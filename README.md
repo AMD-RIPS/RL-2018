@@ -3,5 +3,5 @@ Reinforcement Learning at UCLA IPAM RIPS 2018
 
 Initial goals:
 * Add papers and background
-* Get OpenAIgym Sandbox working
+* Get OpenAI gym Sandbox working
 * Get game working/imported

@@ -5,3 +5,5 @@ Initial goals:
 * Add papers and background
 * Get OpenAI gym Sandbox working
 * Get game working/imported
+
+https://blog.openai.com/requests-for-research-2/

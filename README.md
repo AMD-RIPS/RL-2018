@@ -7,3 +7,4 @@ Initial goals:
 * Get game working/imported
 
 https://blog.openai.com/requests-for-research-2/
+http://www.andreykurenkov.com/writing/ai/a-brief-history-of-game-ai/

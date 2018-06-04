@@ -8,3 +8,7 @@ Initial goals:
 
 https://blog.openai.com/requests-for-research-2/
 http://www.andreykurenkov.com/writing/ai/a-brief-history-of-game-ai/
+
+https://blog.openai.com/retro-contest/
+
+https://medium.com/@dhruvp/how-to-write-a-neural-network-to-play-pong-from-scratch-956b57d4f6e0

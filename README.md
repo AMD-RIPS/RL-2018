@@ -6,6 +6,8 @@ Initial goals:
 * Get OpenAI gym Sandbox working
 * Get game working/imported
 
+https://blog.insightdatascience.com/reinforcement-learning-from-scratch-819b65f074d8
+
 https://blog.openai.com/requests-for-research-2/
 
 http://www.andreykurenkov.com/writing/ai/a-brief-history-of-game-ai/

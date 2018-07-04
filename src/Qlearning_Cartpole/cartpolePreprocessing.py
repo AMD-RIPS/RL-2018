@@ -1,21 +1,21 @@
 import math
+import hyperparameters as _
 
-# Bounds for the state space, bounds for index 0 and 2 are as returned by env.observation_space.low
-BOUNDS = [[-2.4, 2.4], [-2, 2], [-0.21, 0.21], [-2, 2]]
-nBUCKETS = [2, 2, 30, 30]
+BOUNDS = _.BOUNDS
+nBUCKETS = _.nBUCKETS
 
 # Returns a non-negative integer, representing the state the game is in
 # In the cartpole game the state is represented as 4 real numbers, we map these 4 dimensional 
 # vectors to a non-negative integer. 
-def preprocess(observation):
+def preprocess(observation, bounds = BOUNDS, nBuckets = nBUCKETS):
 	buckets = []
 	n = len(observation)
 
 	for index in range(n):
-		buckets.append(getBucket(observation[index], BOUNDS[index][0], BOUNDS[index][1], nBUCKETS[index]))
+		buckets.append(getBucket(observation[index], bounds[index][0], bounds[index][1], nBuckets[index]))
 
 	# map to a non-negative integer
-	m = max(nBUCKETS)
+	m = max(nBuckets)
 	answer = int(buckets[0] + m*buckets[1] + m**2 *buckets[2] + m**3 *buckets[3])
 	return answer
 
@@ -26,7 +26,7 @@ def getBucket(value, lowerB, upperB, nBuckets):
 	elif value > upperB:
 		bucket = nBuckets - 1
 
-	# assign bucket
+	# assign buckets
 	else:
 		ran = upperB - lowerB
 		bucket = math.floor(nBuckets*(value - lowerB) / ran)
@@ -34,6 +34,3 @@ def getBucket(value, lowerB, upperB, nBuckets):
 
 def pause():
     programPause = raw_input("Press the <ENTER> key to continue...")
-
-
-

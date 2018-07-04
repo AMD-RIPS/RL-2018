@@ -3,6 +3,8 @@ import qLearning as QL
 import cartpolePreprocessing as crtpl
 
 env = gym.make('CartPole-v0')
-fitQ = QL.learn(env)
+fitQ, trainingScores = QL.learn(env)
+print(trainingScores)
 crtpl.pause()
-QL.test(env, fitQ)
+testScores = QL.test(env, fitQ)
+print(testScores)

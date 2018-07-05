@@ -2,9 +2,11 @@ import numpy as np
 import gym
 import math
 import random as rand
+import subprocess
 
-class ClassicControl():
+class ClassicControl:
 
+	# aSize is the dimension of the action space
 	def __init__(self, game, nBuckets, bounds, aSize):
 		self.game = game
 		self.env = gym.make(game)
@@ -18,28 +20,31 @@ class ClassicControl():
 		# Keeping track of time spent training
 		self.trainingTime = 0
 
-	def setLearningParameters(self, nEpisodes = 1000, maxEpisodeLength = 500, discount = 0.99, minLearningRate = 0.05, minExploreRate = 0.1):
+	def setLearningParameters(self, nEpisodes = 1000, maxEpisodeLength = 500, discount = 0.99, minLearningRate = 0.05, minExploreRate = 0.1, fixedERate = False, fixedLRate = False):
 		self.nEpisodes = nEpisodes
 		self.maxEpisodeLength = maxEpisodeLength
 		self.discount = discount
 		self.minLearningRate = minLearningRate
 		self.minExploreRate = minExploreRate
+		self.fixedERate = fixedERate
+		self.fixedLRate = fixedLRate
 
 	def getStatespaceSize(self):
 		m = max(self.nBuckets)
 		return (m - 1) * sum([m**i for i in range(len(self.nBuckets))]) + 1
 
 	def learn(self):
-		trainingScores = []
+		averageQValues = []
 		for episode in range(self.nEpisodes):
 			self.runEpisode()
 
 			# Checking whether the algorithm has converged
 			if episode%20 == 0 and self.converged(): break
-		return episode
+			averageQValues.append(sum(map(sum, self.Q))/(self.aSize * self.sSize))
+		return averageQValues
 
 	def converged(self): 
-		if self.game == 'CartPole-v0' and self.test(visualise = False) > 190: return True
+		if self.game == 'CartPole-v0' and self.test(visualize = False) > 190: return True
 		return False
 
 	def runEpisode(self):
@@ -58,20 +63,21 @@ class ClassicControl():
 			if done: break
 			self.trainingTime += 1
 
-	def getExploreRate(self): return max(self.minExploreRate, min(1, 5 - math.log10(self.trainingTime + 1)))
+	def getExploreRate(self): 
+		return self.minExploreRate if self.fixedERate else max(self.minExploreRate, min(1, 5 - math.log10(self.trainingTime + 1)))
 
-	def getLearningRate(self): return max(self.minLearningRate, min(1, 5 - math.log10(self.trainingTime + 1)))
+	def getLearningRate(self): 
+		return self.minLearningRate if self.fixedLRate else max(self.minExploreRate, min(1, 5 - math.log10(self.trainingTime + 1)))
 
 
-	def test(self, testEpisodes = 10, testMaxTime = 250, visualise = True):
+	def test(self, testEpisodes = 10, testMaxTime = 250, visualize = True):
 		testScores = []
 		for episode in range(testEpisodes):
 			observation = self.env.reset()
 			state = self.preprocess(observation)
 
-			# Stepping through episode
 			for time in range(testMaxTime):
-				if visualise: self.env.render()
+				if visualize: self.env.render()
 				action = greedy(self.Q[state])
 				newObservation, reward, done, info = self.env.step(action)
 				newState = self.preprocess(newObservation)
@@ -98,8 +104,6 @@ def eGreedy(q, epsilon):
 	u = rand.random()
 	greedy = np.argmax(q)
 
-	# Decrease exploration over time
-	# epsilon = max(minExploreRate, min(1, 2.544 - math.log10(time + 1)))
 	return greedy if u > epsilon else int(rand.random()*aSize)
 
 def greedy(q): return np.argmax(q)
@@ -117,14 +121,22 @@ def getBucket(value, lowerB, upperB, nBuckets):
 
 def pause(): programPause = raw_input("Press the <ENTER> key to continue...")
 
+
 # pole = ClassicControl(game = 'CartPole-v0', bounds = [[-2.4, 2.4], [-2, 2], [-0.21, 0.21], [-2, 2]], nBuckets = [1, 1, 20, 20], aSize = 2)
 # pole.setLearningParameters(nEpisodes = 1000, maxEpisodeLength = 200, discount = 0.99, minLearningRate = 0.05, minExploreRate = 0.1)
 # print('Converged in {} episodes'.format(pole.learn()))
 # pause()
 # pole.test()
 
-car = ClassicControl(game = 'MountainCar-v0', bounds = [[-1.2, 1.2], [-0.07, 0.07]], nBuckets = [10, 30], aSize = 3)
-car.setLearningParameters(nEpisodes = 2000, discount = 0.99, minLearningRate = 0.05, minExploreRate = 0.1)
-car.learn()
-pause()
-car.test()
+# car = ClassicControl(game = 'MountainCar-v0', bounds = [[-1.2, 1.2], [-0.07, 0.07]], nBuckets = [10, 30], aSize = 3)
+# car.setLearningParameters(nEpisodes = 500, discount = 0.99, minLearningRate = 0.2, minExploreRate = 0.1, fixedLRate = 0.3)
+# car.learn()
+# pause()
+# car.test()
+
+# Not working
+# pendulum = ClassicControl(game = 'Pendulum-v0', bounds = [[-1, 1], [-1, 1], [-8, 8]], nBuckets = [10, 10, 10], aSize = 2)
+# pendulum.setLearningParameters(nEpisodes = 2000, discount = 0.99, minLearningRate = 0.05, minExploreRate = 0.1)
+# pendulum.learn()
+# pause()
+# pendulum.test()

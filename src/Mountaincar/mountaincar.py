@@ -3,37 +3,37 @@ import gym
 import math
 import random as rand
 
-class Cartpole():
+class MountainCar():
 
-	def __init__(self, nBUCKETS, BOUNDS, MIN_LEARNING_RATE, MIN_EXPLORE_RATE, DISCOUNT):
-		self.env = gym.make('CartPole-v0')
+	def __init__(self, nBUCKETS, BOUNDS, MIN_LEARNING_RATE, MIN_EXPLORE_RATE, DISCOUNT, aSize):
+		self.env = gym.make('MountainCar-v0')
 		self.nBUCKETS = nBUCKETS
 		self.BOUNDS = BOUNDS
 		self.MIN_LEARNING_RATE = MIN_LEARNING_RATE
 		self.MIN_EXPLORE_RATE = MIN_EXPLORE_RATE
 		self.DISCOUNT = DISCOUNT
 		self.sSize = self.getStatespaceSize()
-		self.aSize = 2
+		self.aSize = aSize
 		randomVector = np.random.normal(size = self.aSize * self.sSize)
 		self.Q = [[randomVector[self.aSize * j + i] for i in range(self.aSize)] for j in range(self.sSize)]
 
 	def getStatespaceSize(self):
 		m = max(self.nBUCKETS)
-		return (m - 1) * (1 + m + m**2 + m**3) + 1
+		return (m - 1) * (1 + m) + 1
 
 	def learn(self, nEPISODES = 1000, MAXTIME = 250):
 		trainingScores = []
 		for episode in range(nEPISODES):
-			self.runEpisode(MAXTIME, episode)
+			self.runEpisode(MAXTIME)
 
 			# Keeping track of training performance
-			if episode%20 == 0:
-				testScore = self.test(visualise = False)
-				trainingScores.append(testScore)
-				if testScore > 190: break
+			# if episode%20 == 0:
+			# 	testScore = self.test(visualise = False)
+			# 	trainingScores.append(testScore)
+			# 	if testScore > 190: break
 		return episode
 
-	def runEpisode(self, MAXTIME, episode):
+	def runEpisode(self, MAXTIME):
 		observation = self.env.reset()
 		state = self.preprocess(observation)
 		for time in range(MAXTIME):
@@ -42,7 +42,8 @@ class Cartpole():
 			newState = self.preprocess(newObservation)
 
 			# Decrease learning rate over time
-			learningRate = max(self.MIN_LEARNING_RATE, min(1, 2.544 - math.log10(episode*MAXTIME + time + 1)))
+			# learningRate = max(self.MIN_LEARNING_RATE, min(1, 2.544 - math.log10(time + 1)))
+			learningRate = 0.01
 
 			# Performing Q-learning update
 			self.Q[state][action] += learningRate*(reward + self.DISCOUNT*np.max(self.Q[newState]) - self.Q[state][action])
@@ -76,7 +77,7 @@ class Cartpole():
 
 		# map to a non-negative integer
 		m = max(self.nBUCKETS)
-		answer = int(buckets[0] + m*buckets[1] + m**2 *buckets[2] + m**3 *buckets[3])
+		answer = int(buckets[0] + m*buckets[1])
 		return answer
 
 def eGreedy(q, time, minExploreRate):
@@ -85,7 +86,8 @@ def eGreedy(q, time, minExploreRate):
 	greedy = np.argmax(q)
 
 	# Decrease exploration over time
-	epsilon = max(minExploreRate, min(1, 2.544 - math.log10(time + 1)))
+	# epsilon = max(minExploreRate, min(1, 2.544 - math.log10(time + 1)))
+	epsilon = 0.1
 	return greedy if u > epsilon else int(rand.random()*aSize)
 
 def greedy(q):
@@ -107,6 +109,7 @@ def getBucket(value, lowerB, upperB, nBuckets):
 def pause(self):
 	programPause = raw_input("Press the <ENTER> key to continue...")
 
-c = Cartpole(BOUNDS = [[-2.4, 2.4], [-2, 2], [-0.21, 0.21], [-2, 2]], nBUCKETS = [1, 1, 20, 20], MIN_EXPLORE_RATE = 0.05, MIN_LEARNING_RATE = 0.05, DISCOUNT = 0.99)
-print('converged in {} episodes'.format(c.learn(nEPISODES = 100000)))
-c.test()
+c = MountainCar(BOUNDS = [[-1.2, 1.2], [-0.07, 0.07]], nBUCKETS = [10, 10], MIN_EXPLORE_RATE = 0.05, MIN_LEARNING_RATE = 0.05, DISCOUNT = 0.99, aSize = 3)
+c.learn(nEPISODES = 2000, MAXTIME = 500)
+# print('converged in {} episodes'.format(c.learn(nEPISODES = 100000)))
+c.test(testMaxTime = 1000)

@@ -32,8 +32,7 @@ Episodes = 10000
 Discount = 0.99
 Learning Rate  = 0.05
 Epsilon = 0.2
-Average Reward for 10 Test Episodes = -180.
-
+Average Reward for 10 Test Episodes = -180.2
 
 Experiment 5
 Bounds = [-1.2,1.2], [-0.07, 0.07]
@@ -42,6 +41,6 @@ Episodes = 10000
 Discount = 0.99
 Learning Rate  = 0.05
 Epsilon = 0.05
-Average Reward for 10 Test Episodes = -150.9
+Average Reward for 10 Test Episodes = -157.7
 
 

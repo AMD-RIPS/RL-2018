@@ -2,6 +2,8 @@ import numpy as np
 import gym
 import math
 import random as rand
+import matplotlib.pyplot as plt
+import copy
 import subprocess
 
 class ClassicControl:
@@ -34,14 +36,12 @@ class ClassicControl:
 		return (m - 1) * sum([m**i for i in range(len(self.nBuckets))]) + 1
 
 	def learn(self):
-		averageQValues = []
 		for episode in range(self.nEpisodes):
 			self.runEpisode()
 
 			# Checking whether the algorithm has converged
 			if episode%20 == 0 and self.converged(): break
-			averageQValues.append(sum(map(sum, self.Q))/(self.aSize * self.sSize))
-		return averageQValues
+		return episode
 
 	def converged(self): 
 		if self.game == 'CartPole-v0' and self.test(visualize = False) > 190: return True

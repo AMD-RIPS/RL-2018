@@ -75,11 +75,9 @@ class ClassicControl:
         if self.plotting: return self.test(visualise = False)
         return 0
 
-    #def getExploreRate(self): return max(self.minExploreRate, min(1, 5 - math.log10(self.trainingTime + 1)))
-    def getExploreRate(self): return self.minExploreRate
+    def getExploreRate(self): return max(self.minExploreRate, min(1, 5 - math.log10(self.trainingTime + 1))) if not self.fixedERate else self.minExploreRate
 
-    def getLearningRate(self): return max(self.minLearningRate, min(1, 5 - math.log10(self.trainingTime + 1)))
-    # def getLearningRate(self): return self.minLearningRate
+    def getLearningRate(self): return max(self.minLearningRate, min(1, 5 - math.log10(self.trainingTime + 1))) if not self.fixedLRate else self.minLearningRate
 
 
     def test(self, testEpisodes = 10, testMaxTime = 250, visualise = True):
@@ -126,9 +124,6 @@ def eGreedy(q, epsilon):
     aSize = len(q)
     u = rand.random()
     greedy = np.argmax(q)
-
-    # Decrease exploration over time
-    # epsilon = max(minExploreRate, min(1, 2.544 - math.log10(time + 1)))
     return greedy if u > epsilon else int(rand.random()*aSize)
 
 def greedy(q): return np.argmax(q)
@@ -148,12 +143,12 @@ def pause(): programPause = raw_input("Press the <ENTER> key to continue...")
 
 # pole = ClassicControl(game = 'CartPole-v0', bounds = [[-2.4, 2.4], [-2, 2], [-0.21, 0.21], [-2, 2]], nBuckets = [1, 1, 20, 20], aSize = 2)
 # pole.setLearningParameters(nEpisodes = 500, maxEpisodeLength = 200, discount = 0.99, minLearningRate = 0.05, minExploreRate = 0.1)
-# pole.learn(plot = True)
+# pole.learn(plot = False)
 # pause()
 # pole.test()
 
 car = ClassicControl(game = 'MountainCar-v0', bounds = [[-1.2, 1.2], [-0.07, 0.07]], nBuckets = [10, 30], aSize = 3)
-car.setLearningParameters(nEpisodes = 500, discount = 0.99, minLearningRate = 0.05, minExploreRate = 0.1)
+car.setLearningParameters(nEpisodes = 10000, discount = 0.99, minLearningRate = 0.05, minExploreRate = 0.1)
 car.learn(plot = True)
 pause()
 result = car.test()

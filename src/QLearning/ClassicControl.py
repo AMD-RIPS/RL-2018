@@ -56,9 +56,11 @@ class ClassicControl:
         return
 
     def runEpisode(self):
+        done = False
         observation = self.env.reset()
         state = self.preprocess(observation)
-        for time in range(self.maxEpisodeLength):
+        while not done:
+            self.trainingTime += 1
             action = eGreedy(self.Q[state], self.getExploreRate())
             newObservation, reward, done, info = self.env.step(action)
             newState = self.preprocess(newObservation)

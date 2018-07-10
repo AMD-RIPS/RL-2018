@@ -11,21 +11,21 @@ env = gym.make('CartPole-v0')
 import tensorflow as tf
 
 # Network Parameters
-n_hidden_1 = 16 # 1st layer number of neurons
-n_hidden_2 = 16 # 2nd layer number of neurons
+n_hidden_1 = 32 # 1st layer number of neurons
+n_hidden_2 = 32 # 2nd layer number of neurons
 num_input = 4 # MNIST data input (img shape: 28*28)
 num_classes = 2 # MNIST total classes (0-9 digits)
 
 weights = {
-    'h1': tf.Variable(tf.random_normal([num_input, n_hidden_1], stddev = 1)),
-    'h2': tf.Variable(tf.random_normal([n_hidden_1, n_hidden_2], stddev = 1)),
-    'out': tf.Variable(tf.random_normal([n_hidden_2, num_classes], stddev = 1))
+    'h1': tf.Variable(tf.random_normal([num_input, n_hidden_1], stddev = 10)),
+    'h2': tf.Variable(tf.random_normal([n_hidden_1, n_hidden_2], stddev = 10)),
+    'out': tf.Variable(tf.random_normal([n_hidden_2, num_classes], stddev = 10))
 }
 
 biases = {
-    'b1': tf.Variable(tf.random_normal([n_hidden_1], stddev = 1)),
-    'b2': tf.Variable(tf.random_normal([n_hidden_2], stddev = 1)),
-    'bOut': tf.Variable(tf.random_normal([num_classes], stddev = 1))
+    'b1': tf.Variable(tf.random_normal([n_hidden_1], stddev = 10)),
+    'b2': tf.Variable(tf.random_normal([n_hidden_2], stddev = 10)),
+    'bOut': tf.Variable(tf.random_normal([num_classes], stddev = 10))
 }
 
 # concatenate the list of trainable variables
@@ -49,17 +49,14 @@ learning_rate = tf.placeholder("float")
 max_Q = tf.reduce_max(Q, axis = 1)
 argmax_Q = tf.argmax(Q, axis = 1)
 
-# print('Im here too ', tf.shape(Q[0][1]))
-
-difference = tf.subtract(Y, tf.gather(Q, action, axis = 1))
-loss = tf.reduce_sum(tf.square(difference))
+loss = tf.losses.mean_squared_error(Y, tf.gather(Q, action, axis = 1))
 # Regularisation
-for weight in weights.values():
-	loss = loss + 0.01*tf.reduce_sum(tf.square(weight))
+# for weight in weights.values():
+# 	loss = loss + 0.01*tf.reduce_sum(tf.square(weight))
 
-# optimizer = tf.train.Grad(learning_rate = 0.1)
-# optimizer = tf.train.AdamOptimizer(learning_rate)
-optimizer = tf.train.GradientDescentOptimizer(learning_rate = 0.001)
+optimizer = tf.train.RMSPropOptimizer(learning_rate = 0.001)
+# optimizer = tf.train.AdamOptimizer(learning_rate = 0.0001)
+# optimizer = tf.train.GradientDescentOptimizer(learning_rate = 0.0001)
 train_op = optimizer.minimize(loss)
 
 
@@ -75,12 +72,11 @@ def eGreedy(state, epsilon):
 	return sess.run(argmax_Q, feed_dict = {X: state})[0] if random.random() > epsilon else int(2*random.random())
 
 def getEpsilon(time, nEpisodes):
-	return 0.5
-	return 1 - time/nEpisodes
+	return 0.5 - 0.5*time/nEpisodes
 
 def getLearningRate(time, nEpisodes):
-	return 0.001
-	return max(0.1, min(0.25 - 0.1*math.log10(time + 1), 0.005))
+	return 0.0001
+	return max(0.1, min(0.25*(1 - time/nEpisodes), 0.0005))
 
 def greedy(state):
 	return sess.run(argmax_Q, feed_dict = {X: state})[0]
@@ -102,13 +98,13 @@ def test(visualise = False, testEpisodes = 10):
 			totalReward += reward
 	return totalReward / float(testEpisodes)
 	
-nEpisodes = 2
+nEpisodes = 2000
 display_step = 20
 discount = 0.99
 epsilon = 1
 replay_memory = []
 replay_capacity = 1000
-minibatch_size = 2
+minibatch_size = 64
 
 time = 0
 for episode in range(nEpisodes):
@@ -126,7 +122,8 @@ for episode in range(nEpisodes):
 		newObservation, reward, done, _ = env.step(a)
 		newState = phi(newObservation)
 		replay_memory.append((state, a, newState, reward))
-		if episode == 0: break
+		# filling up replay memory
+		if episode < 20: break
 
 		states = [None] * minibatch_size
 		newStates = [None] * minibatch_size
@@ -149,7 +146,7 @@ for episode in range(nEpisodes):
 		sess.run(train_op, feed_dict = {X: states, Y: y, action : actions, learning_rate: getLearningRate(time, nEpisodes)})
 		state = newState
 		time += 1
-	print(sess.run(trainable_variables))
+	# print(sess.run(trainable_variables))
 	p = (episode + 1)%display_step == 0
 	if p: 
 		temp = test()

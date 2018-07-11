@@ -4,9 +4,11 @@ import math
 import random as rand
 import matplotlib.pyplot as plt
 import copy
+import subprocess
 
-class ClassicControl():
+class ClassicControl:
 
+    # aSize is the dimension of the action space
     def __init__(self, game, nBuckets, bounds, aSize):
         self.game = game
         self.env = gym.make(game)
@@ -14,62 +16,52 @@ class ClassicControl():
         self.bounds = bounds
         self.sSize = self.getStatespaceSize()
         self.aSize = aSize
-        randomVector = np.random.normal(size = self.aSize * self.sSize)
-        self.Q = [[randomVector[self.aSize * j + i] for i in range(self.aSize)] for j in range(self.sSize)]
+        # randomVector = np.random.normal(size = self.aSize * self.sSize)
+        # self.Q = [[randomVector[self.aSize * j + i] for i in range(self.aSize)] for j in range(self.sSize)]
+        self.Q = [[0 for _ in range(self.aSize)] for _ in range(self.sSize)]
         self.setLearningParameters()
         # Keeping track of time spent training
         self.trainingTime = 0
 
-    def setLearningParameters(self, nEpisodes = 1000, maxEpisodeLength = 500, discount = 0.99, minLearningRate = 0.05, minExploreRate = 0.1):
+    def setLearningParameters(self, nEpisodes = 1000, maxEpisodeLength = 500, discount = 0.99, minLearningRate = 0.05, minExploreRate = 0.1, fixedERate = False, fixedLRate = False):
         self.nEpisodes = nEpisodes
         self.maxEpisodeLength = maxEpisodeLength
         self.discount = discount
         self.minLearningRate = minLearningRate
         self.minExploreRate = minExploreRate
+        self.fixedERate = fixedERate
+        self.fixedLRate = fixedLRate
 
     def getStatespaceSize(self):
         m = max(self.nBuckets)
         return (m - 1) * sum([m**i for i in range(len(self.nBuckets))]) + 1
 
-    def learn(self, plot = False, exp = ""):
-        avgQ = []
-        normQ = []
-        rewards = []
-        episodes = [i for i in range(0, self.nEpisodes, 100)]
+    def learn(self, plot = False):
+    	self.plotting = plot
+        avgQ = [0 for _ in range(self.nEpisodes)]
+        rewards = [0 for _ in range(self.nEpisodes)]
+        episodes = [i for i in range(0, self.nEpisodes)]
 
         for episode in range(self.nEpisodes):
-            if episode % 100 == 0:
-                oldQ = copy.deepcopy(self.Q)
-
             # run episode
             reward = self.runEpisode()
- 
-            # Checking whether the algorithm has converged
-            if episode%20 == 0 and self.converged(): break
 
             # Record results for plotting
-            if plot and episode % 100 == 0:
-                avgQ.append(np.average(self.Q))
-                normQ.append(np.linalg.norm(np.subtract(self.Q, oldQ), 2))
-                rewards.append(reward)
-                
-        if plot:
-            # Plot Average Q Values
-            self.plot(episodes, avgQ, "Average Q Value", exp)
-            # Plot Q Norm
-            self.plot(episodes, normQ, "Q Norm", exp)
-            # Plot Average Rewards
-            self.plot(episodes, rewards, "Rewards", exp)
-        return episode
+            if plot:
+                avgQ[episode] = np.sum(self.Q)/(np.prod(self.nBuckets) * self.aSize)
+                rewards[episode] = reward
 
-    def converged(self): 
-        if self.game == 'CartPole-v0' and self.test(visualise = False) > 190: return True
-        return False
+        if plot:
+            self.plot(episodes, avgQ, "Average Q Value")
+            self.plot(episodes, rewards, "Rewards")
+        return
 
     def runEpisode(self):
+        done = False
         observation = self.env.reset()
         state = self.preprocess(observation)
-        for time in range(self.maxEpisodeLength):
+        while not done:
+            self.trainingTime += 1
             action = eGreedy(self.Q[state], self.getExploreRate())
             newObservation, reward, done, info = self.env.step(action)
             newState = self.preprocess(newObservation)
@@ -80,13 +72,12 @@ class ClassicControl():
             state = newState
             if done: break
             self.trainingTime += 1
-        return self.test(visualise=False)
+        if self.plotting: return self.test(visualise = False)
+        return 0
 
-    #def getExploreRate(self): return max(self.minExploreRate, min(1, 5 - math.log10(self.trainingTime + 1)))
-    def getExploreRate(self): return self.minExploreRate
+    def getExploreRate(self): return max(self.minExploreRate, min(1, 5 - math.log10(self.trainingTime + 1))) if not self.fixedERate else self.minExploreRate
 
-    #def getLearningRate(self): return max(self.minLearningRate, min(1, 5 - math.log10(self.trainingTime + 1)))
-    def getLearningRate(self): return self.minLearningRate
+    def getLearningRate(self): return max(self.minLearningRate, min(1, 5 - math.log10(self.trainingTime + 1))) if not self.fixedLRate else self.minLearningRate
 
 
     def test(self, testEpisodes = 10, testMaxTime = 250, visualise = True):
@@ -121,21 +112,18 @@ class ClassicControl():
         n = len(buckets)
         return int(sum([m**j * buckets[j] for j in range(n)]))
     
-    def plot(self, x, y, title, exp):
+    def plot(self, x, y, title):
         plt.figure()
         plt.plot(x, y)
         plt.xlabel("Episode")
         plt.ylabel(title)
         plt.title(title + " for " + self.game)
-        plt.savefig(title.replace(" ", "") + exp + ".png")
+        plt.savefig(title.replace(" ", "") + ".png")
 
 def eGreedy(q, epsilon):
     aSize = len(q)
     u = rand.random()
     greedy = np.argmax(q)
-
-    # Decrease exploration over time
-    # epsilon = max(minExploreRate, min(1, 2.544 - math.log10(time + 1)))
     return greedy if u > epsilon else int(rand.random()*aSize)
 
 def greedy(q): return np.argmax(q)
@@ -153,15 +141,14 @@ def getBucket(value, lowerB, upperB, nBuckets):
 
 def pause(): programPause = raw_input("Press the <ENTER> key to continue...")
 
-
-#pole = ClassicControl(game = 'CartPole-v0', bounds = [[-2.4, 2.4], [-2, 2], [-0.21, 0.21], [-2, 2]], nBuckets = [1, 1, 20, 20], aSize = 2)
-#pole.setLearningParameters(nEpisodes = 100, maxEpisodeLength = 200, discount = 0.99, minLearningRate = 0.05, minExploreRate = 0.1)
-#print('Converged in {} episodes'.format(pole.learn(plot=True)))
-#pause()
-#pole.test()
+# pole = ClassicControl(game = 'CartPole-v0', bounds = [[-2.4, 2.4], [-2, 2], [-0.21, 0.21], [-2, 2]], nBuckets = [1, 1, 20, 20], aSize = 2)
+# pole.setLearningParameters(nEpisodes = 500, maxEpisodeLength = 200, discount = 0.99, minLearningRate = 0.05, minExploreRate = 0.1)
+# pole.learn(plot = False)
+# pause()
+# pole.test()
 
 car = ClassicControl(game = 'MountainCar-v0', bounds = [[-1.2, 1.2], [-0.07, 0.07]], nBuckets = [10, 30], aSize = 3)
 car.setLearningParameters(nEpisodes = 10000, discount = 0.99, minLearningRate = 0.05, minExploreRate = 0.1)
-car.learn()
+car.learn(plot = True)
 pause()
 result = car.test()

@@ -3,7 +3,8 @@ import deep_q_general
 # Train Cartpole
 print ('---- CartPole ----')
 cp = deep_q_general.Playground('CartPole-v1', 2, [24,24], .4, .01, .05, .99, 32, 10000)
-cp.begin_training(1500)
+cp.begin_training(200)
+cp.test_Q(100)
 
 # Train MountainCar
 # print ('---- Mountain Car ----')

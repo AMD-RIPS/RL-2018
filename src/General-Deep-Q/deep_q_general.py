@@ -3,6 +3,7 @@ import numpy as np
 import tensorflow as tf
 import random
 
+# Yayy
 class Playground:
 	def __init__(self, game, num_hidden_layers, layer_sizes, epsilon_max, epsilon_min, alpha, gamma, batch_size):
 		self.game = game

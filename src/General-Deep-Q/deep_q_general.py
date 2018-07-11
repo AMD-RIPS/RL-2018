@@ -16,10 +16,11 @@ class Playground:
 		self.gamma = gamma
 		self.batch_size = batch_size
 		self.memory_capacity = memory_capacity
+		self.LOG_DIR = '/home/jguan/Documents/RIPS/RL-2018/src/Cartpole_Deep/Log'
 		self.initialize_tf_variables()
 
 	def Q_nn(self, input):
-		with tf.device('/device:GPU:0'):
+		with tf.device('/device:CPU:0'):
 			neural_net = input
 			for n in self.layer_sizes:
 				neural_net = tf.layers.dense(neural_net, n, activation=tf.nn.relu)
@@ -55,9 +56,12 @@ class Playground:
 		config.gpu_options.allow_growth = True
 		config.log_device_placement = True
 		self.sess = tf.Session(config = config)
+		tf.summary.scalar('loss', self.loss)
+		self.summary = tf.summary.merge_all()
+		self.summary_writer = tf.summary.FileWriter(self.LOG_DIR, self.sess.graph)
 		self.trainable_variables = tf.trainable_variables()
 		self.sess.run(tf.global_variables_initializer())
-		self.sess.graph.finalize()
+		# self.sess.graph.finalize()
 
 	def get_batch(self, replay_memory):
 		mini_batch = random.sample(replay_memory, self.batch_size)
@@ -77,7 +81,8 @@ class Playground:
 		for i in range(self.batch_size):
 			y_batch[i] = reward_batch[i] + (0 if done_batch[i] else self.gamma * np.max(Q_value_batch[i]))
 
-		self.sess.run(self.train_op, feed_dict={self.y_tf: y_batch, self.action_tf: action_batch, self.state_tf: state_batch})
+		_, summary = self.sess.run([self.train_op, self.summary], feed_dict={self.y_tf: y_batch, self.action_tf: action_batch, self.state_tf: state_batch})
+		return summary
 
 	def get_action(self, state, epsilon):
 		if random.random() < epsilon:
@@ -92,6 +97,7 @@ class Playground:
 		eps_decay_rate = (self.epsilon_min - self.epsilon_max) / num_episodes
 		# q_averages = np.zeros(num_episodes)
 		replay_memory = []
+		total_steps = 0
 		print 'Training...'
 		for episode in range(num_episodes):
 			done = False
@@ -99,6 +105,7 @@ class Playground:
 			state = self.env.reset()
 			self.update_fixed_weights()
 			while not done:
+				total_steps += 1
 				# Take action and update replay memory
 				action = self.get_action(state, self.epsilon_max + eps_decay_rate * episode)
 				next_state, reward, done, _ = self.env.step(action)
@@ -112,10 +119,12 @@ class Playground:
 
 				# Perform experience replay if replay memory populated
 				if len(replay_memory) > 10 * self.batch_size:
-					self.experience_replay(replay_memory)
+					summary = self.experience_replay(replay_memory)
+					self.summary_writer.add_summary(summary, total_steps)
 
 				tot_reward += reward
 				state = next_state
+
 			# q_averages[episode] = self.estimate_avg_q(1000)
 			print 'Episode: {}. Reward: {}'.format(episode, tot_reward)
 		# file_name = 'avg_q_' + self.game + '.csv'

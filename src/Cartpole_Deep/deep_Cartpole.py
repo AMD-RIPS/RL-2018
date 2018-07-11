@@ -35,18 +35,8 @@ learning_rate = tf.placeholder("float")
 max_Q = tf.reduce_max(Q, axis = 1)
 argmax_Q = tf.argmax(Q, axis = 1)
 
-Q_actionval = Q[0][action]
-loss = tf.losses.mean_squared_error(Y, Q_actionval)
-
-# _______________________________________________________________
-# At the same time version
-# Q_actionvals = tf.matmul(Q, tf.transpose(tf.one_hot(indices = action, depth = num_classes)))
-# loss = tf.losses.mean_squared_error(Y, Q_actionvals)
-
-
-# Regularisation
-# for weight in weights.values():
-# 	loss = loss + 0.01*.reduce_sum(tf.square(weight))
+Q_actionvals = tf.matmul(Q, tf.transpose(tf.one_hot(indices = action, depth = num_classes)))
+loss = tf.losses.mean_squared_error(Y, Q_actionvals)
 
 # optimizer = tf.train.RMSPropOptimizer(learning_rate)
 # optimizer = tf.train.ProximalGradientDescentOptimizer(learning_rate)
@@ -69,9 +59,6 @@ def getEpsilon(episode, nEpisodes):
 
 def getLearningRate(time, nEpisodes):
 	return 0.001
-	# decay = 1 - prevReward/200
-	# return max(0.001, decay**4)
-	# return max(0.1, min(1, 2.5 - math.log10(time + 1)))
 
 def greedy(state):
 	return sess.run(argmax_Q, feed_dict = {X: state})[0]
@@ -110,7 +97,6 @@ for episode in range(nEpisodes):
 	state = phi(initObservation)
 	done = False
 	fixed_weights = sess.run(trainable_variables)
-	# print(fixed_weights)
 	while not done:
 		a = eGreedy(state, getEpsilon(episode, nEpisodes))
 
@@ -120,57 +106,34 @@ for episode in range(nEpisodes):
 		# filling up replay memory
 		if episode < 2: break
 
-		# _____________________________________________________________________________________
-		# Everything at once version
-		# states = [None] * minibatch_size
-		# newStates = [None] * minibatch_size
-		# actions = [None] * minibatch_size
-		# rewards = [None] * minibatch_size
-		# i = 0
-		# for index in np.random.choice(a = len(replay_memory), size = minibatch_size):
-		# 	temp = replay_memory[index]
-		# 	states[i] = temp[0][0]
-		# 	newStates[i] = temp[2][0]
-		# 	actions[i] = temp[1]
-		# 	rewards[i] = temp[3]
-		# 	i += 1
-
-		# dict = {X: newStates}
-		# # dict.update(zip(trainable_variables, fixed_weights))
-		# max_q = sess.run(max_Q, feed_dict = dict)
-		# y = np.matrix([rewards]).T + discount*np.matrix(max_q).T if not done else reward
-
-		# train_dict = {X: states, Y: y, action : actions, learning_rate: getLearningRate(time, nEpisodes)}
-		# # print(sess.run(loss, train_dict))
-		# sess.run(train_op, feed_dict = train_dict)
-
-		# ___________________________________________________________________________________-
-		# separately version
+		states = [None] * minibatch_size
+		newStates = [None] * minibatch_size
+		actions = [None] * minibatch_size
+		rewards = [None] * minibatch_size
+		dones = [None] * minibatch_size
+		i = 0
 		for index in np.random.choice(a = len(replay_memory), size = minibatch_size):
 			temp = replay_memory[index]
-			s = temp[0]
-			ns = temp[2]
-			a = temp[1]
-			r = temp[3]
-			d = temp[4]
-			dict = {X: ns}
-			dict.update(zip(trainable_variables, fixed_weights))
-			max_q = sess.run(max_Q, feed_dict = dict)[0]
-			y = r + discount*max_q if not d else r
-			train_dict = {X: s, action: a, Y: [[y]], learning_rate: 0.01}
-			sess.run(train_op, feed_dict = train_dict)
+			states[i] = temp[0][0]
+			newStates[i] = temp[2][0]
+			actions[i] = temp[1]
+			rewards[i] = temp[3]
+			dones[i] = temp[4]
+			i += 1
 
+		dict = {X: newStates}
+		dict.update(zip(trainable_variables, fixed_weights))
+		max_q = sess.run(max_Q, feed_dict = dict)
+		# y = np.matrix([rewards]) + discount*np.matrix(max_q) if not done else np.matrix([rewards])
+		y = np.matrix([[rewards[i] + discount*max_q[i] if not dones[i] else rewards[i] for i in range(minibatch_size)]])
+		y = y.T
+		train_dict = {X: states, Y: y, action : actions, learning_rate: 0.01}
+		sess.run(train_op, feed_dict = train_dict)
 		state = newState
 		time += 1
-	# print(episode)
-	# print(sess.run(trainable_variables))
 	score = test(testEpisodes = 10)
 	if score == 200: break
 	print("score = {0}, epsilon = {1}, learning rate = {2}".format(score, getEpsilon(episode, nEpisodes), getLearningRate(time, nEpisodes)))
-	# print(prevReward)
-	# if prevReward > 190: 
-	# 	print(episode)
-	# 	break
 
 test(visualise = True)
 

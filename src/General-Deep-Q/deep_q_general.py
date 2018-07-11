@@ -15,10 +15,11 @@ class Playground:
 		self.batch_size = batch_size
 
 	def Q_nn(self, input):
-		neural_net = input
-		for n in self.layer_sizes:
-			neural_net = tf.layers.dense(neural_net, n, activation=tf.nn.relu)
-		return tf.layers.dense(neural_net, self.action_size, activation=None)
+		with tf.device('/device:CPU:0'):
+			neural_net = input
+			for n in self.layer_sizes:
+				neural_net = tf.layers.dense(neural_net, n, activation=tf.nn.relu)
+			return tf.layers.dense(neural_net, self.action_size, activation=None)
 
 	# Initialize tensorflow place holders
 	def initialize_tf_variables(self):
@@ -30,9 +31,12 @@ class Playground:
 		self.Q_amax = tf.reduce_max(self.Q_value[0])
 		self.Q_value_at_action = tf.reduce_sum(tf.multiply(self.Q_value, self.action_tf),reduction_indices = 1)
 		self.loss = tf.reduce_mean(tf.square(self.y_tf - self.Q_value_at_action))
-		self.optimizer = tf.train.AdamOptimizer(learning_rate = self.alpha)
-		self.train_op = self.optimizer.minimize(self.loss)
-		self.sess = tf.Session()
+		self.train_op = tf.train.AdamOptimizer(learning_rate = self.alpha).minimize(self.loss)
+		config = tf.ConfigProto()
+		config.allow_soft_placement=True
+		config.gpu_options.allow_growth = True
+		config.log_device_placement = True
+		self.sess = tf.Session(config=config)
 		self.sess.run(tf.global_variables_initializer())
 
 	def experience_replay(self):
@@ -59,6 +63,11 @@ class Playground:
 		else:
 			return self.sess.run(self.Q_argmax, feed_dict={self.state_tf: [state]})
 
+	def get_epsilon(self, episode):
+		eps_decay_rate = (self.epsilon_min-self.epsilon_max)/(self.num_episodes/2)
+		eps = max(self.epsilon_max + eps_decay_rate*episode, self.epsilon_min)
+		return eps
+
 	def rand_state_sample(self):
 		sample = np.zeros(self.state_size)
 		for i in range(self.state_size):
@@ -80,7 +89,7 @@ class Playground:
 		self.upper_bounds = self.env.observation_space.high
 		self.action_size = self.env.action_space.n
 		self.initialize_tf_variables()
-		eps_decay_rate = (self.epsilon_min-self.epsilon_max)/num_episodes
+		self.num_episodes = num_episodes
 		q_averages = np.zeros(num_episodes)
 		self.history = []
 		max_history = 10000
@@ -91,7 +100,7 @@ class Playground:
 			if (len(self.history) > max_history):
 				self.history.pop(0)
 			while not done:
-				action = self.get_action(state, self.epsilon_max + eps_decay_rate*episode)
+				action = self.get_action(state, self.get_epsilon(episode))
 				next_state, reward, done, _ = self.env.step(action)
 				one_hot_action = np.zeros(self.action_size)
 				one_hot_action[action] = 1
@@ -101,12 +110,13 @@ class Playground:
 				else:
 					y = reward + self.gamma*self.sess.run(self.Q_amax, feed_dict={self.state_tf: [next_state]})
 				tot_reward += reward
-				if episode < self.batch_size:
-					self.sess.run(self.train_op, feed_dict={self.state_tf:[state], self.y_tf: y, self.action_tf: [one_hot_action]})
+				if len(self.history) < self.batch_size:
+					continue
+					# self.sess.run(self.train_op, feed_dict={self.state_tf:[state], self.y_tf: y, self.action_tf: [one_hot_action]})
 				else:
 					self.experience_replay()
 				state = next_state
 			q_averages[episode] = self.estimate_avg_q(1000)
-			print 'Episode: {}. Reward: {}'.format(episode,tot_reward)
+			print 'Episode: {}. Reward: {}. Epsilon: {}'.format(episode,tot_reward, self.get_epsilon(episode))
 		file_name = 'avg_q_' + self.game + '.csv'
 		np.savetxt(file_name, q_averages, delimiter=',')

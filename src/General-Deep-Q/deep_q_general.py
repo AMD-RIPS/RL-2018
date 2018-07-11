@@ -19,10 +19,11 @@ class Playground:
         self.initialize_tf_variables()
 
     def Q_nn(self, input):
-        neural_net = input
-        for n in self.layer_sizes:
-            neural_net = tf.layers.dense(neural_net, n, activation=tf.nn.relu)
-        return tf.layers.dense(neural_net, self.action_size, activation=None)
+        with tf.device('/device:CPU:0'):
+            neural_net = input
+            for n in self.layer_sizes:
+                neural_net = tf.layers.dense(neural_net, n, activation=tf.nn.relu)
+            return tf.layers.dense(neural_net, self.action_size, activation=None)
 
     def initialize_tf_variables(self):
     	# Setting up game specific variables
@@ -49,7 +50,11 @@ class Playground:
         self.fixed_weights = None
 
         # Tensorflow session setup
-        self.sess = tf.Session()
+        config = tf.ConfigProto()
+        config.allow_soft_placement=True
+        config.gpu_options.allow_growth = True
+        config.log_device_placement = True
+        self.sess = tf.Session(config = config)
         self.trainable_variables = tf.trainable_variables()
         self.sess.run(tf.global_variables_initializer())
         self.sess.graph.finalize()

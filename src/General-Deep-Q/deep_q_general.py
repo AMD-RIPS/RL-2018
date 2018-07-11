@@ -92,6 +92,7 @@ class Playground:
         eps_decay_rate = (self.epsilon_min - self.epsilon_max) / num_episodes
         # q_averages = np.zeros(num_episodes)
         replay_memory = []
+        print 'Training...'
         for episode in range(num_episodes):
             done = False
             tot_reward = 0
@@ -119,7 +120,23 @@ class Playground:
             print 'Episode: {}. Reward: {}'.format(episode, tot_reward)
         # file_name = 'avg_q_' + self.game + '.csv'
         # np.savetxt(file_name, q_averages, delimiter=',')
+        print '--------------- Done training ---------------'
     
+    def test_Q(self, num_test_episodes):
+        print 'Testing...'
+        for episode in range(num_test_episodes):
+            done = False
+            tot_reward = 0
+            state = self.env.reset()
+            while not done:
+                # Take action and update replay memory
+                action = self.get_action(state, 0)
+                next_state, reward, done, _ = self.env.step(action)
+                tot_reward += reward
+                state = next_state
+                tot_reward += reward
+            print 'Test {}: Reward = {}'.format(episode, tot_reward)
+
     def rand_state_sample(self):
         sample = np.zeros(self.state_size)
         for i in range(self.state_size):

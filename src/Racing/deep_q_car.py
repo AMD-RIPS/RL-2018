@@ -17,7 +17,7 @@ class Playground:
 		self.gamma = gamma
 		self.batch_size = batch_size
 		self.memory_capacity = memory_capacity
-        self.history_pick = 4
+		self.history_pick = 4
 		self.steering = steering
 		self.acceleration = acceleration
 		self.deceleration = deceleration
@@ -83,10 +83,10 @@ class Playground:
 		self.sess.graph.finalize()
 
 	def phi(self, states):
-        hist_size = np.shape(states)[0]
-        return_size = np.amin([self.history_pick, hist_size])
-        ret_vec = [states[i] for i in range(hist_size)[(hist_size - return_size):]]
-    return ret_vec
+		hist_size = np.shape(states)[0]
+		return_size = np.amin([self.history_pick, hist_size])
+		ret_vec = [states[i] for i in range(hist_size)[(hist_size - return_size):]]
+		return ret_vec
 
 	def get_batch(self, replay_memory):
 		mini_batch = random.sample(replay_memory, self.batch_size)
@@ -133,17 +133,17 @@ class Playground:
 			tot_reward = 0
 			state = self.env.reset()
 			state = self.down_sample(state)
-            states = [state]
+			states = [state]
 			self.env.render()
 			self.update_fixed_weights()
 			while not done:
 				# Take action and update replay memory
-                phi = self.phi(states)
+				phi = self.phi(states)
 				action = self.get_action(phi, self.epsilon_max + eps_decay_rate * episode)
 				next_state, reward, done, _ = self.env.step(self.map_action(action))
 				next_state = self.down_sample(next_state)
-                states.append(next_state)
-                phi_1 = self.phi(states)
+				states.append(next_state)
+				phi_1 = self.phi(states)
 				one_hot_action = np.zeros(self.action_size)
 				one_hot_action[action] = 1
 				replay_memory.append((phi, one_hot_action, reward, phi_1, done))

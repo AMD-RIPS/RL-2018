@@ -36,7 +36,7 @@ class Playground:
         return np.shape(self.down_sample(state))[0]
 
     def Q_nn(self, input):
-        with tf.device('/device:CPU:0'):
+        with tf.device('/device:GPU:0'):
             neural_net = input
             for n in self.layer_sizes:
                 neural_net = tf.layers.dense(neural_net, n, activation=tf.nn.relu)

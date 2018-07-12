@@ -30,18 +30,19 @@ class Playground:
 		return np.dot(rgb, [0.299, 0.587, 0.114])
 	
 	def down_sample(self, state):
-		state = self.rgb2gray(state[:82,:])
-		return  downscale_local_mean(state, (2, 2)).flatten()
+		state = self.rgb2gray(state)#self.rgb2gray(state[:82,:])
+		return  state#downscale_local_mean(state, (2, 2)).flatten()
 
 	def get_state_space_size(self, state):
-		return np.shape(self.down_sample(state))[0]
+		return np.shape(self.down_sample(state))
 
 	def Q_nn(self, input):
 		with tf.device('/device:GPU:0'):
-			neural_net = input
-			for n in self.layer_sizes:
-				neural_net = tf.layers.dense(neural_net, n, activation=tf.nn.relu)
-			return tf.layers.dense(neural_net, self.action_size, activation=None)
+			layer1_out = tf.nn.relu(tf.nn.conv2d(input, filter=[8,8,4,16], strides=[1,4,4,1], padding='SAME')) # CNN (96x96x4) => 16*(8x8) w/ stride 4
+			layer2_out = tf.nn.relu(tf.nn.conv2d(layer1_out, filter=[4,4,16,32], strides=[1,2,2,1], padding='SAME')) # CNN (23x23x16) => 32*(4x4) w/ stride 2
+			layer3_out = tf.dense(layer_2_out, 256, activation='relu') # CNN (23x23x16) => 32*(4x4) w/ stride 2
+			return tf.dense(layer_3_out, self.action_size, activation=None)
+
 
 	def map_action(self, action_index):
 		s = self.steering[int(np.floor(action_index/(self.acceleration_size*self.deceleration_size)))]
@@ -57,7 +58,7 @@ class Playground:
 		self.upper_bounds = self.env.observation_space.high
 		self.action_size = self.steering_size*self.acceleration_size*self.deceleration_size
 		# Tf placeholders
-		self.state_tf = tf.placeholder(shape=[None, self.state_size], dtype=tf.float64)
+		self.state_tf = tf.placeholder(shape=[96,96,None, Non], dtype=tf.float64)
 		self.action_tf = tf.placeholder(shape=[None, self.action_size], dtype=tf.float64)
 		self.y_tf = tf.placeholder(dtype=tf.float64)
 
@@ -136,9 +137,11 @@ class Playground:
 			states = [state]
 			self.env.render()
 			self.update_fixed_weights()
+			print '------------------- HERE ----------------------'
 			while not done:
 				# Take action and update replay memory
 				phi = self.phi(states)
+				print phi
 				action = self.get_action(phi, self.epsilon_max + eps_decay_rate * episode)
 				next_state, reward, done, _ = self.env.step(self.map_action(action))
 				next_state = self.down_sample(next_state)

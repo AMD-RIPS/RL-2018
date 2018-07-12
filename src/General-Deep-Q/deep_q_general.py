@@ -35,7 +35,7 @@ class Playground:
         self.lower_bounds = self.env.observation_space.low
         self.upper_bounds = self.env.observation_space.high
         self.action_size = self.env.action_space.n
-        self.training_clock = 0
+        self.q_grid = None
 
         # Tf placeholders
         self.state_tf = tf.placeholder(shape=[None, self.state_size], dtype=tf.float64)
@@ -132,17 +132,12 @@ class Playground:
 
                 tot_reward += reward
                 state = next_state
-                self.training_clock += 1
-            # q_averages[episode] = self.estimate_avg_q(1000)
+            if len(replay_memory) > 1000:
+                self.q_grid = [[replay_memory[index][0]] for index in range(1000)]
             avg_q = self.estimate_avg_q(1000)
-            # score = self.test_Q(num_test_episodes=5)
-            score = 1
+            score = self.test_Q(num_test_episodes=5)
             self.writer.add_summary(self.sess.run(self.summary, feed_dict={self.training_score:score, self.avg_q:avg_q}), episode)
             print 'Episode: {}. Reward: {}'.format(episode, score)
-            # if score > 195:
-            #     break
-        # file_name = 'avg_q_' + self.game + '.csv'
-        # np.savetxt(file_name, q_averages, delimiter=',')
         print '--------------- Done training ---------------'
 
     def test_Q(self, num_test_episodes = 10, visualize=False):
@@ -159,16 +154,9 @@ class Playground:
                 cum_reward += reward
         return cum_reward / float(num_test_episodes)
 
-    def rand_state_sample(self):
-        sample = np.zeros(self.state_size)
-        for i in range(self.state_size):
-            sample[i] = np.random.uniform(max(-5, self.lower_bounds[i]), min(5, self.upper_bounds[i]))
-        return [sample]
-
     def estimate_avg_q(self, num_samples):
+        if not self.q_grid: return 0
         q_avg = 0.0
-        for i in range(num_samples):
-            state_sample = self.rand_state_sample()
-            q_avg += np.mean(self.sess.run(self.Q_value, feed_dict={self.state_tf: state_sample}))
-        q_avg /= num_samples
-        return q_avg
+        for index in range(num_samples):
+            q_avg += np.amax(self.sess.run(self.Q_value, feed_dict={self.state_tf: self.q_grid[index]}))
+        return q_avg/num_samples

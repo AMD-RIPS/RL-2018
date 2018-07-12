@@ -2,6 +2,9 @@ import gym
 import numpy as np
 import tensorflow as tf
 import random
+import os 
+import subprocess
+DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 
 
 class Playground:
@@ -26,41 +29,54 @@ class Playground:
             return tf.layers.dense(neural_net, self.action_size, activation=None)
 
     def initialize_tf_variables(self):
-    	# Setting up game specific variables
-    	self.env = gym.make(self.game)
+        # Setting up game specific variables
+        self.env = gym.make(self.game)
         self.state_size = np.shape(self.env.observation_space)[0]
         self.lower_bounds = self.env.observation_space.low
         self.upper_bounds = self.env.observation_space.high
         self.action_size = self.env.action_space.n
+        self.training_clock = 0
 
         # Tf placeholders
         self.state_tf = tf.placeholder(shape=[None, self.state_size], dtype=tf.float64)
         self.action_tf = tf.placeholder(shape=[None, self.action_size], dtype=tf.float64)
         self.y_tf = tf.placeholder(dtype=tf.float64)
+        self.training_score = tf.placeholder(dtype=tf.float64)
+        self.avg_q = tf.placeholder(dtype=tf.float64)
 
         # Operations
         self.Q_value = self.Q_nn(self.state_tf)
         self.Q_argmax = tf.argmax(self.Q_value[0])
         self.Q_amax = tf.reduce_max(self.Q_value[0])
         self.Q_value_at_action = tf.reduce_sum(tf.multiply(self.Q_value, self.action_tf), axis=1)
-        
+
         # Training related
         self.loss = tf.reduce_mean(tf.square(self.y_tf - self.Q_value_at_action))
         self.train_op = tf.train.AdamOptimizer(learning_rate=self.alpha).minimize(self.loss)
         self.fixed_weights = None
 
-        # Tensorflow session setup
+        # Tensorflow  session setup
         config = tf.ConfigProto()
-        config.allow_soft_placement=True
+        config.allow_soft_placement = True
         config.gpu_options.allow_growth = True
-        config.log_device_placement = True
-        self.sess = tf.Session(config = config)
+        # config.log_device_placement = True
+        self.sess = tf.Session(config=config)
         self.trainable_variables = tf.trainable_variables()
+
+        # Tensorboard setup
+        self.writer = tf.summary.FileWriter(DIR_PATH)
+        self.writer.add_graph(self.sess.graph)
+        tf.summary.scalar("Training score", self.training_score, collections=None, family=None)
+        tf.summary.scalar("Average Q-value", self.avg_q, collections=None, family=None)
+        self.summary = tf.summary.merge_all()
+        subprocess.Popen(['tensorboard', '--logdir', DIR_PATH])
+
+        # Initialising and finalising
         self.sess.run(tf.global_variables_initializer())
         self.sess.graph.finalize()
 
     def get_batch(self, replay_memory):
-    	mini_batch = random.sample(replay_memory, self.batch_size)
+        mini_batch = random.sample(replay_memory, self.batch_size)
         state_batch = [data[0] for data in mini_batch]
         action_batch = [data[1] for data in mini_batch]
         reward_batch = [data[2] for data in mini_batch]
@@ -69,7 +85,7 @@ class Playground:
         return state_batch, action_batch, reward_batch, next_state_batch, done_batch
 
     def experience_replay(self, replay_memory):
-    	state_batch, action_batch, reward_batch, next_state_batch, done_batch = self.get_batch(replay_memory)
+        state_batch, action_batch, reward_batch, next_state_batch, done_batch = self.get_batch(replay_memory)
         y_batch = [None] * self.batch_size
         dict = {self.state_tf: next_state_batch}
         dict.update(zip(self.trainable_variables, self.fixed_weights))
@@ -86,7 +102,7 @@ class Playground:
             return self.sess.run(self.Q_argmax, feed_dict={self.state_tf: [state]})
 
     def update_fixed_weights(self):
-    	self.fixed_weights = self.sess.run(self.trainable_variables)
+        self.fixed_weights = self.sess.run(self.trainable_variables)
 
     def begin_training(self, num_episodes):
         eps_decay_rate = (self.epsilon_min - self.epsilon_max) / num_episodes
@@ -99,7 +115,7 @@ class Playground:
             state = self.env.reset()
             self.update_fixed_weights()
             while not done:
-            	# Take action and update replay memory
+                # Take action and update replay memory
                 action = self.get_action(state, self.epsilon_max + eps_decay_rate * episode)
                 next_state, reward, done, _ = self.env.step(action)
                 one_hot_action = np.zeros(self.action_size)
@@ -107,7 +123,7 @@ class Playground:
                 replay_memory.append((state, one_hot_action, reward, next_state, done))
 
                 # Check whether replay memory capacity reached
-                if (len(replay_memory) > self.memory_capacity): 
+                if (len(replay_memory) > self.memory_capacity):
                     replay_memory.pop(0)
 
                 # Perform experience replay if replay memory populated
@@ -116,31 +132,37 @@ class Playground:
 
                 tot_reward += reward
                 state = next_state
+                self.training_clock += 1
             # q_averages[episode] = self.estimate_avg_q(1000)
-            print 'Episode: {}. Reward: {}'.format(episode, tot_reward)
+            avg_q = self.estimate_avg_q(1000)
+            # score = self.test_Q(num_test_episodes=5)
+            score = 1
+            self.writer.add_summary(self.sess.run(self.summary, feed_dict={self.training_score:score, self.avg_q:avg_q}), episode)
+            print 'Episode: {}. Reward: {}'.format(episode, score)
+            # if score > 195:
+            #     break
         # file_name = 'avg_q_' + self.game + '.csv'
         # np.savetxt(file_name, q_averages, delimiter=',')
         print '--------------- Done training ---------------'
-    
-    def test_Q(self, num_test_episodes):
-        print 'Testing...'
+
+    def test_Q(self, num_test_episodes = 10, visualize=False):
+        cum_reward = 0
         for episode in range(num_test_episodes):
             done = False
-            tot_reward = 0
             state = self.env.reset()
             while not done:
-                # Take action and update replay memory
+                if visualize:
+                    self.env.render()
                 action = self.get_action(state, 0)
                 next_state, reward, done, _ = self.env.step(action)
-                tot_reward += reward
                 state = next_state
-                tot_reward += reward
-            print 'Test {}: Reward = {}'.format(episode, tot_reward)
+                cum_reward += reward
+        return cum_reward / float(num_test_episodes)
 
     def rand_state_sample(self):
         sample = np.zeros(self.state_size)
         for i in range(self.state_size):
-            sample[i] = np.random.uniform(self.lower_bounds[i], self.upper_bounds[i])
+            sample[i] = np.random.uniform(max(-5, self.lower_bounds[i]), min(5, self.upper_bounds[i]))
         return [sample]
 
     def estimate_avg_q(self, num_samples):

@@ -31,8 +31,8 @@ class Playground:
 	
 	def down_sample(self, state):
 		state = self.rgb2gray(state[:82,:])
-		return  downscale_local_mean(state, (2, 2)).flatten()
-
+		return  downscale_local_mean(state, (2, 2))
+        
 	def get_state_space_size(self, state):
 		return np.shape(self.down_sample(state))[0]
 

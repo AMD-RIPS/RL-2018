@@ -38,8 +38,8 @@ class Playground:
 
 	def Q_nn(self, x):
 		with tf.device('/device:GPU:0'):
-			layer1_out = tf.layers.conv2d(x, filters=16, kernel_size=[8,8], strides=[4,4], padding='same', activation=tf.nn.relu, data_format='channels_last') # => 23x23x16
-			layer2_out = tf.layers.conv2d(layer1_out, filters=32, kernel_size=[4,4], strides=[2,2], padding='same', activation=tf.nn.relu, data_format='channels_last') # => 9x9x32
+			layer1_out = tf.layers.conv2d(x, filters=16, kernel_size=[8,8], strides=[4,4], padding='same', activation=tf.nn.relu, data_format='channels_first') # => 23x23x16
+			layer2_out = tf.layers.conv2d(layer1_out, filters=32, kernel_size=[4,4], strides=[2,2], padding='same', activation=tf.nn.relu, data_format='channels_first') # => 9x9x32
 			layer2_shape = np.prod(np.shape(layer2_out)[1:])
 			layer3_out = tf.layers.dense(tf.reshape(layer2_out, [-1,layer2_shape]), 256, activation=tf.nn.relu) # => 1x256
 			output = tf.layers.dense(layer3_out, self.action_size, activation=None)
@@ -64,7 +64,7 @@ class Playground:
 		self.upper_bounds = self.env.observation_space.high
 		self.action_size = self.steering_size*self.acceleration_size*self.deceleration_size
 		# Tf placeholders
-		self.state_tf = tf.placeholder(shape=[None,96, 96, self.history_pick], dtype=tf.float64)
+		self.state_tf = tf.placeholder(shape=[None, self.history_pick, 96, 96], dtype=tf.float64)
 		self.action_tf = tf.placeholder(shape=[None, self.action_size], dtype=tf.float64)
 		self.y_tf = tf.placeholder(dtype=tf.float64)
 
@@ -107,14 +107,14 @@ class Playground:
 	def experience_replay(self, replay_memory):
 		state_batch, action_batch, reward_batch, next_state_batch, done_batch = self.get_batch(replay_memory)
 		y_batch = [None] * self.batch_size
-		dict = {self.state_tf: np.reshape(next_state_batch, [self.batch_size, 96, 96, self.history_pick])}
+		dict = {self.state_tf: next_state_batch}
 		dict.update(zip(self.trainable_variables, self.fixed_weights))
 		Q_value_batch = self.sess.run(self.Q_value, feed_dict=dict)
 		for i in range(self.batch_size):
 			y_batch[i] = reward_batch[i] + (0 if done_batch[i] else self.gamma * np.max(Q_value_batch[i]))
 
 		self.sess.run(self.train_op, feed_dict={self.y_tf: y_batch, self.action_tf: action_batch, 
-			self.state_tf: np.reshape(state_batch, [self.batch_size, 96, 96, self.history_pick])})
+			self.state_tf: state_batch})
    
 	def get_random_action(self):
 		s = np.random.randint(0, self.steering_size)
@@ -126,7 +126,7 @@ class Playground:
 		if random.random() < epsilon:
 			return self.get_random_action()
 		else:
-			return self.sess.run(self.Q_argmax, feed_dict={self.state_tf: np.reshape([state], [1,96,96,self.history_pick])})
+			return self.sess.run(self.Q_argmax, feed_dict={self.state_tf: [state]})
 
 	def update_fixed_weights(self):
 		self.fixed_weights = self.sess.run(self.trainable_variables)

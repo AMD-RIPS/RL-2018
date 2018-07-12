@@ -2,9 +2,11 @@ import deep_q_general
 
 # Train Cartpole
 print ('---- CartPole ----')
-cp = deep_q_general.Playground('CartPole-v1', 2, [24,24], .4, .01, .05, .99, 32, 10000)
-cp.begin_training(200)
-cp.test_Q(100)
+cp = deep_q_general.Playground(game = 'CartPole-v0', num_hidden_layers = 2, 
+	layer_sizes = [16,16], epsilon_max = .4, epsilon_min = .01, 
+	alpha = .005, gamma = .99, batch_size = 16, memory_capacity = 10000)
+cp.begin_training(1000)
+print(cp.test_Q(10, visualize = True))
 
 # Train MountainCar
 # print ('---- Mountain Car ----')

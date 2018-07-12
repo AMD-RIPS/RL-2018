@@ -36,17 +36,25 @@ class Playground:
 	def get_state_space_size(self, state):
 		return np.shape(self.down_sample(state))
 
-	def Q_nn(self, input):
+	def Q_nn(self, x):
 		with tf.device('/device:GPU:0'):
-			layer1_out = tf.nn.relu(tf.nn.conv2d(input, filter=[8,8,4,16], strides=[1,4,4,1], padding='SAME')) # CNN (96x96x4) => 16*(8x8) w/ stride 4
-			layer2_out = tf.nn.relu(tf.nn.conv2d(layer1_out, filter=[4,4,16,32], strides=[1,2,2,1], padding='SAME')) # CNN (23x23x16) => 32*(4x4) w/ stride 2
-			layer3_out = tf.dense(layer_2_out, 256, activation='relu') # CNN (23x23x16) => 32*(4x4) w/ stride 2
-			return tf.dense(layer_3_out, self.action_size, activation=None)
+			# layer1_out = tf.nn.relu(tf.nn.conv2d(input, filter=[8,8,4,16], strides=[1,4,4,1], padding='SAME')) # CNN (96x96x4) => 16*(8x8) w/ stride 4
+			# layer2_out = tf.nn.relu(tf.nn.conv2d(layer1_out, filter=[4,4,16,32], strides=[1,2,2,1], padding='SAME')) # CNN (23x23x16) => 32*(4x4) w/ stride 2
+			layer1_out = tf.layers.conv2d(x, filters=16, kernel_size=[8,8], strides=[4,4], padding='same', activation=tf.nn.relu, data_format='channels_last') # => 23x23x16
+			layer2_out = tf.layers.conv2d(layer1_out, filters=32, kernel_size=[4,4], strides=[2,2], padding='same', activation=tf.nn.relu, data_format='channels_last') # => 9x9x32
+			layer2_shape = np.prod(np.shape(layer2_out)[1:])
+			layer3_out = tf.layers.dense(tf.reshape(layer2_out, [-1,layer2_shape]), 256, activation=tf.nn.relu) # => 1x256
+			output = tf.layers.dense(layer3_out, self.action_size, activation=None)
+			print np.shape(layer1_out)
+			print np.shape(layer2_out)
+			print np.shape(layer3_out)
+			print np.shape(output)
+			return output # => 1x45
 
 
 	def map_action(self, action_index):
-		s = self.steering[int(np.floor(action_index/(self.acceleration_size*self.deceleration_size)))]
-		a = self.acceleration[int(np.floor(action_index/self.deceleration_size))%self.acceleration_size]
+		s = self.steering[action_index/(self.acceleration_size*self.deceleration_size)]
+		a = self.acceleration[(action_index/self.deceleration_size)%self.acceleration_size]
 		d = self.deceleration[action_index%self.deceleration_size]
 		return [s,a,d]
 
@@ -58,7 +66,7 @@ class Playground:
 		self.upper_bounds = self.env.observation_space.high
 		self.action_size = self.steering_size*self.acceleration_size*self.deceleration_size
 		# Tf placeholders
-		self.state_tf = tf.placeholder(shape=[96,96,None, Non], dtype=tf.float64)
+		self.state_tf = tf.placeholder(shape=[None,96, 96, self.history_pick], dtype=tf.float64)
 		self.action_tf = tf.placeholder(shape=[None, self.action_size], dtype=tf.float64)
 		self.y_tf = tf.placeholder(dtype=tf.float64)
 
@@ -77,7 +85,7 @@ class Playground:
 		config = tf.ConfigProto()
 		config.allow_soft_placement=True
 		config.gpu_options.allow_growth = True
-		config.log_device_placement = True
+		config.log_device_placement = False
 		self.sess = tf.Session(config = config)
 		self.trainable_variables = tf.trainable_variables()
 		self.sess.run(tf.global_variables_initializer())
@@ -101,13 +109,14 @@ class Playground:
 	def experience_replay(self, replay_memory):
 		state_batch, action_batch, reward_batch, next_state_batch, done_batch = self.get_batch(replay_memory)
 		y_batch = [None] * self.batch_size
-		dict = {self.state_tf: next_state_batch}
+		dict = {self.state_tf: np.reshape(next_state_batch, [self.batch_size, 96, 96, self.history_pick])}
 		dict.update(zip(self.trainable_variables, self.fixed_weights))
 		Q_value_batch = self.sess.run(self.Q_value, feed_dict=dict)
 		for i in range(self.batch_size):
 			y_batch[i] = reward_batch[i] + (0 if done_batch[i] else self.gamma * np.max(Q_value_batch[i]))
 
-		self.sess.run(self.train_op, feed_dict={self.y_tf: y_batch, self.action_tf: action_batch, self.state_tf: state_batch})
+		self.sess.run(self.train_op, feed_dict={self.y_tf: y_batch, self.action_tf: action_batch, 
+			self.state_tf: np.reshape(state_batch, [self.batch_size, 96, 96, self.history_pick])})
    
 	def get_random_action(self):
 		s = np.random.randint(0, self.steering_size)
@@ -119,7 +128,7 @@ class Playground:
 		if random.random() < epsilon:
 			return self.get_random_action()
 		else:
-			return self.sess.run(self.Q_argmax, feed_dict={self.state_tf: [state]})
+			return self.sess.run(self.Q_argmax, feed_dict={self.state_tf: np.reshape([state], [1,96,96,self.history_pick])})
 
 	def update_fixed_weights(self):
 		self.fixed_weights = self.sess.run(self.trainable_variables)
@@ -134,14 +143,13 @@ class Playground:
 			tot_reward = 0
 			state = self.env.reset()
 			state = self.down_sample(state)
-			states = [state]
+			states = [state, state, state, state]
 			self.env.render()
 			self.update_fixed_weights()
 			print '------------------- HERE ----------------------'
 			while not done:
 				# Take action and update replay memory
 				phi = self.phi(states)
-				print phi
 				action = self.get_action(phi, self.epsilon_max + eps_decay_rate * episode)
 				next_state, reward, done, _ = self.env.step(self.map_action(action))
 				next_state = self.down_sample(next_state)

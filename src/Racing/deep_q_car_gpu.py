@@ -3,7 +3,7 @@ import numpy as np
 import tensorflow as tf
 import random
 from skimage.transform import downscale_local_mean
-import time
+import datetime
 
 class Playground:
 
@@ -38,13 +38,13 @@ class Playground:
 		return np.shape(self.down_sample(state))
 
 	def Q_nn(self, x):
-		for d in ['/device:GPU:0','/device:GPU:2']:
-			with tf.device(d):
-				layer1_out = tf.layers.conv2d(x, filters=16, kernel_size=[8,8], strides=[4,4], padding='same', activation=tf.nn.relu, data_format='channels_first') # => 23x23x16
-				layer2_out = tf.layers.conv2d(layer1_out, filters=32, kernel_size=[4,4], strides=[2,2], padding='same', activation=tf.nn.relu, data_format='channels_first') # => 9x9x32
-				layer2_shape = np.prod(np.shape(layer2_out)[1:])
-				layer3_out = tf.layers.dense(tf.reshape(layer2_out, [-1,layer2_shape]), 256, activation=tf.nn.relu) # => 1x256
-				output = tf.layers.dense(layer3_out, self.action_size, activation=None)
+		# for d in ['/device:GPU:0']:
+			# with tf.device(d):
+		layer1_out = tf.layers.conv2d(x, filters=16, kernel_size=[8,8], strides=[4,4], padding='same', activation=tf.nn.relu, data_format='channels_first') # => 23x23x16
+		layer2_out = tf.layers.conv2d(layer1_out, filters=32, kernel_size=[4,4], strides=[2,2], padding='same', activation=tf.nn.relu, data_format='channels_first') # => 9x9x32
+		layer2_shape = np.prod(np.shape(layer2_out)[1:])
+		layer3_out = tf.layers.dense(tf.reshape(layer2_out, [-1,layer2_shape]), 256, activation=tf.nn.relu) # => 1x256
+		output = tf.layers.dense(layer3_out, self.action_size, activation=None)
 		return output # => 1x45
 
 
@@ -83,7 +83,7 @@ class Playground:
 		config.inter_op_parallelism_threads = 8
 		config.allow_soft_placement=True
 		config.gpu_options.allow_growth = True
-		config.log_device_placement = False
+		config.log_device_placement = True
 		self.sess = tf.Session(config = config)
 		self.trainable_variables = tf.trainable_variables()
 		self.sess.run(tf.global_variables_initializer())
@@ -135,9 +135,9 @@ class Playground:
 		eps_decay_rate = (self.epsilon_min - self.epsilon_max) / num_episodes
 		# q_averages = np.zeros(num_episodes)
 		replay_memory = []
-		start_time=time.time()
+
 		print 'Training...'
-		print start_time
+
 		for episode in range(num_episodes):
 			done = False
 			tot_reward = 0
@@ -146,18 +146,24 @@ class Playground:
 			states = [state, state, state, state]
 			self.env.render()
 			self.update_fixed_weights()
+			time_st=datetime.datetime.now()
 			while not done:
 				# Take action and update replay memory
-				elapsed_time=time.time()-start_time
+				
 				phi = self.phi(states)
+
 				action = self.get_action(phi, self.epsilon_max + eps_decay_rate * episode)
+
 				next_state, reward, done, _ = self.env.step(self.map_action(action))
+
 				next_state = self.down_sample(next_state)
+
 				states.append(next_state)
 				phi_1 = self.phi(states)
 				one_hot_action = np.zeros(self.action_size)
 				one_hot_action[action] = 1
 				replay_memory.append((phi, one_hot_action, reward, phi_1, done))
+				
 
 				# Check whether replay memory capacity reached
 				if (len(replay_memory) > self.memory_capacity): 
@@ -167,11 +173,13 @@ class Playground:
 				if len(replay_memory) > 10 * self.batch_size:
 					self.experience_replay(replay_memory)
 
+
 				tot_reward += reward
 				state = next_state
 			# q_averages[episode] = self.estimate_avg_q(1000)
 			print 'Episode: {}. Reward: {}'.format(episode, tot_reward)
-			pause
+			time_ep = datetime.datetime.now()-time_st
+			print 'Elapsed time - {}:{}'.format(time_ep.seconds,time_ep.microseconds)
 		# file_name = 'avg_q_' + self.game + '.csv'
 		# np.savetxt(file_name, q_averages, delimiter=',')
 		print '--------------- Done training ---------------'

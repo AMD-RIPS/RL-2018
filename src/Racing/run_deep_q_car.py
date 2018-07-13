@@ -1,7 +1,7 @@
 import deep_q_car_gpu
 
 # Train Cartpole
-steering = [-1, 1]
+steering = [-1,0, 1]
 acceleration = [0, 1]
 deceleration = [0, 0.8]
 print ('---- CarRacing ----')

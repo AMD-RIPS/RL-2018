@@ -3,6 +3,7 @@ import numpy as np
 import tensorflow as tf
 import random
 from skimage.transform import downscale_local_mean
+import time
 
 class Playground:
 
@@ -31,23 +32,20 @@ class Playground:
 	
 	def down_sample(self, state):
 		state = self.rgb2gray(state)#self.rgb2gray(state[:82,:])
-		return  state#downscale_local_mean(state, (2, 2)).flatten()
+		return  downscale_local_mean(state, (2, 2))
 
 	def get_state_space_size(self, state):
 		return np.shape(self.down_sample(state))
 
 	def Q_nn(self, x):
-		with tf.device('/device:GPU:0'):
-			layer1_out = tf.layers.conv2d(x, filters=16, kernel_size=[8,8], strides=[4,4], padding='same', activation=tf.nn.relu, data_format='channels_first') # => 23x23x16
-			layer2_out = tf.layers.conv2d(layer1_out, filters=32, kernel_size=[4,4], strides=[2,2], padding='same', activation=tf.nn.relu, data_format='channels_first') # => 9x9x32
-			layer2_shape = np.prod(np.shape(layer2_out)[1:])
-			layer3_out = tf.layers.dense(tf.reshape(layer2_out, [-1,layer2_shape]), 256, activation=tf.nn.relu) # => 1x256
-			output = tf.layers.dense(layer3_out, self.action_size, activation=None)
-			print np.shape(layer1_out)
-			print np.shape(layer2_out)
-			print np.shape(layer3_out)
-			print np.shape(output)
-			return output # => 1x45
+		for d in ['/device:GPU:0','/device:GPU:2']:
+			with tf.device(d):
+				layer1_out = tf.layers.conv2d(x, filters=16, kernel_size=[8,8], strides=[4,4], padding='same', activation=tf.nn.relu, data_format='channels_first') # => 23x23x16
+				layer2_out = tf.layers.conv2d(layer1_out, filters=32, kernel_size=[4,4], strides=[2,2], padding='same', activation=tf.nn.relu, data_format='channels_first') # => 9x9x32
+				layer2_shape = np.prod(np.shape(layer2_out)[1:])
+				layer3_out = tf.layers.dense(tf.reshape(layer2_out, [-1,layer2_shape]), 256, activation=tf.nn.relu) # => 1x256
+				output = tf.layers.dense(layer3_out, self.action_size, activation=None)
+		return output # => 1x45
 
 
 	def map_action(self, action_index):
@@ -64,7 +62,7 @@ class Playground:
 		self.upper_bounds = self.env.observation_space.high
 		self.action_size = self.steering_size*self.acceleration_size*self.deceleration_size
 		# Tf placeholders
-		self.state_tf = tf.placeholder(shape=[None, self.history_pick, 96, 96], dtype=tf.float64)
+		self.state_tf = tf.placeholder(shape=[None, self.history_pick, 48, 48], dtype=tf.float64)
 		self.action_tf = tf.placeholder(shape=[None, self.action_size], dtype=tf.float64)
 		self.y_tf = tf.placeholder(dtype=tf.float64)
 
@@ -81,6 +79,8 @@ class Playground:
 
 		# Tensorflow session setup
 		config = tf.ConfigProto()
+		config.intra_op_parallelism_threads = 8
+		config.inter_op_parallelism_threads = 8
 		config.allow_soft_placement=True
 		config.gpu_options.allow_growth = True
 		config.log_device_placement = False
@@ -135,7 +135,9 @@ class Playground:
 		eps_decay_rate = (self.epsilon_min - self.epsilon_max) / num_episodes
 		# q_averages = np.zeros(num_episodes)
 		replay_memory = []
+		start_time=time.time()
 		print 'Training...'
+		print start_time
 		for episode in range(num_episodes):
 			done = False
 			tot_reward = 0
@@ -146,6 +148,7 @@ class Playground:
 			self.update_fixed_weights()
 			while not done:
 				# Take action and update replay memory
+				elapsed_time=time.time()-start_time
 				phi = self.phi(states)
 				action = self.get_action(phi, self.epsilon_max + eps_decay_rate * episode)
 				next_state, reward, done, _ = self.env.step(self.map_action(action))
@@ -168,6 +171,7 @@ class Playground:
 				state = next_state
 			# q_averages[episode] = self.estimate_avg_q(1000)
 			print 'Episode: {}. Reward: {}'.format(episode, tot_reward)
+			pause
 		# file_name = 'avg_q_' + self.game + '.csv'
 		# np.savetxt(file_name, q_averages, delimiter=',')
 		print '--------------- Done training ---------------'

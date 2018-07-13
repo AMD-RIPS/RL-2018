@@ -37,6 +37,15 @@ class Playground:
 	def get_state_space_size(self, state):
 		return np.shape(self.down_sample(state))
 
+	# def Q_nn(self, x):
+	# 	with tf.device('/device:GPU:0'):
+	# 		layer1_out = tf.layers.conv2d(x, filters=16, kernel_size=[8,8], strides=[4,4], padding='same', activation=tf.nn.relu, data_format='channels_last') # => 23x23x16
+	# 		layer2_out = tf.layers.conv2d(layer1_out, filters=32, kernel_size=[4,4], strides=[2,2], padding='same', activation=tf.nn.relu, data_format='channels_last') # => 9x9x32
+	# 		layer2_shape = np.prod(np.shape(layer2_out)[1:])
+	# 		layer3_out = tf.layers.dense(tf.reshape(layer2_out, [-1,layer2_shape]), 256, activation=tf.nn.relu) # => 1x256
+	# 		output = tf.layers.dense(layer3_out, self.action_size, activation=None)
+	# 		return output # => 1x45
+
 	def Q_nn(self, x):
 		with tf.device('/device:GPU:0'):
 			layer1_out = tf.layers.conv2d(x, filters=16, kernel_size=[8,8], strides=[4,4], padding='same', activation=tf.nn.relu, data_format='channels_first') # => 23x23x16
@@ -116,6 +125,11 @@ class Playground:
 		self.sess.run(self.train_op, feed_dict={self.y_tf: y_batch, self.action_tf: action_batch, 
 			self.state_tf: state_batch})
    
+	# def get_random_action(self):
+	# 	s = np.random.randint(0, self.steering_size)
+	# 	a = np.random.randint(0, self.acceleration_size)
+	# 	d = np.random.randint(0, self.deceleration_size)
+	# 	return s*self.acceleration_size*self.deceleration_size + a*self.deceleration_size + d
 	def get_random_action(self):
 		return np.random.randint(0, 4)
 

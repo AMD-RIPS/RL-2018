@@ -41,10 +41,11 @@ class Playground:
 		# for d in ['/device:GPU:0']:
 			# with tf.device(d):
 		layer1_out = tf.layers.conv2d(x, filters=16, kernel_size=[8,8], strides=[4,4], padding='same', activation=tf.nn.relu, data_format='channels_first') # => 23x23x16
-		layer2_out = tf.layers.conv2d(layer1_out, filters=32, kernel_size=[4,4], strides=[2,2], padding='same', activation=tf.nn.relu, data_format='channels_first') # => 9x9x32
-		layer2_shape = np.prod(np.shape(layer2_out)[1:])
-		layer3_out = tf.layers.dense(tf.reshape(layer2_out, [-1,layer2_shape]), 256, activation=tf.nn.relu) # => 1x256
-		output = tf.layers.dense(layer3_out, self.action_size, activation=None)
+		# layer2_out = tf.layers.conv2d(layer1_out, filters=32, kernel_size=[4,4], strides=[2,2], padding='same', activation=tf.nn.relu, data_format='channels_first') # => 9x9x32
+		layer1_shape = np.prod(np.shape(layer1_out)[1:])
+		layer2_out = tf.layers.dense(tf.reshape(layer1_out, [-1,layer2_shape]), 256, activation=tf.nn.relu) # => 1x256
+		dropout = tf.layers.dropout(inputs=layer2_out, rate=0.4)
+		output = tf.layers.dense(dropout, self.action_size, activation=None)
 		return output # => 1x45
 
 

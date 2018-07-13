@@ -5,7 +5,7 @@ print ('---- CartPole ----')
 cp = deep_q_general.Playground(game = 'CartPole-v0', num_hidden_layers = 2, 
 	layer_sizes = [16,16], epsilon_max = .4, epsilon_min = .01, 
 	alpha = .001, gamma = .99, batch_size = 16, memory_capacity = 10000)
-cp.begin_training(1000)
+cp.begin_training(100000)
 print(cp.test_Q(10, visualize = True))
 
 # Train MountainCar

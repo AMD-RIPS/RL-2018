@@ -38,28 +38,28 @@ class Playground:
         self.q_grid = None
 
         # Tf placeholders
-        self.state_tf = tf.placeholder(shape=[None, self.state_size], dtype=tf.float64)
-        self.action_tf = tf.placeholder(shape=[None, self.action_size], dtype=tf.float64)
-        self.y_tf = tf.placeholder(dtype=tf.float64)
-        self.training_score = tf.placeholder(dtype=tf.float64)
-        self.avg_q = tf.placeholder(dtype=tf.float64)
+        self.state_tf = tf.placeholder(shape=[None, self.state_size], dtype=tf.float64, name = 'State')
+        self.action_tf = tf.placeholder(shape=[None, self.action_size], dtype=tf.float64, name = 'Action')
+        self.y_tf = tf.placeholder(dtype=tf.float64, name = 'Y')
+        self.training_score = tf.placeholder(dtype=tf.float64, name = 'Training_Score')
+        self.avg_q = tf.placeholder(dtype=tf.float64, name = 'Avg_Q')
 
         # Operations
         self.Q_value = self.Q_nn(self.state_tf)
-        self.Q_argmax = tf.argmax(self.Q_value[0])
-        self.Q_amax = tf.reduce_max(self.Q_value[0])
-        self.Q_value_at_action = tf.reduce_sum(tf.multiply(self.Q_value, self.action_tf), axis=1)
+        self.Q_argmax = tf.argmax(self.Q_value[0], name = 'Greedy')
+        self.Q_amax = tf.reduce_max(self.Q_value[0], name = 'Max_value')
+        self.Q_value_at_action = tf.reduce_sum(tf.multiply(self.Q_value, self.action_tf), axis=1, name = 'Value_at_action')
 
         # Training related
-        self.loss = tf.reduce_mean(tf.square(self.y_tf - self.Q_value_at_action))
-        self.train_op = tf.train.AdamOptimizer(learning_rate=self.alpha).minimize(self.loss)
+        self.loss = tf.reduce_mean(tf.square(self.y_tf - self.Q_value_at_action), name = 'Loss')
+        self.train_op = tf.train.AdamOptimizer(learning_rate=self.alpha, name = 'Optimizer').minimize(self.loss)
         self.fixed_weights = None
 
         # Tensorflow  session setup
         config = tf.ConfigProto()
         config.allow_soft_placement = True
         config.gpu_options.allow_growth = True
-        # config.log_device_placement = True
+        config.log_device_placement = True
         self.sess = tf.Session(config=config)
         self.trainable_variables = tf.trainable_variables()
 
@@ -68,6 +68,8 @@ class Playground:
         self.writer.add_graph(self.sess.graph)
         tf.summary.scalar("Training score", self.training_score, collections=None, family=None)
         tf.summary.scalar("Average Q-value", self.avg_q, collections=None, family=None)
+        self.run_options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
+        self.run_metadata = tf.RunMetadata()
         self.summary = tf.summary.merge_all()
         subprocess.Popen(['tensorboard', '--logdir', DIR_PATH])
 
@@ -84,7 +86,7 @@ class Playground:
         done_batch = [data[4] for data in mini_batch]
         return state_batch, action_batch, reward_batch, next_state_batch, done_batch
 
-    def experience_replay(self, replay_memory):
+    def experience_replay(self, replay_memory, record_metadata = False):
         state_batch, action_batch, reward_batch, next_state_batch, done_batch = self.get_batch(replay_memory)
         y_batch = [None] * self.batch_size
         dict = {self.state_tf: next_state_batch}
@@ -93,7 +95,10 @@ class Playground:
         for i in range(self.batch_size):
             y_batch[i] = reward_batch[i] + (0 if done_batch[i] else self.gamma * np.max(Q_value_batch[i]))
 
-        self.sess.run(self.train_op, feed_dict={self.y_tf: y_batch, self.action_tf: action_batch, self.state_tf: state_batch})
+        if record_metadata:
+        	self.sess.run(self.train_op, feed_dict={self.y_tf: y_batch, self.action_tf: action_batch, self.state_tf: state_batch},
+        				  options=self.run_options, run_metadata=self.run_metadata)	
+        else: self.sess.run(self.train_op, feed_dict={self.y_tf: y_batch, self.action_tf: action_batch, self.state_tf: state_batch})
 
     def get_action(self, state, epsilon):
         if random.random() < epsilon:
@@ -114,6 +119,7 @@ class Playground:
             tot_reward = 0
             state = self.env.reset()
             self.update_fixed_weights()
+            record_metadata = (episode == 200)
             while not done:
                 # Take action and update replay memory
                 action = self.get_action(state, self.epsilon_max + eps_decay_rate * episode)
@@ -128,14 +134,15 @@ class Playground:
 
                 # Perform experience replay if replay memory populated
                 if len(replay_memory) > 10 * self.batch_size:
-                    self.experience_replay(replay_memory)
-
+                    self.experience_replay(replay_memory, record_metadata = record_metadata)
+                    record_metadata = False
                 tot_reward += reward
                 state = next_state
             if len(replay_memory) > 1000:
                 self.q_grid = [[replay_memory[index][0]] for index in range(1000)]
             avg_q = self.estimate_avg_q(1000)
             score = self.test_Q(num_test_episodes=5)
+            if episode == 200: self.writer.add_run_metadata(self.run_metadata, 'step' + str(episode))
             self.writer.add_summary(self.sess.run(self.summary, feed_dict={self.training_score:score, self.avg_q:avg_q}), episode)
             print 'Episode: {}. Reward: {}'.format(episode, score)
         print '--------------- Done training ---------------'

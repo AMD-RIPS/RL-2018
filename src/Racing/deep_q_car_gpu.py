@@ -3,6 +3,7 @@ import numpy as np
 import tensorflow as tf
 import random
 from skimage.transform import downscale_local_mean
+import time
 
 class Playground:
 
@@ -31,7 +32,7 @@ class Playground:
 	
 	def down_sample(self, state):
 		state = self.rgb2gray(state)#self.rgb2gray(state[:82,:])
-		return  state#downscale_local_mean(state, (2, 2)).flatten()
+		return  downscale_local_mean(state, (2, 2))
 
 	def get_state_space_size(self, state):
 		return np.shape(self.down_sample(state))
@@ -39,22 +40,20 @@ class Playground:
 	def Q_nn(self, x):
 		with tf.device('/device:GPU:0'):
 			layer1_out = tf.layers.conv2d(x, filters=16, kernel_size=[8,8], strides=[4,4], padding='same', activation=tf.nn.relu, data_format='channels_first') # => 23x23x16
-			layer2_out = tf.layers.conv2d(layer1_out, filters=32, kernel_size=[4,4], strides=[2,2], padding='same', activation=tf.nn.relu, data_format='channels_first') # => 9x9x32
-			layer2_shape = np.prod(np.shape(layer2_out)[1:])
-			layer3_out = tf.layers.dense(tf.reshape(layer2_out, [-1,layer2_shape]), 256, activation=tf.nn.relu) # => 1x256
-			output = tf.layers.dense(layer3_out, self.action_size, activation=None)
-			print np.shape(layer1_out)
-			print np.shape(layer2_out)
-			print np.shape(layer3_out)
-			print np.shape(output)
+			layer1_shape = np.prod(np.shape(layer1_out)[1:])
+			layer2_out = tf.layers.dense(tf.reshape(layer1_out, [-1,layer1_shape]), 32, activation=tf.nn.relu) # => 1x256
+			output = tf.layers.dense(layer2_out, self.action_size, activation=None)
 			return output # => 1x45
 
-
+	# action index is 0 - 3
 	def map_action(self, action_index):
-		s = self.steering[action_index/(self.acceleration_size*self.deceleration_size)]
-		a = self.acceleration[(action_index/self.deceleration_size)%self.acceleration_size]
-		d = self.deceleration[action_index%self.deceleration_size]
-		return [s,a,d]
+		return [[-1, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 0.8]][action_index]
+
+	# def map_action(self, action_index):
+	# 	s = self.steering[action_index/(self.acceleration_size*self.deceleration_size)]
+	# 	a = self.acceleration[(action_index/self.deceleration_size)%self.acceleration_size]
+	# 	d = self.deceleration[action_index%self.deceleration_size]
+	# 	return [s,a,d]
 
 	def initialize_tf_variables(self):
 		# Setting up game specific variables
@@ -62,9 +61,10 @@ class Playground:
 		self.state_size = self.get_state_space_size(self.env.reset())
 		self.lower_bounds = self.env.observation_space.low
 		self.upper_bounds = self.env.observation_space.high
-		self.action_size = self.steering_size*self.acceleration_size*self.deceleration_size
+		self.action_size = 4
+		#self.action_size = self.steering_size*self.acceleration_size*self.deceleration_size
 		# Tf placeholders
-		self.state_tf = tf.placeholder(shape=[None, self.history_pick, 96, 96], dtype=tf.float64)
+		self.state_tf = tf.placeholder(shape=[None,48, 48, self.history_pick], dtype=tf.float64)
 		self.action_tf = tf.placeholder(shape=[None, self.action_size], dtype=tf.float64)
 		self.y_tf = tf.placeholder(dtype=tf.float64)
 
@@ -117,10 +117,7 @@ class Playground:
 			self.state_tf: state_batch})
    
 	def get_random_action(self):
-		s = np.random.randint(0, self.steering_size)
-		a = np.random.randint(0, self.acceleration_size)
-		d = np.random.randint(0, self.deceleration_size)
-		return s*self.acceleration_size*self.deceleration_size + a*self.deceleration_size + d
+		return np.random.randint(0, 4)
 
 	def get_action(self, state, epsilon):
 		if random.random() < epsilon:
@@ -131,14 +128,16 @@ class Playground:
 	def update_fixed_weights(self):
 		self.fixed_weights = self.sess.run(self.trainable_variables)
 
-	def begin_training(self, num_episodes):
+	def begin_training(self, num_episodes, k):
 		eps_decay_rate = (self.epsilon_min - self.epsilon_max) / num_episodes
 		# q_averages = np.zeros(num_episodes)
 		replay_memory = []
 		print 'Training...'
 		for episode in range(num_episodes):
+			start_time = time.time()
 			done = False
 			tot_reward = 0
+			frame = 0
 			state = self.env.reset()
 			state = self.down_sample(state)
 			states = [state, state, state, state]
@@ -147,7 +146,8 @@ class Playground:
 			while not done:
 				# Take action and update replay memory
 				phi = self.phi(states)
-				action = self.get_action(phi, self.epsilon_max + eps_decay_rate * episode)
+				if frame == 0:
+					action = self.get_action(phi, self.epsilon_max + eps_decay_rate * episode)
 				next_state, reward, done, _ = self.env.step(self.map_action(action))
 				next_state = self.down_sample(next_state)
 				states.append(next_state)
@@ -166,8 +166,10 @@ class Playground:
 
 				tot_reward += reward
 				state = next_state
+				frame = (frame + 1) % k
 			# q_averages[episode] = self.estimate_avg_q(1000)
 			print 'Episode: {}. Reward: {}'.format(episode, tot_reward)
+			print 'Time: {} seconds'.format(time.time() - start_time)
 		# file_name = 'avg_q_' + self.game + '.csv'
 		# np.savetxt(file_name, q_averages, delimiter=',')
 		print '--------------- Done training ---------------'
@@ -192,6 +194,19 @@ class Playground:
 		for i in range(self.state_size):
 			sample[i] = np.random.uniform(self.lower_bounds[i], self.upper_bounds[i])
 		return [sample]
+
+	def get_random_states(self, num_samples):
+		sample = []
+		for episode in range(num_samples/5):
+			states = []
+			self.env.reset()
+			done = False
+			while not done:
+				state, _, done, _ = self.env.step(self.env.action_space.sample())
+				states.append(state)
+			for state in random.sample(states, 5):
+				sample.append(self.down_sample(state))
+		return sample
 
 	def estimate_avg_q(self, num_samples):
 		q_avg = 0.0

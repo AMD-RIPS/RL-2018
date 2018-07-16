@@ -59,7 +59,7 @@ class Playground:
         config = tf.ConfigProto()
         config.allow_soft_placement = True
         config.gpu_options.allow_growth = True
-        # config.log_device_placement = True
+        config.log_device_placement = True
         self.sess = tf.Session(config=config)
         self.trainable_variables = tf.trainable_variables()
 

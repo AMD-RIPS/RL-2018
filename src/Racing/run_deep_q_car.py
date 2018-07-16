@@ -1,4 +1,4 @@
-import deep_q_car
+import deep_q_car_gpu
 
 # Train Cartpole
 steering = [-1, 0, 1]

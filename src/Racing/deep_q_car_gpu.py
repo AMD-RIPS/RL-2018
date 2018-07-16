@@ -8,6 +8,7 @@ from tensorflow.python.saved_model import tag_constants
 import os, argparse
 
 
+
 class Playground:
 
 	def __init__(self, game, num_hidden_layers, layer_sizes, epsilon_max, epsilon_min, alpha, gamma, batch_size, memory_capacity,
@@ -39,6 +40,7 @@ class Playground:
 	def down_sample(self, state):
 		state = self.rgb2gray(state)#self.rgb2gray(state[:82,:])
 		return downscale_local_mean(state, (2, 2))
+
 
 	def get_state_space_size(self, state):
 		return np.shape(self.down_sample(state))
@@ -103,7 +105,9 @@ class Playground:
 
 		# Tensorflow session setup
 		config = tf.ConfigProto()
-		config.allow_soft_placement=False
+		config.intra_op_parallelism_threads = 8
+		config.inter_op_parallelism_threads = 8
+		config.allow_soft_placement=True
 		config.gpu_options.allow_growth = True
 		config.log_device_placement = True
 		self.sess = tf.Session(config = config)
@@ -159,6 +163,7 @@ class Playground:
 		eps_decay_rate = (self.epsilon_min - self.epsilon_max) / num_episodes
 		# q_averages = np.zeros(num_episodes)
 		replay_memory = []
+
 		print 'Training...'
 		rewards_vec = np.zeros(num_episodes)
 
@@ -179,6 +184,7 @@ class Playground:
 				phi = self.phi(states)
 				if (frame % k) == 0:
 					action = self.get_action(phi, self.epsilon_max + eps_decay_rate * episode)
+
 				next_state, reward, done, _ = self.env.step(self.map_action(action))
 
 				next_state = self.down_sample(next_state)
@@ -206,6 +212,7 @@ class Playground:
 			# q_averages[episode] = self.estimate_avg_q(1000)
 			rewards_vec[episode] = tot_reward
 			print 'Episode: {}. Reward: {}'.format(episode, tot_reward)
+
 			print 'Time: {} seconds'.format(time.time() - start_time)
 			np.savetxt('CarRacingRewards.csv', rewards_vec, delimiter=',')
 

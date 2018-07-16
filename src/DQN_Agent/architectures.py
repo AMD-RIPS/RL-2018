@@ -3,6 +3,7 @@ sys.dont_write_bytecode = True
 
 import tensorflow as tf
 
+
 def basic_architecture(input, action_size):
     neural_net = input
     for n in basic_layer_sizes:
@@ -10,7 +11,7 @@ def basic_architecture(input, action_size):
     return tf.layers.dense(neural_net, action_size, activation=None)
 
 arch_dict = {
-	'basic': basic_architecture
+    'basic': basic_architecture
 }
 
 basic_layer_sizes = [16, 16]

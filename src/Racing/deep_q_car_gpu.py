@@ -5,6 +5,7 @@ import random
 from skimage.transform import downscale_local_mean
 import time
 from tensorflow.python.saved_model import tag_constants
+import os, argparse
 
 
 class Playground:
@@ -27,6 +28,7 @@ class Playground:
 		self.steering_size = len(self.steering)
 		self.acceleration_size = len(self.acceleration)
 		self.deceleration_size = len(self.deceleration)
+		self.dir = os.path.dirname(os.path.realpath('deep_q_car_gpu.py'))
 		# self.Q_eval_states = np.load('random_sample.npy')
 		# self.Q_eval_states_len = np.shape(self.Q_eval_states)[0]
 		self.initialize_tf_variables()
@@ -210,6 +212,9 @@ class Playground:
 		# file_name = 'avg_q_' + self.game + '.csv'
 		# np.savetxt(file_name, q_averages, delimiter=',')
 		print '--------------- Done training ---------------'
+
+		saver = tf.train.Saver()
+    	last_chkp = saver.save(self.sess, dir + '/data-all.chkp')
 	
 	def test_Q(self, num_test_episodes):
 		print 'Testing...'

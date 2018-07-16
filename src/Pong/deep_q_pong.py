@@ -8,8 +8,7 @@ import time
 actions = [[-1, 0, 0], [1, 0, 0], [0, 1, 0], [0,0,0.8]]
 class Playground:
 
-	def __init__(self, game, num_hidden_layers, layer_sizes, epsilon_max, epsilon_min, alpha, gamma, batch_size, memory_capacity,
-		steering, acceleration, deceleration):
+	def __init__(self, game, num_hidden_layers, layer_sizes, epsilon_max, epsilon_min, alpha, gamma, batch_size, memory_capacity):
 		self.game = game
 		self.num_hidden_layers = num_hidden_layers
 		self.layer_sizes = layer_sizes
@@ -20,12 +19,6 @@ class Playground:
 		self.batch_size = batch_size
 		self.memory_capacity = memory_capacity
 		self.history_pick = 4
-		self.steering = steering
-		self.acceleration = acceleration
-		self.deceleration = deceleration
-		self.steering_size = len(self.steering)
-		self.acceleration_size = len(self.acceleration)
-		self.deceleration_size = len(self.deceleration)
 		self.initialize_tf_variables()
 
 	def rgb2gray(self, rgb):
@@ -33,19 +26,11 @@ class Playground:
 	
 	def down_sample(self, state):
 		state = self.rgb2gray(state)#self.rgb2gray(state[:82,:])
-		return  #downscale_local_mean(state, (2, 2))
+		return  state#downscale_local_mean(state, (2, 2))
 
 	def get_state_space_size(self, state):
 		return np.shape(self.down_sample(state))
 
-	# def Q_nn(self, x):
-	# 	with tf.device('/device:GPU:0'):
-	# 		layer1_out = tf.layers.conv2d(x, filters=16, kernel_size=[8,8], strides=[4,4], padding='same', activation=tf.nn.relu, data_format='channels_last') # => 23x23x16
-	# 		layer2_out = tf.layers.conv2d(layer1_out, filters=32, kernel_size=[4,4], strides=[2,2], padding='same', activation=tf.nn.relu, data_format='channels_last') # => 9x9x32
-	# 		layer2_shape = np.prod(np.shape(layer2_out)[1:])
-	# 		layer3_out = tf.layers.dense(tf.reshape(layer2_out, [-1,layer2_shape]), 256, activation=tf.nn.relu) # => 1x256
-	# 		output = tf.layers.dense(layer3_out, self.action_size, activation=None)
-	# 		return output # => 1x45
 
 	def Q_nn(self, x):
 		with tf.device('/device:GPU:0'):
@@ -59,11 +44,6 @@ class Playground:
 	def map_action(self, action_index):
 		return actions[action_index]
 
-	# def map_action(self, action_index):
-	# 	s = self.steering[action_index/(self.acceleration_size*self.deceleration_size)]
-	# 	a = self.acceleration[(action_index/self.deceleration_size)%self.acceleration_size]
-	# 	d = self.deceleration[action_index%self.deceleration_size]
-	# 	return [s,a,d]
 
 	def initialize_tf_variables(self):
 		# Setting up game specific variables
@@ -71,7 +51,7 @@ class Playground:
 		self.state_size = self.get_state_space_size(self.env.reset())
 		self.lower_bounds = self.env.observation_space.low
 		self.upper_bounds = self.env.observation_space.high
-		self.action_size = len(actions)
+		self.action_size = 6
 		#self.action_size = self.steering_size*self.acceleration_size*self.deceleration_size
 		# Tf placeholders
 		self.state_tf = tf.placeholder(shape=[None,96, 96, self.history_pick], dtype=tf.float64)
@@ -125,12 +105,7 @@ class Playground:
 
 		self.sess.run(self.train_op, feed_dict={self.y_tf: y_batch, self.action_tf: action_batch, 
 			self.state_tf: np.reshape(state_batch, [self.batch_size, 96, 96, self.history_pick])})
-   
-	# def get_random_action(self):
-	# 	s = np.random.randint(0, self.steering_size)
-	# 	a = np.random.randint(0, self.acceleration_size)
-	# 	d = np.random.randint(0, self.deceleration_size)
-	# 	return s*self.acceleration_size*self.deceleration_size + a*self.deceleration_size + d
+
 	def get_random_action(self):
 		return np.random.randint(0, self.action_size)
 
@@ -158,10 +133,11 @@ class Playground:
 			states = [state, state, state, state]
 			self.env.render()
 			self.update_fixed_weights()
-			while not done and frame < 500:
+			while not done:
 				# self.env.render()
 				# Take action and update replay memory
 				phi = self.phi(states)
+				print np.shape(phi)
 				if (frame % k) == 0:
 					action = self.get_action(phi, self.epsilon_max + eps_decay_rate * episode)
 				next_state, reward, done, _ = self.env.step(self.map_action(action))

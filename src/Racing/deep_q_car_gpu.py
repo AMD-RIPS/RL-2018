@@ -7,7 +7,7 @@ import time
 from tensorflow.python.saved_model import tag_constants
 import os, argparse
 import subprocess
-DIR_PATH = '/home/jguan/Documents/RIPS/RL-2018/src/Racing/log'
+DIR_PATH = '/home/jguan/Documents/RIPS/RL-2018/src/Racing/log5'
 
 
 class Playground:
@@ -40,7 +40,7 @@ class Playground:
 	
 	def down_sample(self, state):
 		state = self.rgb2gray(state)#self.rgb2gray(state[:82,:])
-		return downscale_local_mean(state, (3, 3))
+		return downscale_local_mean(state, (4, 4))
 
 
 	def get_state_space_size(self, state):
@@ -59,9 +59,13 @@ class Playground:
 		with tf.variable_scope("Q_nn"):
 			with tf.device('/device:GPU:0'):
 				layer1_out = tf.layers.conv2d(x, filters=16, kernel_size=[8,8], strides=[4,4], padding='same', activation=tf.nn.relu, data_format='channels_first',name='conv1') # => 23x23x16
-				layer1_shape = np.prod(np.shape(layer1_out)[1:])
-				layer2_out = tf.nn.dropout(tf.layers.dense(tf.reshape(layer1_out, [-1,layer1_shape]), 16, activation=tf.nn.relu), .3, name='layer2_out') # => 1x256
-				output = tf.layers.dense(layer2_out, self.action_size, activation=None, name = 'output')
+				layer2_out = tf.layers.conv2d(layer1_out, filters=32, kernel_size=[4,4], strides=[2,2], padding='same', activation=tf.nn.relu, data_format='channels_first',name='conv2') # => 9x9x32
+				layer2_shape = np.prod(np.shape(layer2_out)[1:])
+				layer3_out = tf.nn.dropout(tf.layers.dense(tf.reshape(layer2_out, [-1,layer2_shape]), 256, activation=tf.nn.relu), .5, name='layer2_out') # => 1x256
+				output = tf.layers.dense(layer3_out, self.action_size, activation=None)
+	# 			layer1_shape = np.prod(np.shape(layer1_out)[1:])
+				# layer2_out = tf.nn.dropout(tf.layers.dense(tf.reshape(layer1_out, [-1,layer1_shape]), 16, activation=tf.nn.relu), .3, name='layer2_out') # => 1x256
+				# output = tf.layers.dense(layer2_out, self.action_size, activation=None, name = 'output')
 				return output # => 1x45
 
 	def avg_Q_val(self):
@@ -70,7 +74,7 @@ class Playground:
 		else:
 			q_avg = 0
 			for index in range(1000):
-				q_avg += np.amax(self.sess.run(self.Q_value, feed_dict={self.state_tf: [self.phi_patch[0]]}))
+				q_avg += np.amax(self.sess.run(self.Q_value, feed_dict={self.state_tf: [self.phi_patch[index]]}))
 			q_avg_est = q_avg/1000
 		return q_avg_est
 
@@ -96,11 +100,13 @@ class Playground:
 
 		# Tf placeholders
 		with tf.variable_scope("placeholder"):
-			self.state_tf = tf.placeholder(shape=[None, self.history_pick, 32, 32], dtype=tf.float64, name = 'state_tf')
+			self.state_tf = tf.placeholder(shape=[None, self.history_pick, 24, 24], dtype=tf.float64, name = 'state_tf')
 			self.action_tf = tf.placeholder(shape=[None, self.action_size], dtype=tf.float64, name = 'action_tf')
 			self.y_tf = tf.placeholder(dtype=tf.float64, name = 'y_ft')
 			self.training_score = tf.placeholder(dtype=tf.float64)
 			self.avg_q = tf.placeholder(dtype=tf.float64)
+			self.test_ave = tf.placeholder(dtype=tf.float64)
+			self.fixed_weights = None
 
 		# Operations
 		with tf.variable_scope("operations"):
@@ -111,9 +117,8 @@ class Playground:
 		
 		# Training related
 		with tf.variable_scope("loss"):
-			self.loss = tf.reduce_mean(tf.square(self.y_tf - self.Q_value_at_action))
+			self.loss = tf.reduce_max(tf.square(tf.subtract(self.y_tf, self.Q_value_at_action)))
 			self.train_op = tf.train.AdamOptimizer(learning_rate=self.alpha).minimize(self.loss, name="train_op")
-		self.fixed_weights = None
 
 		# Tensorflow session setup
 		config = tf.ConfigProto()
@@ -129,10 +134,12 @@ class Playground:
 		# Tensorboard setup
 		self.writer = tf.summary.FileWriter(DIR_PATH)
 		self.writer.add_graph(self.sess.graph)
-		tf.summary.scalar("Training score", self.training_score, collections=None, family=None)
-		tf.summary.scalar("Average Q-value", self.avg_q, collections=None, family=None)
-		self.summary = tf.summary.merge_all()
-		subprocess.Popen(['tensorboard', '--logdir', DIR_PATH, '--port', '8008'])
+		training_score = tf.summary.scalar("Training score", self.training_score, collections=None, family=None)
+		ave_Q = tf.summary.scalar("Average Q-value", self.avg_q, collections=None, family=None)
+		test_ave = tf.summary.scalar("Test average", self.test_ave, collections=None, family=None)
+		self.training_summary = tf.summary.merge([training_score, ave_Q])
+		self.test_summary = tf.summary.merge([test_ave])
+		subprocess.Popen(['tensorboard', '--logdir', DIR_PATH, '--port', '6013'])
 
 		self.sess.run(tf.global_variables_initializer())
 		self.sess.graph.finalize()
@@ -155,9 +162,9 @@ class Playground:
 	def experience_replay(self, replay_memory):
 		state_batch, action_batch, reward_batch, next_state_batch, done_batch = self.get_batch(replay_memory)
 		y_batch = [None] * self.batch_size
-		dict = {self.state_tf: next_state_batch}
-		dict.update(zip(self.trainable_variables, self.fixed_weights))
-		Q_value_batch = self.sess.run(self.Q_value, feed_dict=dict)
+		feed_dict = {self.state_tf: next_state_batch}
+		feed_dict.update(zip(self.trainable_variables, self.fixed_weights))
+		Q_value_batch = self.sess.run(self.Q_value, feed_dict=feed_dict)
 		for i in range(self.batch_size):
 			y_batch[i] = reward_batch[i] + (0 if done_batch[i] else self.gamma * np.max(Q_value_batch[i]))
 
@@ -199,10 +206,11 @@ class Playground:
 			state = self.env.reset()
 			state = self.down_sample(state)
 			states = [state, state, state, state]
-			self.env.render()
 			self.update_fixed_weights()
+			self.env.render()
+			
 
-			while not done and frame < 500:
+			while not done:
 				# Take action and update replay memory
 				# self.env.render()
 				phi = self.phi(states)
@@ -240,21 +248,29 @@ class Playground:
 			avg_Q.append(self.avg_Q_val())
 			print 'Episode: {}. Reward: {}'.format(episode, tot_reward)
 			print 'Time: {} seconds'.format(time.time() - start_time)
-			self.writer.add_summary(self.sess.run(self.summary, feed_dict={self.training_score:tot_reward, self.avg_q:self.avg_Q_val()}), episode)
+			self.writer.add_summary(self.sess.run(self.training_summary, feed_dict={self.training_score:tot_reward, self.avg_q:self.avg_Q_val()}), episode)
 			np.savetxt('CarRacingRewards.csv', rewards_vec, delimiter=',')
+
+		if episode % 30 == 0:
+			self.update_fixed_weights()
+		if episode % 100 == 0:
+			self.writer.add_summary(self.sess.run(self.test_summary, feed_dict={self.test_ave:self.test_Q(10)}), episode/100)
+
 
 		# file_name = 'avg_q_' + self.game + '.csv'
 		# np.savetxt(file_name, q_averages, delimiter=',')
 		self.saver.save(self.sess, '/home/jguan/Documents/RIPS/RL-2018/src/Racing' + '/data-all.chkp')
 		print '--------------- Done training ---------------'
 
-		
+	
 	def test_Q(self, num_test_episodes):
 		print 'Testing...'
+		reward_ave=0
 		for episode in range(num_test_episodes):
 			done = False
 			tot_reward = 0
 			state = self.env.reset()
+			self.env.render()
 			while not done:
 				# Take action and update replay memory
 				action = self.get_action(state, 0)
@@ -263,3 +279,6 @@ class Playground:
 				state = next_state
 				tot_reward += reward
 			print 'Test {}: Reward = {}'.format(episode, tot_reward)
+			reward_ave += tot_reward
+		reward_ave = reward_ave/num_test_episodes
+		return reward_ave

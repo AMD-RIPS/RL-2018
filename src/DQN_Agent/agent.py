@@ -43,7 +43,7 @@ class DQN_Agent:
         self.q_grid = None
 
         # Tf placeholders
-        self.state_tf = tf.placeholder(shape=[None, self.state_size], dtype=tf.float64)
+        self.state_tf = tf.placeholder(shape=self.env.state_shape, dtype=tf.float64)
         self.action_tf = tf.placeholder(shape=[None, self.action_size], dtype=tf.float64)
         self.y_tf = tf.placeholder(dtype=tf.float64)
         self.alpha = tf.placeholder(dtype=tf.float64)
@@ -77,7 +77,7 @@ class DQN_Agent:
         self.run_options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
         self.run_metadata = tf.RunMetadata()
         self.summary = tf.summary.merge_all()
-        subprocess.Popen(['tensorboard', '--logdir', DIR_PATH])
+        subprocess.Popen(['tensorboard', '--logdir', DIR_PATH, '--port', '8008'])
 
         # Initialising and finalising
         self.sess.run(tf.global_variables_initializer())
@@ -114,6 +114,7 @@ class DQN_Agent:
     def train(self):
         for episode in range(self.num_episodes):
             state = self.env.reset()
+            self.env.render()
             done = False
             self.update_fixed_weights()
             save_metadata = episode == 100

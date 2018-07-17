@@ -22,6 +22,7 @@ class CartPole:
         self.state_space_upper_bounds = self.env.observation_space.high
         self.action_space_size = self.env.action_space.n
         self.history = []
+        self.state_shape = [None,4]
 
     def sample_action_space(self):
         return self.env.action_space.sample()
@@ -52,6 +53,8 @@ class Pong:
         # self.state_space_upper_bounds = self.env.observation_space.high
         self.action_space_size = self.env.action_space.n
         self.history = []
+        self.history_pick = 4
+        self.state_shape = [None, self.history_pick, 42, 32]
 
     def sample_action_space(self):
         return self.env.action_space.sample()
@@ -88,10 +91,71 @@ class Pong:
         return result
 
     def add_history(self, state, action, reward):
-        if len(self.history) >= 3: self.history.pop(0)
+        if len(self.history) < self.history_pick - 1: 
+            zeros = np.zeros((42,32))
+            result = [zeros, zeros, zeros, zeros]
+            return result
+        result = []
+        for image in self.history:
+            temp = self.downscale(image)#.reshape([1, self.image_dim])
+            result.append(temp)
+        result.append(self.downscale(state))
+        return result
+
+    def add_history(self, state, action, reward):
+        if len(self.history) >= self.history_pick - 1: self.history.pop(0)
+        self.history.append(state)
+
+class CarRacing:
+
+    def __init__(self):
+        self.image_dim = 48*48
+        self.env = gym.make("CarRacing-v0")
+        self.action_space_size = 4
+        self.history = []
+        self.history_pick = 4
+        self.state_space_size = self.image_dim * self.history_pick 
+        self.state_shape = [None, self.history_pick, 48, 48]
+
+    def sample_action_space(self):
+        return np.random.randint(self.action_space_size)
+
+    def map_action(self, action_index):
+        return [[-1, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 0.8]][action_index]
+
+    def reset(self):
+        return self.env.reset()
+
+    def step(self, action):
+        return self.env.step(self.map_action(action))
+
+    def render(self):
+        self.env.render()
+
+    def downscale(self, rgb):
+        r, g, b = rgb[:,:,0], rgb[:,:,1], rgb[:,:,2]
+        gray = 0.2989 * r + 0.5870 * g + 0.1140 * b
+        gray = downscale_local_mean(gray, (2, 2))
+        return gray
+
+    def process(self, state):
+        if len(self.history) < self.history_pick - 1: 
+            zeros = np.zeros((48,48))
+            result = [zeros, zeros, zeros, zeros]
+            return result
+        result = []
+        for image in self.history:
+            temp = self.downscale(image)#.reshape([1, self.image_dim])
+            result.append(temp)
+        result.append(self.downscale(state))
+        return result
+
+    def add_history(self, state, action, reward):
+        if len(self.history) >= self.history_pick - 1: self.history.pop(0)
         self.history.append(state)
 
 env_dict = {
 	"CartPole": CartPole,
-	"Pong": Pong
+	"Pong": Pong,
+    "CarRacing": CarRacing
 }

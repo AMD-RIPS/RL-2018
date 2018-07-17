@@ -4,6 +4,10 @@ sys.dont_write_bytecode = True
 import numpy as np
 import random
 
+def pause():
+    programPause = raw_input("Press the <ENTER> key to continue...")
+
+
 class Replay_Memory:
 	def __init__(self, memory_capacity, batch_size):
 		self.memory_capacity = memory_capacity

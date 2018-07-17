@@ -6,7 +6,8 @@ from skimage.transform import downscale_local_mean
 import time
 from tensorflow.python.saved_model import tag_constants
 import os, argparse
-
+import subprocess
+DIR_PATH = '/home/jguan/Documents/RIPS/RL-2018/src/Racing/log'
 
 
 class Playground:
@@ -29,7 +30,7 @@ class Playground:
 		self.steering_size = len(self.steering)
 		self.acceleration_size = len(self.acceleration)
 		self.deceleration_size = len(self.deceleration)
-		self.dir = os.path.dirname(os.path.realpath('deep_q_car_gpu.py'))
+		self.phi_patch = [];
 		# self.Q_eval_states = np.load('random_sample.npy')
 		# self.Q_eval_states_len = np.shape(self.Q_eval_states)[0]
 		self.initialize_tf_variables()
@@ -39,7 +40,7 @@ class Playground:
 	
 	def down_sample(self, state):
 		state = self.rgb2gray(state)#self.rgb2gray(state[:82,:])
-		return downscale_local_mean(state, (2, 2))
+		return downscale_local_mean(state, (3, 3))
 
 
 	def get_state_space_size(self, state):
@@ -55,19 +56,23 @@ class Playground:
 	# 		return output # => 1x45
 
 	def Q_nn(self, x):
-		with tf.device('/device:GPU:0'):
-			layer1_out = tf.layers.conv2d(x, filters=16, kernel_size=[8,8], strides=[4,4], padding='same', activation=tf.nn.relu, data_format='channels_first') # => 23x23x16
-			layer1_shape = np.prod(np.shape(layer1_out)[1:])
-			layer2_out = tf.nn.dropout(tf.layers.dense(tf.reshape(layer1_out, [-1,layer1_shape]), 64, activation=tf.nn.relu), .5) # => 1x256
-			output = tf.layers.dense(layer2_out, self.action_size, activation=None)
-			return output # => 1x45
+		with tf.variable_scope("Q_nn"):
+			with tf.device('/device:GPU:0'):
+				layer1_out = tf.layers.conv2d(x, filters=16, kernel_size=[8,8], strides=[4,4], padding='same', activation=tf.nn.relu, data_format='channels_first',name='conv1') # => 23x23x16
+				layer1_shape = np.prod(np.shape(layer1_out)[1:])
+				layer2_out = tf.nn.dropout(tf.layers.dense(tf.reshape(layer1_out, [-1,layer1_shape]), 16, activation=tf.nn.relu), .3, name='layer2_out') # => 1x256
+				output = tf.layers.dense(layer2_out, self.action_size, activation=None, name = 'output')
+				return output # => 1x45
 
-	# def avg_Q_val(self):
-	# 	q_avg_est = 0
-	# 	print 'Hi, JJ!'
-	# 	for state in self.Q_eval_states:
-	# 		q_avg_est += self.sess.run(self.Q_amax, feed_dict={self.state_tf: [[state, state, state, state]]})
-	# 	return q_avg_est/self.Q_eval_states_len
+	def avg_Q_val(self):
+		if len(self.phi_patch) <1000:
+			q_avg_est = 0
+		else:
+			q_avg = 0
+			for index in range(1000):
+				q_avg += np.amax(self.sess.run(self.Q_value, feed_dict={self.state_tf: [self.phi_patch[0]]}))
+			q_avg_est = q_avg/1000
+		return q_avg_est
 
 	# action index is 0 - 3
 	def map_action(self, action_index):
@@ -81,26 +86,33 @@ class Playground:
 
 	def initialize_tf_variables(self):
 		# Setting up game specific variables
-		self.env = gym.make(self.game)
-		self.state_size = self.get_state_space_size(self.env.reset())
-		self.lower_bounds = self.env.observation_space.low
-		self.upper_bounds = self.env.observation_space.high
-		self.action_size = 4
+		with tf.variable_scope("game"):
+			self.env = gym.make(self.game)
+			self.state_size = self.get_state_space_size(self.env.reset())
+			self.lower_bounds = self.env.observation_space.low
+			self.upper_bounds = self.env.observation_space.high
+			self.action_size = 4
 		#self.action_size = self.steering_size*self.acceleration_size*self.deceleration_size
+
 		# Tf placeholders
-		self.state_tf = tf.placeholder(shape=[None, self.history_pick, 48, 48], dtype=tf.float64)
-		self.action_tf = tf.placeholder(shape=[None, self.action_size], dtype=tf.float64)
-		self.y_tf = tf.placeholder(dtype=tf.float64)
+		with tf.variable_scope("placeholder"):
+			self.state_tf = tf.placeholder(shape=[None, self.history_pick, 32, 32], dtype=tf.float64, name = 'state_tf')
+			self.action_tf = tf.placeholder(shape=[None, self.action_size], dtype=tf.float64, name = 'action_tf')
+			self.y_tf = tf.placeholder(dtype=tf.float64, name = 'y_ft')
+			self.training_score = tf.placeholder(dtype=tf.float64)
+			self.avg_q = tf.placeholder(dtype=tf.float64)
 
 		# Operations
-		self.Q_value = self.Q_nn(self.state_tf)
-		self.Q_argmax = tf.argmax(self.Q_value[0])
-		self.Q_amax = tf.reduce_max(self.Q_value[0])
-		self.Q_value_at_action = tf.reduce_sum(tf.multiply(self.Q_value, self.action_tf), axis=1)
+		with tf.variable_scope("operations"):
+			self.Q_value = self.Q_nn(self.state_tf)
+			self.Q_argmax = tf.argmax(self.Q_value[0])
+			self.Q_amax = tf.reduce_max(self.Q_value[0])
+			self.Q_value_at_action = tf.reduce_sum(tf.multiply(self.Q_value, self.action_tf), axis=1)
 		
 		# Training related
-		self.loss = tf.reduce_mean(tf.square(self.y_tf - self.Q_value_at_action))
-		self.train_op = tf.train.AdamOptimizer(learning_rate=self.alpha).minimize(self.loss)
+		with tf.variable_scope("loss"):
+			self.loss = tf.reduce_mean(tf.square(self.y_tf - self.Q_value_at_action))
+			self.train_op = tf.train.AdamOptimizer(learning_rate=self.alpha).minimize(self.loss, name="train_op")
 		self.fixed_weights = None
 
 		# Tensorflow session setup
@@ -109,9 +121,19 @@ class Playground:
 		config.inter_op_parallelism_threads = 8
 		config.allow_soft_placement=True
 		config.gpu_options.allow_growth = True
-		config.log_device_placement = True
+		config.log_device_placement = False
+		self.saver = tf.train.Saver()
 		self.sess = tf.Session(config = config)
 		self.trainable_variables = tf.trainable_variables()
+
+		# Tensorboard setup
+		self.writer = tf.summary.FileWriter(DIR_PATH)
+		self.writer.add_graph(self.sess.graph)
+		tf.summary.scalar("Training score", self.training_score, collections=None, family=None)
+		tf.summary.scalar("Average Q-value", self.avg_q, collections=None, family=None)
+		self.summary = tf.summary.merge_all()
+		subprocess.Popen(['tensorboard', '--logdir', DIR_PATH, '--port', '8008'])
+
 		self.sess.run(tf.global_variables_initializer())
 		self.sess.graph.finalize()
 
@@ -147,6 +169,7 @@ class Playground:
 	# 	a = np.random.randint(0, self.acceleration_size)
 	# 	d = np.random.randint(0, self.deceleration_size)
 	# 	return s*self.acceleration_size*self.deceleration_size + a*self.deceleration_size + d
+
 	def get_random_action(self):
 		return np.random.randint(0, 4)
 
@@ -163,6 +186,7 @@ class Playground:
 		eps_decay_rate = (self.epsilon_min - self.epsilon_max) / num_episodes
 		# q_averages = np.zeros(num_episodes)
 		replay_memory = []
+		avg_Q = []
 
 		print 'Training...'
 		rewards_vec = np.zeros(num_episodes)
@@ -204,6 +228,8 @@ class Playground:
 				if len(replay_memory) > 10 * self.batch_size:
 					self.experience_replay(replay_memory)
 
+				if len(replay_memory) == 1000:
+					self.phi_patch = [data[0] for data in replay_memory]
 
 				tot_reward += reward
 				state = next_state
@@ -211,18 +237,18 @@ class Playground:
 				frame += 1
 			# q_averages[episode] = self.estimate_avg_q(1000)
 			rewards_vec[episode] = tot_reward
+			avg_Q.append(self.avg_Q_val())
 			print 'Episode: {}. Reward: {}'.format(episode, tot_reward)
-
 			print 'Time: {} seconds'.format(time.time() - start_time)
+			self.writer.add_summary(self.sess.run(self.summary, feed_dict={self.training_score:tot_reward, self.avg_q:self.avg_Q_val()}), episode)
 			np.savetxt('CarRacingRewards.csv', rewards_vec, delimiter=',')
 
 		# file_name = 'avg_q_' + self.game + '.csv'
 		# np.savetxt(file_name, q_averages, delimiter=',')
+		self.saver.save(self.sess, '/home/jguan/Documents/RIPS/RL-2018/src/Racing' + '/data-all.chkp')
 		print '--------------- Done training ---------------'
 
-		saver = tf.train.Saver()
-    	last_chkp = saver.save(self.sess, dir + '/data-all.chkp')
-	
+		
 	def test_Q(self, num_test_episodes):
 		print 'Testing...'
 		for episode in range(num_test_episodes):

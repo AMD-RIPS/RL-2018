@@ -11,6 +11,7 @@ import architectures as arch
 import learning_rates as lrng
 import explore_rates as expl
 import replay_memory as rplm
+import time
 
 DIR_PATH = os.path.dirname(os.path.realpath(__file__)) + "/logs"
 
@@ -38,8 +39,6 @@ class DQN_Agent:
     def initialize_tf_variables(self):
         # Setting up game specific variables
         self.state_size = self.env.state_space_size
-        self.lower_bounds = self.env.state_space_lower_bounds
-        self.upper_bounds = self.env.state_space_upper_bounds
         self.action_size = self.env.action_space_size
         self.q_grid = None
 
@@ -120,20 +119,19 @@ class DQN_Agent:
             save_metadata = episode == 100
             while not done:
                 # Take action, update replay memory and update history (for storing previous 4 frames for example)
-                action = self.get_action(state, self.explore_rate.get(self.episodes_trained, self.num_episodes))
+                action = self.get_action(self.env.process(state), self.explore_rate.get(self.episodes_trained, self.num_episodes))
                 next_state, reward, done, _ = self.env.step(action)
-                self.replay_memory.add(self.env, state, action, reward, next_state, done, self.action_size)
                 self.env.add_history(state, action, reward)
+                self.replay_memory.add(self.env, state, action, reward, next_state, done, self.action_size)
 
-                # Perform experience replay if replay memory populated. Note: 10 is an arbitrary constant
-                if self.replay_memory.length() > 10 * self.replay_memory.batch_size:
+                # Perform experience replay if replay memory populated
+                if self.replay_memory.length() > self.replay_memory.batch_size:
                     self.experience_replay(save_metadata=save_metadata)
                     if save_metadata:
                         save_metadata = False
 
                 state = next_state
-
-            # Save metadat on 100th episode
+            # Save metadata on 100th episode
             if episode == 100:
                 self.writer.add_run_metadata(self.run_metadata, 'step' + str(episode))
 
@@ -142,7 +140,6 @@ class DQN_Agent:
                 self.q_grid = self.replay_memory.get_q_grid(1000)
             # Calculate estimated Q value. Note: if q_grid undefined, returns 0
             avg_q = self.estimate_avg_q()
-
             score = self.test_Q(num_test_episodes=5)
             print("Episode {0}, score {1}".format(episode, score))
             # Save score and average q-values into logs for Tensorboard
@@ -157,7 +154,7 @@ class DQN_Agent:
             while not done:
                 if visualize:
                     self.env.render()
-                action = self.get_action(state, epsilon=0)
+                action = self.get_action(self.env.process(state), epsilon=0)
                 next_state, reward, done, _ = self.env.step(action)
                 state = next_state
                 cum_reward += reward

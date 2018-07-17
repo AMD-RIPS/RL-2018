@@ -5,8 +5,15 @@ import agent
 import environment as env
 
 # Train Cartpole
-environment = env.Environment(game='CartPole-v0')
-cp = agent.DQN_Agent(environment=environment, architecture='basic', explore_rate='basic', learning_rate='basic')
-cp.set_training_parameters(discount=.99, batch_size=16, memory_capacity=10000, num_episodes=300)
-cp.train()
-print(cp.test_Q(10, visualize=True))
+environment = env.env_dict["CartPole"]()
+control = agent.DQN_Agent(environment=environment, architecture='basic', explore_rate='basic', learning_rate='basic')
+control.set_training_parameters(discount=.99, batch_size=32, memory_capacity=10000, num_episodes=300)
+control.train()
+print(control.test_Q(10, visualize=True))
+
+# Train Pong
+# environment = env.env_dict["Pong"]()
+# control = agent.DQN_Agent(environment=environment, architecture='conv', explore_rate='basic', learning_rate='basic')
+# control.set_training_parameters(discount=.99, batch_size=32, memory_capacity=10000, num_episodes=500)
+# control.train()
+# print(control.test_Q(10, visualize=True))

@@ -213,7 +213,7 @@ class BreakOut:
         self.history.append(state)
 
 
- env_dict = {
+env_dict = {
     "CartPole": CartPole,
     "Pong": Pong,
     "CarRacing": CarRacing,

@@ -10,7 +10,7 @@ class Basic:
         pass
 
     def get(self, episode, num_episodes):
-        return 1 - episode/num_episodes
+        return max(0.01, 1 - float(episode)/((num_episodes+1)/2))
 
 expl_dict = {
     'basic': Basic

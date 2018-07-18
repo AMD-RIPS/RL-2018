@@ -30,8 +30,11 @@ class CartPole:
     def reset(self):
         return self.env.reset()
 
-    def step(self, action):
-        next_state, reward, done, _ = self.env.step(action)
+    def step(self, action, skip_frames):
+        for i in range(skip_frames):
+            next_state, reward, done, _ = self.env.step(action)
+            if done:
+                break
         info = {'true_done': done}
         return next_state, reward, done, info
     def render(self):
@@ -66,7 +69,11 @@ class Pong:
     def step(self, action):
         action_dict = {0:2, 1:3}
         action = action_dict[action]
-        next_state, reward, done, info = self.env.step(action)
+        for i in range(skip_frames):
+            next_state, reward, done, info = self.env.step(action)
+            if done:
+                break
+        
         info = {'true_done': done}
         if reward == -1: done = True
         return next_state, reward, done, info
@@ -133,8 +140,11 @@ class CarRacing:
     def reset(self):
         return self.env.reset()
 
-    def step(self, action):
-        next_state, reward, done, info = self.env.step(self.map_action(action))
+    def step(self, action, skip_frames):
+        for i in range(skip_frames):
+            next_state, reward, done, info = self.env.step(self.map_action(action))
+            if done:
+                break
         info = {'true_done': done}
         return next_state, reward, done, info
 

@@ -12,6 +12,7 @@ import learning_rates as lrng
 import explore_rates as expl
 import replay_memory as rplm
 import time
+from tensorflow.python.saved_model import tag_constants
 
 DIR_PATH = os.path.dirname(os.path.realpath(__file__)) + "/logs/tmp"
 
@@ -23,12 +24,13 @@ def pause():
 class DQN_Agent:
     # architecture, explore_rate and learning_rate are strings, see respective files for definitions
 
-    def __init__(self, environment, architecture, explore_rate, learning_rate):
+    def __init__(self, environment, architecture, explore_rate, learning_rate, skip_frames):
         self.env = environment
         self.episodes_trained = 0
         self.architecture = arch.arch_dict[architecture]
         self.explore_rate = expl.expl_dict[explore_rate]()
         self.learning_rate = lrng.lrng_dict[learning_rate]()
+        self.skip_frames = skip_frames
         self.initialize_tf_variables()
 
     def set_training_parameters(self, discount, batch_size, memory_capacity, num_episodes):
@@ -81,6 +83,8 @@ class DQN_Agent:
         self.test_summary = tf.summary.merge([training_score])
         subprocess.Popen(['tensorboard', '--logdir', DIR_PATH, '--port', '6006'])
 
+        self.saver = tf.train.Saver()
+
         # Initialising and finalising
         self.sess.run(tf.global_variables_initializer())
         self.sess.graph.finalize()
@@ -93,10 +97,7 @@ class DQN_Agent:
         dict = {self.state_tf: next_state_batch}
         dict.update(zip(self.trainable_variables, self.fixed_weights))
         Q_value_batch = self.sess.run(self.Q_value, feed_dict=dict)
-
-        for i in range(self.replay_memory.batch_size):
-            y_batch[i] = reward_batch[i] + (0 if done_batch[i] else self.discount * np.max(Q_value_batch[i]))
-
+        y_batch = reward_batch + self.discount*np.multiply(np.invert(done_batch), np.amax(Q_value_batch, axis=1))
         self.sess.run(self.train_op, feed_dict={self.y_tf: y_batch, self.action_tf: action_batch, self.state_tf: state_batch,
                                                     self.alpha: self.learning_rate.get(self.episodes_trained, self.num_episodes)})
 
@@ -112,23 +113,28 @@ class DQN_Agent:
 
     def train(self):
         for episode in range(self.num_episodes):
+            start_time = time.time()
             state = self.env.reset()
             self.env.render()
             done = False
             self.update_fixed_weights()
+            epsilon = self.explore_rate.get(self.episodes_trained, self.num_episodes)
+            print 'Episode: {}, epsilon: {}'.format(episode, epsilon)
+
             while not done:
                 # Take action, update replay memory and update history (for storing previous 4 frames for example)
-                action = self.get_action(self.env.process(state), self.explore_rate.get(self.episodes_trained, self.num_episodes))
-                next_state, reward, done, info = self.env.step(action)
+                action = self.get_action(self.env.process(state), epsilon) 
+                next_state, reward, done, info = self.env.step(action, self.skip_frames)
                 self.env.add_history(state, action, reward)
                 self.replay_memory.add(self.env, state, action, reward, next_state, done, self.action_size)
 
                 # Perform experience replay if replay memory populated
                 if self.replay_memory.length() > self.replay_memory.batch_size:
                     self.experience_replay()
-
+            
                 state = next_state
-                # done = info['true_done']
+                done = info['true_done']
+            print 'Episode {} time: {}'.format(episode, time.time() - start_time)
 
             # If q_grid not defined yet, and replay memory populated, create q_grid
             if not self.q_grid and self.replay_memory.length() > 1000:
@@ -136,15 +142,20 @@ class DQN_Agent:
             # Calculate estimated Q value. Note: if q_grid undefined, returns 0
             avg_q = self.estimate_avg_q()
 
+            # score = self.test_Q()
+            # print(score)
+            # Save score and average q-values into logs for Tensorboard
+            if episode % 100 == 0:
+                self.saver.save(self.sess, DIR_PATH +'/data-all.chkp')
+
             # score = 0
             if episode % 50 == 0:
                 score = self.test_Q(num_test_episodes=5)
                 self.writer.add_summary(self.sess.run(self.test_summary, feed_dict={self.training_score: score}), episode/50)
 
-            print("Episode {0}, epsilon {1}".format(episode, score))
+            print("Episode {0}, epsilon {1}".format(episode, epsilon))
             # Save score and average q-values into logs for Tensorboard
-            self.writer.add_summary(self.sess.run(self.training_summary, feed_dict={self.avg_q: avg_q, self.epsilon: self.explore_rate.get(self.episodes_trained, self.num_episodes)}), episode)
-
+            self.writer.add_summary(self.sess.run(self.training_summary, feed_dict={self.avg_q: avg_q, self.epsilon: epsilon}), episode)
             self.episodes_trained += 1
 
     def test_Q(self, num_test_episodes=10, visualize=False):
@@ -156,7 +167,7 @@ class DQN_Agent:
                 if visualize:
                     self.env.render()
                 action = self.get_action(self.env.process(state), epsilon=0)
-                next_state, reward, done, info = self.env.step(action)
+                next_state, reward, done, info = self.env.step(action,self.skip_frames)
                 state = next_state
                 cum_reward += reward
                 # done = info['true_done']

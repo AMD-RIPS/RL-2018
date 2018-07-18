@@ -3,7 +3,8 @@ sys.dont_write_bytecode = True
 
 import tensorflow as tf
 import numpy as np
-basic_layer_sizes = [16, 16]
+
+basic_layer_sizes = [32, 32]
 
 def basic_architecture(input, action_size):
     neural_net = input

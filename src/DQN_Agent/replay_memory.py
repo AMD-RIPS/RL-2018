@@ -38,4 +38,4 @@ class Replay_Memory:
 			self.memory.pop(0)
 
 	def get_q_grid(self, size):
-		return [[self.memory[index][0]] for index in range(self.q_grid_size)]
+		return [data[0] for data in self.memory[:self.q_grid_size]]

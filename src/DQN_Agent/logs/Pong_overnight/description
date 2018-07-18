@@ -1,0 +1,6 @@
+batch = 32, 
+layers: dense, 32, 32, 
+memory = 10k, 
+explore = linear from 1, 
+learning = 0.005, 
+

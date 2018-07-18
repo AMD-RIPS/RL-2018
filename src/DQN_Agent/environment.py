@@ -22,7 +22,7 @@ class CartPole:
         self.state_space_upper_bounds = self.env.observation_space.high
         self.action_space_size = self.env.action_space.n
         self.history = []
-        self.state_shape = [None,4]
+        self.state_shape = [None, self.state_space_size]
 
     def sample_action_space(self):
         return self.env.action_space.sample()
@@ -31,12 +31,13 @@ class CartPole:
         return self.env.reset()
 
     def step(self, action):
-        return self.env.step(action)
-
+        next_state, reward, done, _ = self.env.step(action)
+        info = {'true_done': done}
+        return next_state, reward, done, info
     def render(self):
         self.env.render()
 
-    # Returns a (4, ) vector
+    # Returns a (sample_space_size, ) vector
     def process(self, x):
         return x
 
@@ -46,33 +47,39 @@ class CartPole:
 class Pong:
 
     def __init__(self):
-        self.image_dim = 42*32
+        self.image_dim = 28*27
         self.env = gym.make("Pong-v0")
         self.state_space_size = 4*self.image_dim
         # self.state_space_lower_bounds = self.env.observation_space.low
         # self.state_space_upper_bounds = self.env.observation_space.high
-        self.action_space_size = self.env.action_space.n
+        self.action_space_size = 2
         self.history = []
         self.history_pick = 4
         self.state_shape = [None, self.history_pick, 42, 32]
 
     def sample_action_space(self):
-        return self.env.action_space.sample()
+        return 0 if (random.random() > 0.5) else 1
 
     def reset(self):
         return self.env.reset()
 
     def step(self, action):
-        return self.env.step(action)
+        action_dict = {0:2, 1:3}
+        action = action_dict[action]
+        next_state, reward, done, info = self.env.step(action)
+        info = {'true_done': done}
+        if reward == -1: done = True
+        return next_state, reward, done, info
 
     def render(self):
         self.env.render()
     
-    # Returns 42*32 greyscale image
+    # Returns 28*27 greyscale image
     def downscale(self, rgb):
+        rgb = rgb[33:196,:,:]
     	r, g, b = rgb[:,:,0], rgb[:,:,1], rgb[:,:,2]
     	gray = 0.2989 * r + 0.5870 * g + 0.1140 * b
-        gray = downscale_local_mean(gray, (5, 5))
+        gray = downscale_local_mean(gray, (6, 6))
         # im = Image.fromarray(gray)
         # im.show()
         # print(gray.shape)

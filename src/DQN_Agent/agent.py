@@ -53,6 +53,7 @@ class DQN_Agent:
         self.alpha = tf.placeholder(dtype=tf.float64)
         self.training_score = tf.placeholder(dtype=tf.float64)
         self.avg_q = tf.placeholder(dtype=tf.float64)
+        self.epsilon = tf.placeholder(dtype=tf.float64)
 
         # Operations
         self.Q_value = self.architecture(self.state_tf, self.action_size)
@@ -76,14 +77,17 @@ class DQN_Agent:
         # Tensorboard setup
         self.writer = tf.summary.FileWriter(DIR_PATH)
         self.writer.add_graph(self.sess.graph)
-        tf.summary.scalar("Training score", self.training_score, collections=None, family=None)
-        tf.summary.scalar("Average Q-value", self.avg_q, collections=None, family=None)
-        self.summary = tf.summary.merge_all()
-        subprocess.Popen(['tensorboard', '--logdir', DIR_PATH, '--port', '8008'])
+        training_score = tf.summary.scalar("Training score", self.training_score, collections=None, family=None)
+        epsilon = tf.summary.scalar("Epsilon", self.epsilon, collections=None, family=None)
+        avg_q = tf.summary.scalar("Average Q-value", self.avg_q, collections=None, family=None)
+        self.training_summary = tf.summary.merge([avg_q, epsilon])
+        self.test_summary = tf.summary.merge([training_score])
+        subprocess.Popen(['tensorboard', '--logdir', DIR_PATH, '--port', '6006'])
 
         # Initialising and finalising
         self.sess.run(tf.global_variables_initializer())
         self.sess.graph.finalize()
+
 
     def experience_replay(self):
         state_batch, action_batch, reward_batch, next_state_batch, done_batch = self.replay_memory.get_batch()
@@ -95,6 +99,7 @@ class DQN_Agent:
         y_batch = reward_batch + self.discount*np.multiply(np.invert(done_batch), np.amax(Q_value_batch, axis=1))
         self.sess.run(self.train_op, feed_dict={self.y_tf: y_batch, self.action_tf: action_batch, self.state_tf: state_batch,
                                                     self.alpha: self.learning_rate.get(self.episodes_trained, self.num_episodes)})
+
 
     def get_action(self, state, epsilon):
         if random.random() < epsilon:
@@ -135,12 +140,21 @@ class DQN_Agent:
                 self.q_grid = self.replay_memory.get_q_grid(1000)
             # Calculate estimated Q value. Note: if q_grid undefined, returns 0
             avg_q = self.estimate_avg_q()
+
             # score = self.test_Q()
             # print(score)
             # Save score and average q-values into logs for Tensorboard
-            self.writer.add_summary(self.sess.run(self.summary, feed_dict={self.training_score: 0, self.avg_q: avg_q}), episode)
             if episode % 100 == 0:
                 self.saver.save(self.sess, '/home/enunez/Documents/RIPS/Git/RL-2018/src/DQN_Agent/data-all.chkp')
+
+            # score = 0
+            if episode % 50 == 0:
+                score = self.test_Q(num_test_episodes=5)
+                self.writer.add_summary(self.sess.run(self.test_summary, feed_dict={self.training_score: score}), episode/50)
+
+            print("Episode {0}, epsilon {1}".format(episode, score))
+            # Save score and average q-values into logs for Tensorboard
+            self.writer.add_summary(self.sess.run(self.training_summary, feed_dict={self.avg_q: avg_q, self.epsilon: self.explore_rate.get(self.episodes_trained, self.num_episodes)}), episode)
             self.episodes_trained += 1
 
     def test_Q(self, num_test_episodes=10, visualize=False):

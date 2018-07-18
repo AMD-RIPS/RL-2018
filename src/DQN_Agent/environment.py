@@ -134,7 +134,9 @@ class CarRacing:
         return self.env.reset()
 
     def step(self, action):
-        return self.env.step(self.map_action(action))
+        next_state, reward, done, info = self.env.step(self.map_action(action))
+        info = {'true_done': done}
+        return next_state, reward, done, info
 
     def render(self):
         self.env.render()

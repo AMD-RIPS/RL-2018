@@ -1,7 +1,0 @@
-When you run run_deep_q.py, tensorboard starts up automatically. In the terminal it tells you what address to go to in your browser of choice to get to tensorboard. 
-In case of error 'TensorBoard attempted to bind to port 6006, but it was already in use', do
-'ps aux | grep tensorboard'
-and then kill the process using
-'kill <PID>'
-
-

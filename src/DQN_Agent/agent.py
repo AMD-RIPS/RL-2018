@@ -13,7 +13,7 @@ import explore_rates as expl
 import replay_memory as rplm
 import time
 
-DIR_PATH = os.path.dirname(os.path.realpath(__file__)) + "/logs"
+DIR_PATH = os.path.dirname(os.path.realpath(__file__)) + "/logs/tmp"
 
 
 def pause():
@@ -128,7 +128,7 @@ class DQN_Agent:
                     self.experience_replay()
 
                 state = next_state
-                done = info['true_done']
+                # done = info['true_done']
 
             # If q_grid not defined yet, and replay memory populated, create q_grid
             if not self.q_grid and self.replay_memory.length() > 1000:
@@ -159,7 +159,7 @@ class DQN_Agent:
                 next_state, reward, done, info = self.env.step(action)
                 state = next_state
                 cum_reward += reward
-                done = info['true_done']
+                # done = info['true_done']
         return cum_reward / float(num_test_episodes)
 
     def estimate_avg_q(self):

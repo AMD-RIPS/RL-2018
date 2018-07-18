@@ -10,7 +10,7 @@ class Basic:
         pass
 
     def get(self, episode, num_episodes):
-        return 0.5*(1 - episode/num_episodes)
+        return 1 - episode/num_episodes
 
 expl_dict = {
     'basic': Basic

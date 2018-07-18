@@ -10,7 +10,7 @@ class Basic:
         pass
 
     def get(self, episode, num_episodes):
-        return 0.005
+        return 0.0005
 
 lrng_dict = {
     'basic': Basic

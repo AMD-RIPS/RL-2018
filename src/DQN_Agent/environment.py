@@ -23,6 +23,7 @@ class CartPole:
         self.action_space_size = self.env.action_space.n
         self.history = []
         self.state_shape = [None, self.state_space_size]
+        self.skip_frames = 1
 
     def sample_action_space(self):
         return self.env.action_space.sample()
@@ -30,8 +31,8 @@ class CartPole:
     def reset(self):
         return self.env.reset()
 
-    def step(self, action, skip_frames):
-        for i in range(skip_frames):
+    def step(self, action):
+        for i in range(self.skip_frames):
             next_state, reward, done, _ = self.env.step(action)
             if done:
                 break
@@ -59,6 +60,7 @@ class Pong:
         self.history = []
         self.history_pick = 4
         self.state_shape = [None, self.history_pick, 42, 32]
+        self.skip_frame = 4
 
     def sample_action_space(self):
         return 0 if (random.random() > 0.5) else 1
@@ -69,7 +71,7 @@ class Pong:
     def step(self, action):
         action_dict = {0:2, 1:3}
         action = action_dict[action]
-        for i in range(skip_frames):
+        for i in range(self.skip_frames):
             next_state, reward, done, info = self.env.step(action)
             if done:
                 break
@@ -130,6 +132,7 @@ class CarRacing:
         self.history_pick = 4
         self.state_space_size = self.image_dim * self.history_pick 
         self.state_shape = [None, self.history_pick, 48, 48]
+        self.skip_frame = 4
 
     def sample_action_space(self):
         return np.random.randint(self.action_space_size)
@@ -140,8 +143,8 @@ class CarRacing:
     def reset(self):
         return self.env.reset()
 
-    def step(self, action, skip_frames):
-        for i in range(skip_frames):
+    def step(self, action):
+        for i in range(self.skip_frames):
             next_state, reward, done, info = self.env.step(self.map_action(action))
             if done:
                 break
@@ -194,7 +197,9 @@ class BreakOut:
         return self.env.reset()
 
     def step(self, action):
-        return self.env.step(self.map_action(action))
+        next_state, reward, done, info = self.env.step(action)
+        info = {true_done: done}
+        return next_state, reward, done, info
 
     def render(self):
         self.env.render()

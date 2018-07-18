@@ -74,8 +74,6 @@ class DQN_Agent:
         self.writer.add_graph(self.sess.graph)
         tf.summary.scalar("Training score", self.training_score, collections=None, family=None)
         tf.summary.scalar("Average Q-value", self.avg_q, collections=None, family=None)
-        self.run_options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
-        self.run_metadata = tf.RunMetadata()
         self.summary = tf.summary.merge_all()
         subprocess.Popen(['tensorboard', '--logdir', DIR_PATH, '--port', '8008'])
 
@@ -83,7 +81,7 @@ class DQN_Agent:
         self.sess.run(tf.global_variables_initializer())
         self.sess.graph.finalize()
 
-    def experience_replay(self, save_metadata):
+    def experience_replay(self):
         state_batch, action_batch, reward_batch, next_state_batch, done_batch = self.replay_memory.get_batch()
         y_batch = [None] * self.replay_memory.batch_size
 
@@ -94,14 +92,9 @@ class DQN_Agent:
         for i in range(self.replay_memory.batch_size):
             y_batch[i] = reward_batch[i] + (0 if done_batch[i] else self.discount * np.max(Q_value_batch[i]))
 
-        if not save_metadata:
-            self.sess.run(self.train_op, feed_dict={self.y_tf: y_batch, self.action_tf: action_batch, self.state_tf: state_batch,
+        self.sess.run(self.train_op, feed_dict={self.y_tf: y_batch, self.action_tf: action_batch, self.state_tf: state_batch,
                                                     self.alpha: self.learning_rate.get(self.episodes_trained, self.num_episodes)})
-        else:
-            self.sess.run(self.train_op, feed_dict={self.y_tf: y_batch, self.action_tf: action_batch, self.state_tf: state_batch, 
-                                                    self.alpha: self.learning_rate.get(self.episodes_trained, self.num_episodes)},
-                                                    options=self.run_options, run_metadata=self.run_metadata)
-
+        
     def get_action(self, state, epsilon):
         if random.random() < epsilon:
             return self.env.sample_action_space()
@@ -117,7 +110,6 @@ class DQN_Agent:
             self.env.render()
             done = False
             self.update_fixed_weights()
-            save_metadata = episode == 100
             while not done:
                 # Take action, update replay memory and update history (for storing previous 4 frames for example)
                 action = self.get_action(self.env.process(state), self.explore_rate.get(self.episodes_trained, self.num_episodes))
@@ -127,22 +119,17 @@ class DQN_Agent:
 
                 # Perform experience replay if replay memory populated
                 if self.replay_memory.length() > self.replay_memory.batch_size:
-                    self.experience_replay(save_metadata=save_metadata)
-                    if save_metadata:
-                        save_metadata = False
+                    self.experience_replay()
 
                 state = next_state
-            # Save metadata on 100th episode
-            if episode == 100:
-                self.writer.add_run_metadata(self.run_metadata, 'step' + str(episode))
 
             # If q_grid not defined yet, and replay memory populated, create q_grid
             if not self.q_grid and self.replay_memory.length() > 1000:
                 self.q_grid = self.replay_memory.get_q_grid(1000)
             # Calculate estimated Q value. Note: if q_grid undefined, returns 0
             avg_q = self.estimate_avg_q()
+            score = 0
             # score = self.test_Q(num_test_episodes=5)
-            print episode
             # print("Episode {0}, score {1}".format(episode, score))
             # Save score and average q-values into logs for Tensorboard
             self.writer.add_summary(self.sess.run(self.summary, feed_dict={self.training_score: 0, self.avg_q: avg_q}), episode)

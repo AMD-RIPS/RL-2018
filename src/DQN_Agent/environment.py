@@ -73,10 +73,10 @@ class Pong:
     	r, g, b = rgb[:,:,0], rgb[:,:,1], rgb[:,:,2]
     	gray = 0.2989 * r + 0.5870 * g + 0.1140 * b
         gray = downscale_local_mean(gray, (5, 5))
-        # im = Image.fromarray(gray)
-        # im.show()
-        # print(gray.shape)
-        # pause()
+        im = Image.fromarray(gray)
+        im.show()
+        print(gray.shape)
+        pause()
     	return gray
 
     def process(self, state):
@@ -154,8 +154,59 @@ class CarRacing:
         if len(self.history) >= self.history_pick - 1: self.history.pop(0)
         self.history.append(state)
 
+class BreakOut:
+
+    def __init__(self):
+        self.image_dim = 40*36
+        self.env = gym.make("Breakout-v0")
+        self.action_space_size = self.env.action_space.n
+        self.history = []
+        self.history_pick = 4
+        self.state_space_size = self.image_dim * self.history_pick 
+        self.state_shape = [None, self.history_pick, 40, 36]
+
+    def sample_action_space(self):
+        return np.random.randint(self.action_space_size)
+
+    def map_action(self, action_index):
+        return action_index
+
+    def reset(self):
+        return self.env.reset()
+
+    def step(self, action):
+        return self.env.step(self.map_action(action))
+
+    def render(self):
+        self.env.render()
+
+    def downscale(self, rgb):
+        rgb = rgb[34:-16, 8:-8, :]
+        r, g, b = rgb[:,:,0], rgb[:,:,1], rgb[:,:,2]
+        gray = 0.2989 * r + 0.5870 * g + 0.1140 * b
+        gray = downscale_local_mean(gray, (4, 4))
+        return gray
+
+    def process(self, state):
+        if len(self.history) < self.history_pick - 1: 
+            zeros = np.zeros((40,36))
+            result = [zeros, zeros, zeros, zeros]
+            return result
+        result = []
+        for image in self.history:
+            temp = self.downscale(image)#.reshape([1, self.image_dim])
+            result.append(temp)
+        result.append(self.downscale(state))
+        return result
+
+    def add_history(self, state, action, reward):
+        if len(self.history) >= self.history_pick - 1: self.history.pop(0)
+        self.history.append(state)
+
+
 env_dict = {
 	"CartPole": CartPole,
 	"Pong": Pong,
-    "CarRacing": CarRacing
+    "CarRacing": CarRacing,
+    "BreakOut": BreakOut
 }

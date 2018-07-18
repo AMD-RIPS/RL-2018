@@ -13,7 +13,7 @@ import explore_rates as expl
 import replay_memory as rplm
 import time
 
-DIR_PATH = os.path.dirname(os.path.realpath(__file__)) + "/logs"
+DIR_PATH = os.path.dirname(os.path.realpath(__file__)) + "/logs/tmp"
 
 
 def pause():
@@ -115,8 +115,9 @@ class DQN_Agent:
             done = False
             self.update_fixed_weights()
             while not done:
+                self.env.render()
                 # Take action, update replay memory and update history (for storing previous 4 frames for example)
-                action = self.get_action(self.env.process(state), self.explore_rate.get(self.episodes_trained, self.num_episodes))
+                action = self.get_action(self.env.process(state), self.explore_rate.get(episode, self.num_episodes))
                 next_state, reward, done, _ = self.env.step(action)
                 self.env.add_history(state, action, reward)
                 self.replay_memory.add(self.env, state, action, reward, next_state, done, self.action_size)
@@ -138,16 +139,17 @@ class DQN_Agent:
                 score = self.test_Q(num_test_episodes=5)
                 self.writer.add_summary(self.sess.run(self.test_summary, feed_dict={self.training_score: score}), episode/50)
 
-            print("Episode {0}, epsilon {1}".format(episode, score))
+            print("Episode {0}, epsilon {1}".format(episode, self.explore_rate.get(episode, self.num_episodes)))
             # Save score and average q-values into logs for Tensorboard
-            self.writer.add_summary(self.sess.run(self.training_summary, feed_dict={self.avg_q: avg_q, self.epsilon: self.explore_rate.get(self.episodes_trained, self.num_episodes)}), episode)
-            self.episodes_trained += 1
+            self.writer.add_summary(self.sess.run(self.training_summary, feed_dict={self.avg_q: avg_q, self.epsilon: self.explore_rate.get(episode, self.num_episodes)}), episode)
+            self.episodes_trained = episode
 
     def test_Q(self, num_test_episodes=10, visualize=False):
         cum_reward = 0
         for episode in range(num_test_episodes):
             done = False
             state = self.env.reset()
+            self.env.render()
             while not done:
                 if visualize:
                     self.env.render()

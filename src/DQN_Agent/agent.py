@@ -128,9 +128,9 @@ class DQN_Agent:
                 self.q_grid = self.replay_memory.get_q_grid(1000)
             # Calculate estimated Q value. Note: if q_grid undefined, returns 0
             avg_q = self.estimate_avg_q()
-            score = 0
-            # score = self.test_Q(num_test_episodes=5)
-            # print("Episode {0}, score {1}".format(episode, score))
+            # score = 0
+            score = self.test_Q(num_test_episodes=5)
+            print("Episode {0}, score {1}".format(episode, score))
             # Save score and average q-values into logs for Tensorboard
             self.writer.add_summary(self.sess.run(self.summary, feed_dict={self.training_score: 0, self.avg_q: avg_q}), episode)
             self.episodes_trained += 1

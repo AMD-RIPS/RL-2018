@@ -2,6 +2,7 @@ import sys
 sys.dont_write_bytecode = True
 
 import tensorflow as tf
+import numpy as np
 
 basic_layer_sizes = [16, 16]
 
@@ -12,21 +13,31 @@ def basic_architecture(input, action_size):
     return tf.layers.dense(neural_net, action_size, activation=None)
 
 
-def convolutional_architecture(input, action_size):
-    device = 'GPU:0'
-    if device[0] == 'G':
-        data_format = 'channels_first'
-    else:
-        data_format = 'channels_last'
-    with tf.device('/device:'+device):
-        layer1_out = tf.layers.conv2d(input, filters=16, kernel_size=[8,8], strides=[4,4], padding='same', activation=tf.nn.relu, data_format=data_format) 
+def convolutional_architecture_1_layer(input, action_size):
+    with tf.device('/device:GPU:0'):
+        layer1_out = tf.layers.conv2d(input, filters=16, kernel_size=[8,8],
+         strides=[4,4], padding='same', activation=tf.nn.relu, data_format='channels_first', name='layer1_out') # => 23x23x16
         layer1_shape = np.prod(np.shape(layer1_out)[1:])
-        layer2_out = tf.nn.dropout(tf.layers.dense(tf.reshape(layer1_out, [-1,layer1_shape]), 64, activation=tf.nn.relu), .5) 
-        output = tf.layers.dense(layer2_out, self.action_size, activation=None)
-    return output 
+        layer2_out = tf.nn.dropout(tf.layers.dense(tf.reshape(layer1_out, [-1,layer1_shape]),
+         16, activation=tf.nn.relu), .3, name='layer2_out') # => 1x256
+        output = tf.layers.dense(layer2_out, action_size, activation=None, name = 'output')
+    return output
+
+def convolutional_architecture_2_layers(input, action_size):
+    with tf.device('/device:GPU:0'):
+        layer1_out = tf.layers.conv2d(input, filters=16, kernel_size=[8,8],
+         strides=[4,4], padding='same', activation=tf.nn.relu, data_format='channels_first', name='layer1_out') # => 23x23x16
+        layer2_out = tf.layers.conv2d(layer1_out, filters=32, kernel_size=[4,4],
+         strides=[2,2], padding='same', activation=tf.nn.relu, data_format='channels_first', name='layer2_out')
+        layer2_shape = np.prod(np.shape(layer2_out)[1:])
+        layer3_out = tf.nn.dropout(tf.layers.dense(tf.reshape(layer2_out, [-1,layer2_shape]),
+         16, activation=tf.nn.relu), .3, name='layer2_out') # => 1x256
+        output = tf.layers.dense(layer3_out, action_size, activation=None, name = 'output')
+    return output
 
 arch_dict = {
     'basic': basic_architecture, 
-    'conv': convolutional_architecture
+    'conv1': convolutional_architecture_1_layer,
+    'conv2': convolutional_architecture_2_layers
 }
 

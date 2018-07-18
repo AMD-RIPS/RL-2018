@@ -134,6 +134,7 @@ class DQN_Agent:
             
                 state = next_state
                 done = info['true_done']
+
             # If q_grid not defined yet, and replay memory populated, create q_grid
             if not self.q_grid and self.replay_memory.length() > 5*self.replay_memory.q_grid_size:
                 self.q_grid = self.replay_memory.get_q_grid()
@@ -168,7 +169,7 @@ class DQN_Agent:
                 next_state, reward, done, info = self.env.step(action)
                 state = next_state
                 cum_reward += reward
-                done = info['true_done']
+                # done = info['true_done']
         return cum_reward / float(num_test_episodes)
 
     def estimate_avg_q(self):

@@ -50,6 +50,7 @@ class DQN_Agent:
         self.alpha = tf.placeholder(dtype=tf.float64)
         self.training_score = tf.placeholder(dtype=tf.float64)
         self.avg_q = tf.placeholder(dtype=tf.float64)
+        self.epsilon = tf.placeholder(dtype=tf.float64)
 
         # Operations
         self.Q_value = self.architecture(self.state_tf, self.action_size)
@@ -73,10 +74,12 @@ class DQN_Agent:
         # Tensorboard setup
         self.writer = tf.summary.FileWriter(DIR_PATH)
         self.writer.add_graph(self.sess.graph)
-        tf.summary.scalar("Training score", self.training_score, collections=None, family=None)
-        tf.summary.scalar("Average Q-value", self.avg_q, collections=None, family=None)
-        self.summary = tf.summary.merge_all()
-        subprocess.Popen(['tensorboard', '--logdir', DIR_PATH, '--port', '8008'])
+        training_score = tf.summary.scalar("Training score", self.training_score, collections=None, family=None)
+        epsilon = tf.summary.scalar("Epsilon", self.epsilon, collections=None, family=None)
+        ave_Q = tf.summary.scalar("Average Q-value", self.avg_q, collections=None, family=None)
+        self.training_summary = tf.summary.merge([ave_Q, epsilon])
+        self.test_summary = tf.summary.merge([training_score])
+        subprocess.Popen(['tensorboard', '--logdir', DIR_PATH, '--port', '6006'])
         # Initialising and finalising
         self.sess.run(tf.global_variables_initializer())
         self.sess.graph.finalize()
@@ -131,10 +134,13 @@ class DQN_Agent:
             # Calculate estimated Q value. Note: if q_grid undefined, returns 0
             avg_q = self.estimate_avg_q()
             # score = 0
-            score = self.test_Q(num_test_episodes=5)
-            print("Episode {0}, score {1}".format(episode, score))
+            if episode % 50 == 0:
+                score = self.test_Q(num_test_episodes=5)
+                self.writer.add_summary(self.sess.run(self.test_summary, feed_dict={self.training_score: score}), episode/50)
+
+            print("Episode {0}, epsilon {1}".format(episode, score))
             # Save score and average q-values into logs for Tensorboard
-            self.writer.add_summary(self.sess.run(self.summary, feed_dict={self.training_score: 0, self.avg_q: avg_q}), episode)
+            self.writer.add_summary(self.sess.run(self.training_summary, feed_dict={self.ave_Q: avg_q, self.epsilon: self.explore_rate.get(self.episodes_trained, self.num_episodes)}), episode)
             self.episodes_trained += 1
 
     def test_Q(self, num_test_episodes=10, visualize=False):

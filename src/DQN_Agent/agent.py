@@ -31,7 +31,6 @@ class DQN_Agent:
         self.explore_rate = expl.expl_dict[explore_rate]()
         self.learning_rate = lrng.lrng_dict[learning_rate]()
         self.skip_frames = skip_frames
-        self.saver = tf.train.Saver()
         self.initialize_tf_variables()
 
     def set_training_parameters(self, discount, batch_size, memory_capacity, num_episodes):
@@ -83,6 +82,8 @@ class DQN_Agent:
         self.training_summary = tf.summary.merge([avg_q, epsilon])
         self.test_summary = tf.summary.merge([training_score])
         subprocess.Popen(['tensorboard', '--logdir', DIR_PATH, '--port', '6006'])
+
+        self.saver = tf.train.Saver()
 
         # Initialising and finalising
         self.sess.run(tf.global_variables_initializer())
@@ -152,7 +153,7 @@ class DQN_Agent:
                 score = self.test_Q(num_test_episodes=5)
                 self.writer.add_summary(self.sess.run(self.test_summary, feed_dict={self.training_score: score}), episode/50)
 
-            print("Episode {0}, epsilon {1}".format(episode, score))
+            print("Episode {0}, epsilon {1}".format(episode, epsilon))
             # Save score and average q-values into logs for Tensorboard
             self.writer.add_summary(self.sess.run(self.training_summary, feed_dict={self.avg_q: avg_q, self.epsilon: self.explore_rate.get(self.episodes_trained, self.num_episodes)}), episode)
             self.episodes_trained += 1
@@ -166,7 +167,7 @@ class DQN_Agent:
                 if visualize:
                     self.env.render()
                 action = self.get_action(self.env.process(state), epsilon=0)
-                next_state, reward, done, info = self.env.step(action)
+                next_state, reward, done, info = self.env.step(action,self.skip_frames)
                 state = next_state
                 cum_reward += reward
                 done = info['true_done']

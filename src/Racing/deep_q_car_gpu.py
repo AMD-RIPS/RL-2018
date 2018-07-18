@@ -126,7 +126,7 @@ class Playground:
 		done_batch = [data[4] for data in mini_batch]
 		return state_batch, action_batch, reward_batch, next_state_batch, done_batch
 
-	def experience_replay(self, replay_memory):
+	def experience_replay(self, replay_memory, frame):
 		state_batch, action_batch, reward_batch, next_state_batch, done_batch = self.get_batch(replay_memory)
 		y_batch = [None] * self.batch_size
 		dict = {self.state_tf: next_state_batch}
@@ -135,14 +135,10 @@ class Playground:
 		for i in range(self.batch_size):
 			y_batch[i] = reward_batch[i] + (0 if done_batch[i] else self.gamma * np.max(Q_value_batch[i]))
 
-		self.sess.run(self.train_op, feed_dict={self.y_tf: y_batch, self.action_tf: action_batch, 
+		if (frame % 100 == 0):
+			self.sess.run(self.train_op, feed_dict={self.y_tf: y_batch, self.action_tf: action_batch, 
 			self.state_tf: state_batch})
    
-	# def get_random_action(self):
-	# 	s = np.random.randint(0, self.steering_size)
-	# 	a = np.random.randint(0, self.acceleration_size)
-	# 	d = np.random.randint(0, self.deceleration_size)
-	# 	return s*self.acceleration_size*self.deceleration_size + a*self.deceleration_size + d
 	def get_random_action(self):
 		return np.random.randint(0, 4)
 
@@ -172,7 +168,6 @@ class Playground:
 			states = [state, state, state, state]
 			self.env.render()
 			self.update_fixed_weights()
-
 			while not done and frame < 500:
 				# Take action and update replay memory
 				# self.env.render()
@@ -188,7 +183,6 @@ class Playground:
 				one_hot_action = np.zeros(self.action_size)
 				one_hot_action[action] = 1
 				replay_memory.append((phi, one_hot_action, reward, phi_1, done))
-				
 
 				# Check whether replay memory capacity reached
 				if (len(replay_memory) > self.memory_capacity): 
@@ -196,8 +190,7 @@ class Playground:
 
 				# Perform experience replay if replay memory populated
 				if len(replay_memory) > 10 * self.batch_size:
-					self.experience_replay(replay_memory)
-
+					self.experience_replay(replay_memory, frame)
 
 				tot_reward += reward
 				state = next_state
@@ -213,8 +206,8 @@ class Playground:
 		# np.savetxt(file_name, q_averages, delimiter=',')
 		print '--------------- Done training ---------------'
 
-		saver = tf.train.Saver()
-    	last_chkp = saver.save(self.sess, dir + '/data-all.chkp')
+		# saver = tf.train.Saver()
+    	# last_chkp = saver.save(self.sess, dir + '/data-all.chkp')
 	
 	def test_Q(self, num_test_episodes):
 		print 'Testing...'

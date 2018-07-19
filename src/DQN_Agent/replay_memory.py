@@ -9,12 +9,12 @@ def pause():
 
 
 class Replay_Memory:
-	def __init__(self, memory_capacity, batch_size):
+	def __init__(self, memory_capacity, batch_size, q_grid_size):
 		self.memory_capacity = memory_capacity
 		self.batch_size = batch_size
 		self.memory = []
 		self.history = []
-		self.q_grid_size = 1000
+		self.q_grid_size = q_grid_size
 
 	def length(self):
 		return len(self.memory)
@@ -37,5 +37,5 @@ class Replay_Memory:
 		if (len(self.memory) > self.memory_capacity):
 			self.memory.pop(0)
 
-	def get_q_grid(self, size):
-		return [data[0] for data in self.memory[:self.q_grid_size]]
+	def get_q_grid(self):
+		return [data[0] for data in random.sample(self.memory, self.q_grid_size)]

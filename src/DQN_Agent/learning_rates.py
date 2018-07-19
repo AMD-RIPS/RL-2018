@@ -10,8 +10,17 @@ class Basic:
         pass
 
     def get(self, episode, num_episodes):
-        return 0.0005
+        return 0.001
+
+class Atari:
+
+    def __init__(self):
+        pass
+
+    def get(self, episode, num_episodes):
+        return 0.0005        
 
 lrng_dict = {
-    'basic': Basic
+    'basic': Basic, 
+    'atari': Atari
 }

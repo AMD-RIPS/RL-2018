@@ -32,9 +32,9 @@ class DQN_Agent:
         self.learning_rate = lrng.lrng_dict[learning_rate]()
         self.initialize_tf_variables()
 
-    def set_training_parameters(self, discount, batch_size, memory_capacity, num_episodes):
+    def set_training_parameters(self, discount, batch_size, memory_capacity, num_episodes, q_grid_size):
         self.discount = discount
-        self.replay_memory = rplm.Replay_Memory(memory_capacity, batch_size)
+        self.replay_memory = rplm.Replay_Memory(memory_capacity, batch_size, q_grid_size)
         self.num_episodes = num_episodes
 
     def initialize_tf_variables(self):
@@ -53,22 +53,23 @@ class DQN_Agent:
         self.avg_q = tf.placeholder(dtype=tf.float64)
         self.epsilon = tf.placeholder(dtype=tf.float64)
 
-        # Operations
-        self.Q_value = self.architecture(self.state_tf, self.action_size)
-        self.Q_argmax = tf.argmax(self.Q_value[0])
-        self.Q_amax = tf.reduce_max(self.Q_value[0])
-        self.Q_value_at_action = tf.reduce_sum(tf.multiply(self.Q_value, self.action_tf), axis=1)
+        with tf.device('/device:GPU:0'):
+        	# Operations
+            self.Q_value = self.architecture(self.state_tf, self.action_size)
+            self.Q_argmax = tf.argmax(self.Q_value[0])
+            self.Q_amax = tf.reduce_max(self.Q_value[0])
+            self.Q_value_at_action = tf.reduce_sum(tf.multiply(self.Q_value, self.action_tf), axis=1)
 
-        # Training related
-        self.loss = tf.reduce_mean(tf.square(self.y_tf - self.Q_value_at_action))
-        self.train_op = tf.train.AdamOptimizer(learning_rate=self.alpha).minimize(self.loss)
-        self.fixed_weights = None
+            # Training related
+            self.loss = tf.reduce_mean(tf.square(self.y_tf - self.Q_value_at_action))
+            self.train_op = tf.train.AdamOptimizer(learning_rate=self.alpha).minimize(self.loss)
+            self.fixed_weights = None
 
         # Tensorflow session setup
         config = tf.ConfigProto()
         config.allow_soft_placement = True
         config.gpu_options.allow_growth = True
-        config.log_device_placement = False
+        config.log_device_placement = True
         self.sess = tf.Session(config=config)
         self.trainable_variables = tf.trainable_variables()
 
@@ -117,8 +118,9 @@ class DQN_Agent:
             self.env.render()
             done = False
             self.update_fixed_weights()
-            epsilon = self.explore_rate.get(self.episodes_trained, self.num_episodes)
+            epsilon = self.explore_rate.get(episode, self.num_episodes)
 
+            print('episode', episode)
             while not done:
                 # Take action, update replay memory and update history (for storing previous 4 frames for example)
                 action = self.get_action(self.env.process(state), epsilon) 
@@ -132,25 +134,26 @@ class DQN_Agent:
             
                 state = next_state
                 done = info['true_done']
-
             # If q_grid not defined yet, and replay memory populated, create q_grid
-            if not self.q_grid and self.replay_memory.length() > 1000:
-                self.q_grid = self.replay_memory.get_q_grid(1000)
+            if not self.q_grid and self.replay_memory.length() > 5*self.replay_memory.q_grid_size:
+                self.q_grid = self.replay_memory.get_q_grid()
             # Calculate estimated Q value. Note: if q_grid undefined, returns 0
             avg_q = self.estimate_avg_q()
-            print(avg_q)
+
+            if episode > 100:
+            	score = self.test_Q(num_test_episodes = 5)
+            	print(score)
 
             # Save score and average q-values into logs for Tensorboard
-            if episode % 100 == 0:
+            if (episode + 1) % 100 == 0:
                 self.saver.save(self.sess, DIR_PATH + '/saved_models/tmp/data-all.chkp')
 
-            # score = 0
-            if episode % 50 == 0:
+            if (episode + 1)% 50 == 0:
                 score = self.test_Q(num_test_episodes=5)
-                self.writer.add_summary(self.sess.run(self.test_summary, feed_dict={self.training_score: score}), episode/50)
+                self.writer.add_summary(self.sess.run(self.test_summary, feed_dict={self.training_score: score}), episode)
 
             # Save score and average q-values into logs for Tensorboard
-            self.writer.add_summary(self.sess.run(self.training_summary, feed_dict={self.avg_q: avg_q, self.epsilon: self.explore_rate.get(self.episodes_trained, self.num_episodes)}), episode)
+            self.writer.add_summary(self.sess.run(self.training_summary, feed_dict={self.avg_q: avg_q, self.epsilon: epsilon}), episode)
             self.episodes_trained += 1
 
     def test_Q(self, num_test_episodes=10, visualize=False):

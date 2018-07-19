@@ -194,7 +194,9 @@ class DQN_Agent:
         for episode in range(num_test_episodes):
             done = False
             state = self.env.reset()
-            while not done:
+            start_time = time.time()
+            elapsed_time = 0
+            while not done and elapsed_time < 10:
                 if visualize:
                     self.env.render()
                 action = self.get_action(self.env.process(state), epsilon=0)
@@ -202,6 +204,7 @@ class DQN_Agent:
                 state = next_state
                 cum_reward += reward
                 done = info['true_done']
+                elapsed_time = time.time()-start_time
         return cum_reward / float(num_test_episodes)
 
     # estimate average Q value

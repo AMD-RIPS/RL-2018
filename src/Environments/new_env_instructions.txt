@@ -1,0 +1,19 @@
+How to add new gym environment
+
+1. copy 'straight_track.py' to ~/.local/lib/python2.7/site-packages/gyms/envs/box2d/
+
+2. add the following line to ~/.local/lib/python2.7/site-packages/gyms/envs/box2d/__init__.py
+from gym.envs.box2d.straight_track import StraightTrack
+
+3. add the following to ~/.local/lib/python2.7/site-packages/gyms/envs/__init__.py
+# Custom Track
+register(
+    id='StraightTrack-v0',
+    entry_point='gym.envs.box2d:StraightTrack',
+    max_episode_steps=250,
+    reward_threshold=900,
+)
+
+4. make sure it is working
+import gym
+env = gym.make('StraightTrack-v0')

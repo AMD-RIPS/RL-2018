@@ -19,6 +19,7 @@ class Replay_Memory:
 	def length(self):
 		return len(self.memory)
 
+	# random sample minibatch
 	def get_batch(self):
 		mini_batch = random.sample(self.memory, self.batch_size)
 		state_batch = [data[0] for data in mini_batch]
@@ -28,14 +29,15 @@ class Replay_Memory:
 		done_batch = [data[4] for data in mini_batch]
 		return state_batch, action_batch, reward_batch, next_state_batch, done_batch
 
+	# add new memory
 	def add(self, environment, state, action, reward, next_state, done, action_size):
 		one_hot_action = np.zeros(action_size) 
 		one_hot_action[action] = 1
-		processed_state = environment.process(state)
-		processed_next_state = environment.process(next_state)
-		self.memory.append((processed_state, one_hot_action, reward, processed_next_state, done))
+		self.memory.append((state, one_hot_action, reward, next_state, done))
 		if (len(self.memory) > self.memory_capacity):
 			self.memory.pop(0)
 
+	# random sample 10 states out of 1000 states
 	def get_q_grid(self, size):
-		return [data[0] for data in self.memory[:self.q_grid_size]]
+		mini_batch = random.sample(self.memory, size)
+		return [data[0] for data in mini_batch]

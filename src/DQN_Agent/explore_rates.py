@@ -25,7 +25,7 @@ class AtariPaper:
 	def __init__(self):
 		pass
 
-	def get(self, frames, frames_limit):
+	def get(self, frames, frames_limit = 1000000):
 		return max(0.1, (1 - 0.9*(float(frames)/frames_limit)))
 
 

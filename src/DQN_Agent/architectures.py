@@ -8,9 +8,8 @@ basic_layer_sizes = [32, 32]
 
 def basic_architecture(input, action_size):
     neural_net = input
-    # for n in basic_layer_sizes:
-    neural_net = tf.nn.dropout(tf.layers.dense(neural_net, 16, activation=tf.nn.relu), 0.9)
-    neural_net = tf.layers.dense(neural_net, 16, activation=tf.nn.relu)
+    for n in basic_layer_sizes:
+        neural_net = tf.layers.dense(neural_net, n, activation=tf.nn.relu)
     return tf.layers.dense(neural_net, action_size, activation=None)
 
 def convolutional_architecture_1_layer(input, action_size):

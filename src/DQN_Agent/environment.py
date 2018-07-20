@@ -52,13 +52,13 @@ class CartPole:
 class Pong:
 
     def __init__(self):
-        self.image_dim = 28*27
+        self.image_dim = 80*72
         self.env = gym.make("PongDeterministic-v4")
         self.state_space_size = 4*self.image_dim
-        self.action_space_size = 2
+        self.action_space_size = 3
         self.history = []
         self.history_pick = 4
-        self.state_shape = [None, self.history_pick, 42, 32]
+        self.state_shape = [None, self.history_pick, 80, 72]
         self.skip_frames = 1
 
     def sample_action_space(self):
@@ -81,23 +81,18 @@ class Pong:
     def render(self):
         self.env.render()
     
-    # Returns 28*27 greyscale image
     def downscale(self, rgb):
-        rgb = rgb[33:196,:,:]
-    	r, g, b = rgb[:,:,0], rgb[:,:,1], rgb[:,:,2]
-    	gray = 0.2989 * r + 0.5870 * g + 0.1140 * b
-        gray = downscale_local_mean(gray, (6, 6))
+        rgb = rgb[34:-16, 8:-8, :]
+        r, g, b = rgb[:,:,0], rgb[:,:,1], rgb[:,:,2]
+        gray = 0.2989 * r + 0.5870 * g + 0.1140 * b
+        gray = downscale_local_mean(gray, (2, 2))
         gray = per_image_standardization(gray)
-        # im = Image.fromarray(gray)
-        # im.show()
-        # print(gray.shape)
-        # pause()
-    	return gray
+        return gray
 
     def process(self, state):
-    	self.add_history(state, None, None)
+        self.add_history(state, None, None)
         if len(self.history) < self.history_pick : 
-            zeros = np.zeros((28,27))
+            zeros = np.zeros((80,72))
             result = np.tile(zeros,((self.history_pick - len(self.history)),1,1))
             result = np.concatenate((result,np.array(self.history)))
         else: 
@@ -118,7 +113,6 @@ class CarRacing:
         self.history_pick = 4
         self.state_space_size = self.image_dim * self.history_pick 
         self.state_shape = [None, self.history_pick, 48, 48]
-        self.skip_frame = 4
 
     def sample_action_space(self):
         return np.random.randint(self.action_space_size)

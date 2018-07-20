@@ -177,7 +177,7 @@ class DQN_Agent:
 
             # Calculate estimated Q value. Note: if q_grid undefined, returns 0
             avg_q = self.estimate_avg_q()
-
+            
             # Save score and average q-values into logs for Tensorboard
             if (episode + 1) % 100 == 0:
                 self.saver.save(self.sess, DIR_PATH + '/saved_models/tmp/data.chkp')

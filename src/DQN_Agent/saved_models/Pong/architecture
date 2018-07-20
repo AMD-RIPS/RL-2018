@@ -1,0 +1,14 @@
+environment = env.env_dict["Pong"]()
+control = agent.DQN_Agent(environment=environment, architecture='conv2', explore_rate='AtariPaper', learning_rate='basic')
+control.set_training_parameters(discount=.99, batch_size=32, memory_capacity=10000, num_episodes=100000)
+
+def convolutional_architecture_2_layers(input, action_size):
+    layer1_out = tf.layers.conv2d(input, filters=16, kernel_size=[8,8],
+     strides=[4,4], padding='same', activation=tf.nn.relu, data_format='channels_first', name='layer1_out', trainable=True) # => 23x23x16
+    layer2_out = tf.layers.conv2d(layer1_out, filters=32, kernel_size=[4,4],
+     strides=[2,2], padding='same', activation=tf.nn.relu, data_format='channels_first', name='layer2_out', trainable=True)
+    layer2_out = tf.layers.flatten(layer2_out)
+    layer3_out = tf.nn.dropout(tf.layers.dense(layer2_out, 256, activation=tf.nn.relu, trainable=True), .7, name='layer3_out') # => 1x256
+    output = tf.layers.dense(layer3_out, action_size, activation=None, name = 'output', trainable=True)
+    return output
+

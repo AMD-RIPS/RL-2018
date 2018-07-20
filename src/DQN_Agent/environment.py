@@ -11,10 +11,17 @@ from PIL import Image
 def pause():
     programPause = raw_input("Press the <ENTER> key to continue...")
 
-# image standardization method
-def per_image_standardization(image):
+def normalise_image(image):
     image  = np.array(image)
     return (image - np.mean(image))/np.std(image)
+
+def process_image(rgb_image, x_low = 0, x_high = None, y_low = 0, y_high = None, downscaling_factor = (1, 1)):
+    rgb_image = rgb_image[x_low:x_high,y_low:y_high,:]
+    r, g, b = rgb_image[:,:,0], rgb_image[:,:,1], rgb_image[:,:,2]
+    gray = 0.2989 * r + 0.5870 * g + 0.1140 * b
+    gray = downscale_local_mean(gray, downscaling_factor)
+    gray = normalise_image(gray)
+    return gray
 
 class CartPole:
 
@@ -80,14 +87,6 @@ class Pong:
 
     def render(self):
         self.env.render()
-    
-    def downscale(self, rgb):
-        rgb = rgb[34:-16, 8:-8, :]
-        r, g, b = rgb[:,:,0], rgb[:,:,1], rgb[:,:,2]
-        gray = 0.2989 * r + 0.5870 * g + 0.1140 * b
-        gray = downscale_local_mean(gray, (2, 2))
-        gray = per_image_standardization(gray)
-        return gray
 
     def process(self, state):
         self.add_history(state, None, None)
@@ -101,7 +100,7 @@ class Pong:
 
     def add_history(self, state, action, reward):
         if len(self.history) >= self.history_pick: self.history.pop(0)
-        self.history.append(self.downscale(state))
+        self.history.append(process_image(state, 34, -16, 8, -8, (2, 2)))
 
 class CarRacing:
 
@@ -113,6 +112,7 @@ class CarRacing:
         self.history_pick = 4
         self.state_space_size = self.image_dim * self.history_pick 
         self.state_shape = [None, self.history_pick, 48, 48]
+        self.skip_frames = 4
 
     def sample_action_space(self):
         return np.random.randint(self.action_space_size)
@@ -134,13 +134,6 @@ class CarRacing:
     def render(self):
         self.env.render()
 
-    def downscale(self, rgb):
-        r, g, b = rgb[:,:,0], rgb[:,:,1], rgb[:,:,2]
-        gray = 0.2989 * r + 0.5870 * g + 0.1140 * b
-        gray = downscale_local_mean(gray, (2, 2))
-        gray = per_image_standardization(gray)
-        return gray
-
     def process(self, state):
         self.add_history(state, None, None)
         if len(self.history) < self.history_pick : 
@@ -153,7 +146,7 @@ class CarRacing:
 
     def add_history(self, state, action, reward):
         if len(self.history) >= self.history_pick: self.history.pop(0)
-        self.history.append(self.downscale(state))
+        self.history.append(process_image(state, downscaling_factor = (2, 2)))
 
 class BreakOut:
 
@@ -166,34 +159,23 @@ class BreakOut:
         self.state_space_size = self.image_dim * self.history_pick 
         self.state_shape = [None, self.history_pick, 80, 72]
         self.skip_frames = 1
+        print(self.env.unwrapped.get_action_meanings())
 
     def sample_action_space(self):
         return np.random.randint(self.action_space_size)
 
-    def map_action(self, action_index):
-        return action_index
-
     def reset(self):
-        return self.env.reset()
+        self.env.reset()
+        # First action should be to fire
+        return self.step(1)[0]
 
     def step(self, action):
-        for i in range(self.skip_frames):
-            next_state, reward, done, info = self.env.step(self.map_action(action))
-            if done:
-                break
+        next_state, reward, done, _ = self.env.step(action)
         info = {'true_done': done}
         return next_state, reward, done, info
 
     def render(self):
         self.env.render()
-
-    def downscale(self, rgb):
-        rgb = rgb[34:-16, 8:-8, :]
-        r, g, b = rgb[:,:,0], rgb[:,:,1], rgb[:,:,2]
-        gray = 0.2989 * r + 0.5870 * g + 0.1140 * b
-        gray = downscale_local_mean(gray, (2, 2))
-        gray = per_image_standardization(gray)
-        return gray
 
     def process(self, state):
         self.add_history(state, None, None)
@@ -207,15 +189,12 @@ class BreakOut:
 
     def add_history(self, state, action, reward):
         if len(self.history) >= self.history_pick: self.history.pop(0)
-        self.history.append(self.downscale(state))
-
-
+        self.history.append(process_image(state, x_low = 34, x_high = -16, y_low = 8, y_high = -8, downscaling_factor = (2, 2)))
 
 env_dict = {
     "CartPole": CartPole,
     "Pong": Pong,
     "CarRacing": CarRacing,
-    "BreakOut": BreakOut,
-    "MountainCar": MountainCar
+    "BreakOut": BreakOut
  }
 

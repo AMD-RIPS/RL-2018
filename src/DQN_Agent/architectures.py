@@ -36,8 +36,7 @@ def atari_paper(input, action_size):
      strides=[4,4], padding='same', activation=tf.nn.relu, data_format='channels_first', name='layer1_out')
     layer2_out = tf.layers.conv2d(layer1_out, filters=32, kernel_size=[4,4],
      strides=[2,2], padding='same', activation=tf.nn.relu, data_format='channels_first', name='layer2_out')
-    layer2_shape = np.prod(np.shape(layer2_out)[1:])
-    layer3_out = tf.layers.dense(tf.reshape(layer2_out, [-1,layer2_shape]), 256, activation=tf.nn.relu, name='layer3_out')
+    layer3_out = tf.layers.dense(tf.layers.flatten(layer2_out), 256, activation=tf.nn.relu, name='layer3_out')
     return tf.layers.dense(layer3_out, action_size, activation=None, name = 'output')
 
 arch_dict = {

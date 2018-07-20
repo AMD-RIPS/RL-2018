@@ -29,9 +29,9 @@ class DQN_Agent:
         self.learning_rate = lrng.lrng_dict[learning_rate]()
         self.initialize_tf_variables()
 
-    def set_training_parameters(self, discount, batch_size, memory_capacity, num_episodes, q_grid_size):
+    def set_training_parameters(self, discount, batch_size, memory_capacity, num_episodes):
         self.discount = discount
-        self.replay_memory = rplm.Replay_Memory(memory_capacity, batch_size, q_grid_size)
+        self.replay_memory = rplm.Replay_Memory(memory_capacity, batch_size)
         self.num_episodes = num_episodes
 
     def initialize_tf_variables(self):
@@ -90,119 +90,86 @@ class DQN_Agent:
 
 
     def experience_replay(self, alpha):
-        # get minibatch for update
         state_batch, action_batch, reward_batch, next_state_batch, done_batch = self.replay_memory.get_batch()
         y_batch = [None] * self.replay_memory.batch_size
 
-        # create feed_dict, notice that it is using the fixed weights
         feed_dict = {self.state_tf: next_state_batch}
         feed_dict.update(zip(self.trainable_variables, self.fixed_target_weights))
-
-        # get Q values according to the fixed weights
+        
         Q_value_batch = self.sess.run(self.Q_value, feed_dict=feed_dict)
-
-        # get y values, for terminal state, y = reward; for non-terminal state, y = reward + discount * max(Q)
         y_batch = reward_batch + self.discount*np.multiply(np.invert(done_batch), np.amax(Q_value_batch, axis=1))
 
-        # minimize loss
+        # Performing one step of optimization
         self.sess.run(self.train_op, feed_dict={self.y_tf: y_batch, self.action_tf: action_batch, self.state_tf: state_batch, self.alpha: alpha})
 
-    # get action based on epsilon-greedy policy
     def get_action(self, state, epsilon):
-        # if random number is smaller than epsilon, take random action
+        # Perorming epsilon-greedy action selection
         if random.random() < epsilon:
             return self.env.sample_action_space()
-        # else, choose action based on Q
         else:
             return self.sess.run(self.Q_argmax, feed_dict={self.state_tf: [state]})
 
-    # update fixed weights to current weights
     def update_fixed_target_weights(self):
         self.fixed_target_weights = self.sess.run(self.trainable_variables)
 
-    # training function
     def train(self):
-        # count frame
         frame = 0
         for episode in range(self.num_episodes):
-            # count time per episode
             start_time = time.time()
             print('Episode {0}/{1}'.format(episode, self.num_episodes))
 
-            # start/reset the game and process the initial state
+            # Setting up game environment
             state = self.env.reset()
             state = self.env.process(state)
-
-            # render image or the environment will return zeros
             self.env.render()
 
-            # initialize terminal state to False
+            # Setting up parameters for the episode
             done = False
-
-            # update fixed weights every 30 episodes
-            if episode % 30 == 0:
-                self.update_fixed_weights()
-
-            # get epsilon based on frame number
             epsilon = self.explore_rate.get(frame)
             alpha = self.learning_rate.get(episode, self.num_episodes)
-
-            print('episode', episode)
             while not done:
-
-                # update fixed weights every 1000 frame
+                # Updating fixed target weights every 1000 frames
                 if frame % 1000 == 0:
                     self.update_fixed_target_weights()
                 frame += 1
 
-                # Take action, update replay memory and update history (for storing previous 4 frame for example)
+                # Choosing and performing action and updating the replay memory
                 action = self.get_action(state, epsilon) 
                 next_state, reward, done, info = self.env.step(action)
-
-                # fixed reward to 1 if positive, -1 if negative
-                reward  = np.sign(reward)
                 next_state = self.env.process(next_state)
+                reward  = np.sign(reward)
                 self.replay_memory.add(self.env, state, action, reward, next_state, done, self.action_size)
 
-                # Perform experience replay if replay memory populated
+                # Performing experience replay if replay memory populated
                 if self.replay_memory.length() > self.replay_memory.batch_size:
                     self.experience_replay(alpha)
-            
                 state = next_state
                 done = info['true_done']
 
-            # If q_grid not defined yet, and replay memory populated, create q_grid
-            if not self.q_grid and self.replay_memory.length() > 5*self.replay_memory.q_grid_size:
-                self.q_grid = self.replay_memory.get_q_grid()
-
-            # Calculate estimated Q value. Note: if q_grid undefined, returns 0
+            
+            # Creating q_grid if not yet defined and calculating average q-value
+            if not self.q_grid and self.replay_memory.length() > 5000:
+                self.q_grid = self.replay_memory.get_q_grid(1000)
             avg_q = self.estimate_avg_q()
             
-            # Save score and average q-values into logs for Tensorboard
-            if (episode + 1) % 100 == 0:
-                self.saver.save(self.sess, DIR_PATH + '/saved_models/tmp/data.chkp')
-            
-            # If q_grid not defined yet, and replay memory populated, create q_grid
-            if not self.q_grid and self.replay_memory.length() > 1000:
-                self.q_grid = self.replay_memory.get_q_grid(100)
-
-            # every 30 episode, test based on current Q
+            # Saving tensorboard data
             if (episode % 30 == 0) and (episode != 0):
-                score = self.test_Q(num_test_episodes=5)
+                score = self.test_Q(num_test_episodes=5, visualize = True)
                 self.writer.add_summary(self.sess.run(self.test_summary, feed_dict={self.training_score: score}), episode/30)
-
-            # Save epsilon and average q-values into logs for Tensorboard
             self.writer.add_summary(self.sess.run(self.training_summary, feed_dict={self.avg_q: avg_q, self.epsilon: epsilon}), episode)
+            
+            # Saving model
+            if episode % 100 == 0:
+                self.saver.save(self.sess, DIR_PATH + '/saved_models/tmp/data.chkp')
 
-    # test function
     def test_Q(self, num_test_episodes=10, visualize=False):
         cum_reward = 0
         for episode in range(num_test_episodes):
             done = False
-            state = self.env.reset()
             start_time = time.time()
             elapsed_time = 0
-            while not done and elapsed_time < 100:
+            state = self.env.reset()
+            while not done and not elapsed_time > 60:
                 if visualize:
                     self.env.render()
                 action = self.get_action(self.env.process(state), epsilon=0)
@@ -210,10 +177,9 @@ class DQN_Agent:
                 state = next_state
                 cum_reward += reward
                 done = info['true_done']
-                elapsed_time = time.time()-start_time
+                elapsed_time = time.time() - start_time
         return cum_reward / float(num_test_episodes)
 
-    # estimate average Q value
     def estimate_avg_q(self):
         if not self.q_grid:
             return 0

@@ -11,14 +11,11 @@ import architectures as arch
 import learning_rates as lrng
 import explore_rates as expl
 import replay_memory as rplm
+from utils import pause
 import time
 from tensorflow.python.saved_model import tag_constants
 
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
-
-def pause():
-    programPause = raw_input("Press the <ENTER> key to continue...")
-
 
 class DQN_Agent:
     # architecture, explore_rate and learning_rate are strings, see respective files for definitions
@@ -29,10 +26,11 @@ class DQN_Agent:
         self.learning_rate = lrng.lrng_dict[learning_rate]()
         self.initialize_tf_variables()
 
-    def set_training_parameters(self, discount, batch_size, memory_capacity, num_episodes):
+    def set_training_parameters(self, discount, batch_size, memory_capacity, num_episodes, learning_rate_drop_frame_limit = 1000000):
         self.discount = discount
         self.replay_memory = rplm.Replay_Memory(memory_capacity, batch_size)
         self.num_episodes = num_episodes
+        self.training_metadata = {'num_episodes': num_episodes, 'frame_limit': learning_rate_drop_frame_limit}
 
     def initialize_tf_variables(self):
         # Setting up game specific variables
@@ -90,7 +88,7 @@ class DQN_Agent:
 
 
     def experience_replay(self, alpha):
-        state_batch, action_batch, reward_batch, next_state_batch, done_batch = self.replay_memory.get_batch()
+        state_batch, action_batch, reward_batch, next_state_batch, done_batch = self.replay_memory.get_mini_batch()
         y_batch = [None] * self.replay_memory.batch_size
 
         feed_dict = {self.state_tf: next_state_batch}
@@ -113,8 +111,9 @@ class DQN_Agent:
         self.fixed_target_weights = self.sess.run(self.trainable_variables)
 
     def train(self):
-        frame = 0
+        self.training_metadata['frame'] = 0
         for episode in range(self.num_episodes):
+            self.training_metadata['episode'] = episode
             start_time = time.time()
             print('Episode {0}/{1}'.format(episode, self.num_episodes))
 
@@ -125,13 +124,13 @@ class DQN_Agent:
 
             # Setting up parameters for the episode
             done = False
-            epsilon = self.explore_rate.get(frame)
-            alpha = self.learning_rate.get(episode, self.num_episodes)
+            epsilon = self.explore_rate.get(self.training_metadata)
+            alpha = self.learning_rate.get(self.training_metadata)
             while not done:
                 # Updating fixed target weights every 1000 frames
-                if frame % 1000 == 0:
+                if self.training_metadata['frame'] % 1000 == 0:
                     self.update_fixed_target_weights()
-                frame += 1
+                self.training_metadata['frame'] += 1
 
                 # Choosing and performing action and updating the replay memory
                 action = self.get_action(state, epsilon) 
@@ -157,17 +156,17 @@ class DQN_Agent:
                 score = self.test_Q(num_test_episodes=5, visualize = True)
                 self.writer.add_summary(self.sess.run(self.test_summary, feed_dict={self.training_score: score}), episode/30)
             self.writer.add_summary(self.sess.run(self.training_summary, feed_dict={self.avg_q: avg_q, self.epsilon: epsilon}), episode)
-            
+
             # Saving model
             if episode % 100 == 0:
                 self.saver.save(self.sess, DIR_PATH + '/saved_models/tmp/data.chkp')
 
     def test_Q(self, num_test_episodes=10, visualize=False):
         cum_reward = 0
+        start_time = time.time()
+        elapsed_time = 0
         for episode in range(num_test_episodes):
             done = False
-            start_time = time.time()
-            elapsed_time = 0
             state = self.env.reset()
             while not done and not elapsed_time > 60:
                 if visualize:
@@ -178,6 +177,7 @@ class DQN_Agent:
                 cum_reward += reward
                 done = info['true_done']
                 elapsed_time = time.time() - start_time
+                if elapsed_time > 60: num_test_episodes = episode
         return cum_reward / float(num_test_episodes)
 
     def estimate_avg_q(self):

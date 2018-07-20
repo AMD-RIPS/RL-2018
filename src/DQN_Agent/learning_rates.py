@@ -9,7 +9,7 @@ class Basic:
     def __init__(self):
         pass
 
-    def get(self, episode, num_episodes):
+    def get(self, training_metadata):
         return 0.001
 
 class Atari:
@@ -17,7 +17,7 @@ class Atari:
     def __init__(self):
         pass
 
-    def get(self, episode, num_episodes):
+    def get(self, training_metadata):
         return 0.0005        
 
 lrng_dict = {

@@ -4,9 +4,7 @@ sys.dont_write_bytecode = True
 import numpy as np
 import random
 
-def pause():
-    programPause = raw_input("Press the <ENTER> key to continue...")
-
+from utils import pause
 
 class Replay_Memory:
 	def __init__(self, memory_capacity, batch_size):
@@ -18,8 +16,7 @@ class Replay_Memory:
 	def length(self):
 		return len(self.memory)
 
-	# random sample minibatch
-	def get_batch(self):
+	def get_mini_batch(self):
 		mini_batch = random.sample(self.memory, self.batch_size)
 		state_batch = [data[0] for data in mini_batch]
 		action_batch = [data[1] for data in mini_batch]
@@ -28,7 +25,6 @@ class Replay_Memory:
 		done_batch = [data[4] for data in mini_batch]
 		return state_batch, action_batch, reward_batch, next_state_batch, done_batch
 
-	# add new memory
 	def add(self, environment, state, action, reward, next_state, done, action_size):
 		one_hot_action = np.zeros(action_size) 
 		one_hot_action[action] = 1

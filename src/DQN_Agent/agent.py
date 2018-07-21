@@ -15,15 +15,17 @@ from utils import pause
 import time
 from tensorflow.python.saved_model import tag_constants
 
-DIR_PATH = os.path.dirname(os.path.realpath(__file__))
+
 
 class DQN_Agent:
     # architecture, explore_rate and learning_rate are strings, see respective files for definitions
-    def __init__(self, environment, architecture, explore_rate, learning_rate):
+    def __init__(self, environment, architecture, explore_rate, learning_rate, model_name=False):
+        self.DIR_PATH = os.path.dirname(os.path.realpath(__file__)) + '/saved_models'
         self.env = environment
         self.architecture = arch.arch_dict[architecture]
         self.explore_rate = expl.expl_dict[explore_rate]()
         self.learning_rate = lrng.lrng_dict[learning_rate]()
+        self.document_parameters(model_name, environment, architecture)
         self.initialize_tf_variables()
 
     def set_training_parameters(self, discount, batch_size, memory_capacity, num_episodes, learning_rate_drop_frame_limit = 1000000):
@@ -31,6 +33,7 @@ class DQN_Agent:
         self.replay_memory = rplm.Replay_Memory(memory_capacity, batch_size)
         self.num_episodes = num_episodes
         self.training_metadata = {'num_episodes': num_episodes, 'frame_limit': learning_rate_drop_frame_limit}
+        self.document_training_parameters(discount, batch_size, memory_capacity, num_episodes, learning_rate_drop_frame_limit)
 
     def initialize_tf_variables(self):
         # Setting up game specific variables
@@ -69,7 +72,7 @@ class DQN_Agent:
         self.trainable_variables = tf.trainable_variables()
 
         # Tensorboard setup
-        LOG_PATH = DIR_PATH  + "/logs/tmp"
+        LOG_PATH = self.DIR_PATH  + "/logs"
         self.writer = tf.summary.FileWriter(LOG_PATH)
         self.writer.add_graph(self.sess.graph)
         training_score = tf.summary.scalar("Training score", self.training_score, collections=None, family=None)
@@ -77,7 +80,7 @@ class DQN_Agent:
         avg_q = tf.summary.scalar("Average Q-value", self.avg_q, collections=None, family=None)
         self.training_summary = tf.summary.merge([avg_q, epsilon])
         self.test_summary = tf.summary.merge([training_score])
-        subprocess.Popen(['tensorboard', '--logdir', DIR_PATH  + "/logs/tmp", '--port', '6006'])
+        subprocess.Popen(['tensorboard', '--logdir', self.DIR_PATH  + "/logs", '--port', '6006'])
 
         # Initialising saver
         self.saver = tf.train.Saver()
@@ -159,7 +162,7 @@ class DQN_Agent:
 
             # Saving model
             if episode % 100 == 0:
-                self.saver.save(self.sess, DIR_PATH + '/saved_models/tmp/data.chkp')
+                self.saver.save(self.sess, self.DIR_PATH + '/model.chkp')
 
     def test_Q(self, num_test_episodes=10, visualize=False):
         cum_reward = 0
@@ -185,3 +188,29 @@ class DQN_Agent:
             return 0
         num_samples = len(self.q_grid)
         return np.average(np.amax(self.sess.run(self.Q_value, feed_dict={self.state_tf: self.q_grid}), axis = 1))
+
+    def document_parameters(self, model_name, env, architecture):        
+        # create path for logs and saved model
+        if model_name:
+            self.DIR_PATH += "/" + model_name
+            if not os.path.exists(self.DIR_PATH):
+                os.makedirs(self.DIR_PATH)
+            else:
+                overwrite_error = 'Model \'' + model_name + '\' has already been created.'
+                raise Exception(overwrite_error)
+
+        # document parameters
+        with open(self.DIR_PATH + '/params.txt', 'w') as file:
+            file.write('Environment: ' + str(env).split()[0].split('.')[1] + '\n')
+            file.write('Architecture: '  + architecture + '\n')
+            file.write('Explore Rate: '  + str(self.explore_rate) + '\n')
+            file.write('Learning Rate: ' + str(self.learning_rate) + '\n') 
+
+    def document_training_parameters(self, discount, batch_size, memory_capacity, num_episodes, learning_rate_drop_frame_limit):
+        # document training parameters
+        with open(self.DIR_PATH + '/params.txt', 'a') as file:
+            file.write('Discount: ' + str(discount) + '\n')
+            file.write('Batch Size: ' + str(batch_size) + '\n')
+            file.write('Memory Capacity: ' + str(memory_capacity) + '\n')
+            file.write('Num Episodes: ' + str(num_episodes) + '\n')
+            file.write('Learning Rate Drop Frame Limit: ' + str(learning_rate_drop_frame_limit) + '\n')

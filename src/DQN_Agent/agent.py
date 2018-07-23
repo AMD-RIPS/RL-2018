@@ -42,7 +42,6 @@ class DQN_Agent:
         self.num_q_grid = num_q_grid
         self.document_training_parameters(discount, batch_size, memory_capacity, num_episodes, learning_rate_drop_frame_limit)
 
-
     def initialize_tf_variables(self):
         # Setting up game specific variables
         self.state_size = self.env.state_space_size
@@ -178,6 +177,7 @@ class DQN_Agent:
         self.loss_summary = tf.summary.merge([loss_monitor])
         subprocess.Popen(['tensorboard', '--logdir', self.log_path, '--port', '6007'])
 
+
         # Initialising and finalising
         # self.sess.graph.finalize()
 
@@ -268,6 +268,7 @@ class DQN_Agent:
             # Saving model
             if (episode+1) % self.save_frequence == 0:
                 self.saver.save(self.sess, self.model_path + '/data.chkp')
+
 
     def test_Q(self, num_test_episodes=10, visualize=False):
         cum_reward = 0

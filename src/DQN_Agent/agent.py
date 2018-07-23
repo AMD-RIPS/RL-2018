@@ -15,6 +15,8 @@ from utils import pause
 import time
 from tensorflow.python.saved_model import tag_constants
 
+
+
 class DQN_Agent:
     # architecture, explore_rate and learning_rate are strings, see respective files for definitions
     def __init__(self, environment, architecture, explore_rate, learning_rate, reload_bool, model_name=False):
@@ -47,6 +49,7 @@ class DQN_Agent:
         self.state_size = self.env.state_space_size
         self.action_size = self.env.action_space_size
         self.state_shape = self.env.state_shape
+        self.q_grid = None
 
         # Tf placeholders
         self.state_tf = tf.placeholder(shape=self.state_shape, dtype=tf.float32, name='state_tf')
@@ -248,6 +251,7 @@ class DQN_Agent:
                     self.experience_replay(alpha)
                 state = next_state
                 done = info['true_done']
+
             
             # Creating q_grid if not yet defined and calculating average q-value
             if not self.q_stored and self.replay_memory.length() > (self.num_q_grid*5):
@@ -320,4 +324,3 @@ class DQN_Agent:
             file.write('Memory Capacity: ' + str(memory_capacity) + '\n')
             file.write('Num Episodes: ' + str(num_episodes) + '\n')
             file.write('Learning Rate Drop Frame Limit: ' + str(learning_rate_drop_frame_limit) + '\n')
-

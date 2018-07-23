@@ -20,12 +20,12 @@ class Classic_Control:
         return self.env.action_space.sample()
 
     def reset(self):
-        return self.env.reset()
+        return self.process(self.env.reset())
 
     def step(self, action):
         next_state, reward, done, _ = self.env.step(action)
         info = {'true_done': done}
-        return next_state, reward, done, info
+        return self.process(next_state), reward, done, info
 
     def render(self):
         self.env.render()
@@ -59,7 +59,7 @@ class Pong:
         return np.random.randint(self.action_space_size)
 
     def reset(self):
-        return self.env.reset()
+        return self.process(self.env.reset())
 
     def step(self, action):
         action = self.map_action(action)
@@ -67,7 +67,7 @@ class Pong:
             next_state, reward, done, info = self.env.step(action)
             info = {'true_done': done}
             if done: break
-        return next_state, reward, done, info
+        return self.process(next_state), reward, done, info
 
     def render(self):
         self.env.render()
@@ -108,7 +108,7 @@ class CarRacing:
         return self.action_dict[action]
 
     def reset(self):
-        return self.env.reset()
+        return self.process(self.env.reset())
 
     def step(self, action):
         action = self.map_action(action)
@@ -116,7 +116,7 @@ class CarRacing:
             next_state, reward, done, info = self.env.step(action)
             info = {'true_done': done}
             if done: break
-        return next_state, reward, done, info
+        return self.process(next_state), reward, done, info
 
     def render(self):
         self.env.render()
@@ -156,12 +156,12 @@ class BreakOut:
     def reset(self):
         self.env.reset()
         # First action should be to fire
-        return self.step(1)[0]
+        return self.process(self.step(1)[0])
 
     def step(self, action):
         next_state, reward, done, _ = self.env.step(action)
         info = {'true_done': done}
-        return next_state, reward, done, info
+        return self.process(next_state), reward, done, info
 
     def render(self):
         self.env.render()

@@ -1,0 +1,3 @@
+cleanup.sh deletes logs/tmp and saved_models/tmp and kills tensorboard.
+To use it just execute './cleanup.sh' in this folder.
+If it's not working (first time) then execute 'chmod a+x cleanup.sh'. 

@@ -3,6 +3,7 @@ sys.dont_write_bytecode = True
 
 import numpy as np
 from skimage.transform import downscale_local_mean
+import time
 
 def pause():
     programPause = raw_input("Press the <ENTER> key to continue...")
@@ -23,3 +24,16 @@ def get_image_shape(env, crop, downscaling_factor):
 	screen = env.reset()
 	image = process_image(screen, crop, downscaling_factor)
 	return np.shape(image)
+
+class Timer:
+    def __init__(self):
+        self.clocks = {}
+
+    def add_timer(self, name):
+        self.clocks[name] = time.time()
+
+    def get_timer(self, name):
+        current_time = time.time()
+        elapsed_time = current_time - self.clocks[name]
+        self.clocks[name] = current_time
+        return elapsed_time

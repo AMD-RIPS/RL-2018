@@ -15,16 +15,17 @@ from utils import pause
 import time
 from tensorflow.python.saved_model import tag_constants
 
+DIR_PATH = os.path.dirname(os.path.realpath(__file__))
+SAVE_PATH = DIR_PATH + '/saved_models/tmp3'
+LOG_PATH = DIR_PATH  + "/logs/tmp3"
+
 class DQN_Agent:
     # architecture, explore_rate and learning_rate are strings, see respective files for definitions
-    def __init__(self, environment, architecture, explore_rate, learning_rate, reload_bool, model_name=False):
+    def __init__(self, environment, architecture, explore_rate, learning_rate, reload_bool):
         self.env = environment
         self.architecture = arch.arch_dict[architecture]
         self.explore_rate = expl.expl_dict[explore_rate]()
         self.learning_rate = lrng.lrng_dict[learning_rate]()
-        self.model_path = os.path.dirname(os.path.realpath(__file__)) + '/saved_models'
-        self.document_parameters(model_name, environment, architecture)
-        self.log_path = self.model_path + '/log'
         if reload_bool:
             self.reload_tf_variables()
         else:
@@ -40,8 +41,6 @@ class DQN_Agent:
         self.test_frequency = test_frequency
         self.save_frequence = save_frequence
         self.num_q_grid = num_q_grid
-        self.document_training_parameters(discount, batch_size, memory_capacity, num_episodes, learning_rate_drop_frame_limit)
-
 
     def initialize_tf_variables(self):
         # Setting up game specific variables
@@ -90,7 +89,7 @@ class DQN_Agent:
         self.trainable_variables = tf.trainable_variables()
 
         # Tensorboard setup
-        self.writer = tf.summary.FileWriter(self.log_path)
+        self.writer = tf.summary.FileWriter(LOG_PATH)
         self.writer.add_graph(self.sess.graph)
         training_score = tf.summary.scalar("Training score", self.training_score, collections=None, family=None)
         epsilon = tf.summary.scalar("Epsilon", self.epsilon, collections=None, family=None)
@@ -99,7 +98,7 @@ class DQN_Agent:
         self.training_summary = tf.summary.merge([avg_q, epsilon])
         self.test_summary = tf.summary.merge([training_score])
         self.loss_summary = tf.summary.merge([loss_monitor])
-        subprocess.Popen(['tensorboard', '--logdir', self.log_path, '--port', '6006'])
+        subprocess.Popen(['tensorboard', '--logdir', LOG_PATH, '--port', '6006'])
 
         # Initialising saver
         self.saver = tf.train.Saver()
@@ -114,7 +113,7 @@ class DQN_Agent:
 
     def reload_tf_variables(self):
         tf.reset_default_graph() 
-        self.saver = tf.train.import_meta_graph(self.model_path + '/data.chkp.meta')
+        self.saver = tf.train.import_meta_graph(SAVE_PATH + '/data.chkp.meta')
 
         # Setting up game specific variables
         self.state_size = self.env.state_space_size
@@ -128,7 +127,7 @@ class DQN_Agent:
         config.log_device_placement = False
         self.sess = tf.Session(config=config)
 
-        self.saver.restore(self.sess,tf.train.latest_checkpoint(self.model_path))
+        self.saver.restore(self.sess,tf.train.latest_checkpoint(SAVE_PATH))
         graph = tf.get_default_graph()
 
         # Tf placeholders
@@ -167,7 +166,7 @@ class DQN_Agent:
         self.previous_fra_num = self.sess.run(self.frames)
 
         # Tensorboard setup
-        self.writer = tf.summary.FileWriter(self.log_path)
+        self.writer = tf.summary.FileWriter(LOG_PATH)
         self.writer.add_graph(self.sess.graph)
         training_score = graph.get_tensor_by_name('Training_score_1:0')
         epsilon = graph.get_tensor_by_name('Epsilon_1:0')
@@ -176,7 +175,7 @@ class DQN_Agent:
         self.training_summary = tf.summary.merge([avg_q, epsilon])
         self.test_summary = tf.summary.merge([training_score])
         self.loss_summary = tf.summary.merge([loss_monitor])
-        subprocess.Popen(['tensorboard', '--logdir', self.log_path, '--port', '6007'])
+        subprocess.Popen(['tensorboard', '--logdir', LOG_PATH, '--port', '6007'])
 
         # Initialising and finalising
         # self.sess.graph.finalize()
@@ -267,7 +266,7 @@ class DQN_Agent:
 
             # Saving model
             if (episode+1) % self.save_frequence == 0:
-                self.saver.save(self.sess, self.model_path + '/data.chkp')
+                self.saver.save(self.sess, SAVE_PATH + '/data.chkp')
 
     def test_Q(self, num_test_episodes=10, visualize=False):
         cum_reward = 0
@@ -292,31 +291,3 @@ class DQN_Agent:
         if not self.q_stored:
             return 0
         return np.average(np.amax(self.sess.run(self.Q_value, feed_dict={self.state_tf: self.sess.run(self.q_grid_set)}), axis = 1))
-
-
-    def document_parameters(self, model_name, env, architecture):        
-        # create path for logs and saved model
-        if model_name:
-            self.model_path += "/" + model_name
-            if not os.path.exists(self.model_path):
-                os.makedirs(self.model_path)
-            else:
-                overwrite_error = 'Model \'' + model_name + '\' has already been created.'
-                raise Exception(overwrite_error)
-
-        # document parameters
-        with open(self.model_path + '/params.txt', 'w') as file:
-            file.write('Environment: ' + str(env).split()[0].split('.')[1] + '\n')
-            file.write('Architecture: '  + architecture + '\n')
-            file.write('Explore Rate: '  + str(self.explore_rate) + '\n')
-            file.write('Learning Rate: ' + str(self.learning_rate) + '\n') 
-
-    def document_training_parameters(self, discount, batch_size, memory_capacity, num_episodes, learning_rate_drop_frame_limit):
-        # document training parameters
-        with open(self.model_path + '/params.txt', 'a') as file:
-            file.write('Discount: ' + str(discount) + '\n')
-            file.write('Batch Size: ' + str(batch_size) + '\n')
-            file.write('Memory Capacity: ' + str(memory_capacity) + '\n')
-            file.write('Num Episodes: ' + str(num_episodes) + '\n')
-            file.write('Learning Rate Drop Frame Limit: ' + str(learning_rate_drop_frame_limit) + '\n')
-

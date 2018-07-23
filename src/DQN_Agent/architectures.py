@@ -10,7 +10,8 @@ def basic_architecture(input, action_size):
     neural_net = input
     for n in basic_layer_sizes:
         neural_net = tf.layers.dense(neural_net, n, activation=tf.nn.relu)
-    return tf.layers.dense(neural_net, action_size, activation=None)
+    output =  tf.layers.dense(neural_net, action_size, activation=None, name='output')
+    return output
 
 def convolutional_architecture_1_layer(input, action_size):
     layer1_out = tf.layers.conv2d(input, filters=16, kernel_size=[8,8],
@@ -37,7 +38,8 @@ def atari_paper(input, action_size):
     layer2_out = tf.layers.conv2d(layer1_out, filters=32, kernel_size=[4,4],
      strides=[2,2], padding='same', activation=tf.nn.relu, data_format='channels_first', name='layer2_out')
     layer3_out = tf.layers.dense(tf.layers.flatten(layer2_out), 256, activation=tf.nn.relu, name='layer3_out')
-    return tf.layers.dense(layer3_out, action_size, activation=None, name = 'output')
+    output =  tf.layers.dense(layer3_out, action_size, activation=None, name='output')
+    return output
 
 arch_dict = {
     'basic': basic_architecture, 

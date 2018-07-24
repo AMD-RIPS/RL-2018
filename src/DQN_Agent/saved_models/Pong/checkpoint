@@ -1,2 +1,0 @@
-model_checkpoint_path: "/home/pgerber/Documents/RL-2018/src/DQN_Agent/saved_models/tmp/breakout.chkp"
-all_model_checkpoint_paths: "/home/pgerber/Documents/RL-2018/src/DQN_Agent/saved_models/tmp/breakout.chkp"

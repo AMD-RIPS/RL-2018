@@ -15,18 +15,19 @@ class Basic:
     def __str__(self):
         return '0.001'
 
+
 class Atari:
 
     def __init__(self):
         pass
 
     def get(self, training_metadata):
-        return 0.0005 
+        return 0.005
 
     def __str__(self):
-        return '0.0005'       
+        return '0.0005'
 
 lrng_dict = {
-    'basic': Basic, 
+    'basic': Basic,
     'atari': Atari
 }

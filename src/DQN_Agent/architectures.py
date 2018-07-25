@@ -43,12 +43,12 @@ class convolutional_architecture_2_layers:
         layer2_out = tf.layers.conv2d(layer1_out, filters=32, kernel_size=[4, 4],
                                       strides=[2, 2], padding='same', activation=tf.nn.relu, data_format='channels_first', name='layer2_out')
         layer2_out = tf.layers.flatten(layer2_out)
-        layer3_out = tf.nn.dropout(tf.layers.dense(layer2_out, 256, activation=tf.nn.relu), .7, name='layer3_out')
+        layer3_out = tf.nn.dropout(tf.layers.dense(layer2_out, 256, activation=tf.nn.relu), 0.7, name='layer3_out')
         output = tf.layers.dense(layer3_out, action_size, activation=None, name='output')
         return output
 
     def __str__(self):
-        return "conv2"
+        return "conv2 with no dropout"
 
 
 class atari_paper:

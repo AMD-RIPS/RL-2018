@@ -31,12 +31,12 @@ class DQN_Agent:
         self.log_path = self.model_path + '/log'
         self.initialize_tf_variables()
 
-    def set_training_parameters(self, discount, batch_size, memory_capacity, num_episodes, learning_rate_drop_frame_limit=100000):
+    def set_training_parameters(self, discount, batch_size, memory_capacity, num_episodes, learning_rate_drop_frame_limit=100000, save = False):
         self.discount = discount
         self.replay_memory = rplm.Replay_Memory(memory_capacity, batch_size)
         self.training_metadata = metadata.Training_Metadata(num_episodes=num_episodes, frame_limit=learning_rate_drop_frame_limit)
         self.training_metadata.num_episodes = num_episodes
-        utils.document_parameters(self)
+        if save: utils.document_parameters(self)
 
     def initialize_tf_variables(self):
         # Setting up game specific variables
@@ -58,6 +58,8 @@ class DQN_Agent:
         self.Q_argmax = tf.argmax(self.Q_value[0], name='Q_argmax')
         self.Q_amax = tf.reduce_max(self.Q_value[0], name='Q_amax')
         self.Q_value_at_action = tf.reduce_sum(tf.multiply(self.Q_value, self.action_tf), axis=1, name='Q_value_at_action')
+        self.DDQN_greedy_action_onehot = tf.one_hot(tf.argmax(self.Q_value, axis = 1), depth=self.action_size)
+        self.DDQN_QVals = tf.reduce_sum(tf.multiply(self.Q_value, self.DDQN_greedy_action_onehot), axis = 1)
 
         # Training related
         self.loss = tf.reduce_mean(tf.square(self.y_tf - self.Q_value_at_action), name='loss')
@@ -93,8 +95,13 @@ class DQN_Agent:
         feed_dict = {self.state_tf: next_state_batch}
         feed_dict.update(zip(self.trainable_variables, self.fixed_target_weights))
 
-        Q_value_batch = self.sess.run(self.Q_value, feed_dict=feed_dict)
-        y_batch = reward_batch + self.discount * np.multiply(np.invert(done_batch), np.amax(Q_value_batch, axis=1))
+        # Simple DQN
+        # Q_value_batch = self.sess.run(self.Q_value, feed_dict=feed_dict)
+        # y_batch = reward_batch + self.discount * np.multiply(np.invert(done_batch), np.amax(Q_value_batch, axis=1))
+
+        # Double DQN
+        Q_value_batch = self.sess.run(self.DDQN_QVals, feed_dict)
+        y_batch = reward_batch + self.discount * np.multiply(np.invert(done_batch), Q_value_batch)
 
         # Performing one step of optimization
         self.sess.run(self.train_op, feed_dict={self.y_tf: y_batch, self.action_tf: action_batch,
@@ -147,7 +154,8 @@ class DQN_Agent:
 
             # Saving tensorboard data and model weights
             if episode % 30 == 0:
-                score = self.test_Q(num_test_episodes=5, visualize=True)
+                score = self.test_Q(num_test_episodes=5, visualize=False)
+                print(score)
                 self.writer.add_summary(self.sess.run(self.test_summary,
                                                       feed_dict={self.test_score: score}), episode / 30)
                 self.saver.save(self.sess, self.model_path + '/data.chkp')

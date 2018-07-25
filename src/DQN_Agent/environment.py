@@ -47,7 +47,7 @@ class Classic_Control:
 
 class Pong:
 
-    def __init__(self, crop=(34, -16, 8, -8), downscaling_factor=(2, 2), history_pick=1, skip_frames=1):
+    def __init__(self, crop=(34, -16, 8, -8), downscaling_factor=(2, 2), history_pick=4, skip_frames=1):
         self.name = "Pong_" + str(time.time())
         self.env = gym.make('PongDeterministic-v4')
         self.image_shape = utils.get_image_shape(self.env, crop, downscaling_factor)
@@ -57,7 +57,7 @@ class Pong:
         self.state_shape = [None, self.history_pick] + list(self.image_shape)
         self.history = []
         self.skip_frames = skip_frames
-        self.action_dict = {0: 2, 1: 3, 2: 0}
+        self.action_dict = {0: 0, 1: 3, 2: 2}
         self.crop = crop
         self.downscaling_factor = downscaling_factor
 
@@ -75,6 +75,7 @@ class Pong:
         for i in range(self.skip_frames):
             next_state, reward, done, info = self.env.step(action)
             info = {'true_done': done}
+            if reward == -1: done = True
             if done:
                 break
         return self.process(next_state), reward, done, info

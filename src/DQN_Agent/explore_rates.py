@@ -22,10 +22,10 @@ class Atari:
         pass
 
     def get(self, training_metadata):
-        return max(0.1, 0.1 + (1 - float(training_metadata.frame) / training_metadata.frame_limit))
+        return max(0.1, 0.1 + 0.2*(1 - float(training_metadata.frame) / training_metadata.frame_limit))
 
     def __str__(self):
-        return 'max(0.1, 0.1 + (1 - float(training_metadata.frame)/training_metadata.frame_limit))'
+        return 'max(0.1, 0.1 + 0.2*(1 - float(training_metadata.frame) / training_metadata.frame_limit))'
 
 expl_dict = {
     'basic': Basic,

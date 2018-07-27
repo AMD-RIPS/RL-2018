@@ -26,6 +26,8 @@ def grayscale_img(image):
 
 def process_image(rgb_image, crop=(None, None, None, None), downscaling_factor=(1, 1)):
     rgb_image = rgb_image[crop[0]:crop[1], crop[2]:crop[3], :]
+    r, g, b = rgb_image[:, :, 0], rgb_image[:, :, 1], rgb_image[:, :, 2]
+    gray = 0.2989 * r + 0.5870 * g + 0.1140 * b
     gray = gray[::2, ::2]
     gray = normalise_image(gray)
     return gray

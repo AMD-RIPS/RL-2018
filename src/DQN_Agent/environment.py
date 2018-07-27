@@ -160,14 +160,15 @@ class BreakOut:
     def __init__(self, crop=(34, -16, 8, -8), downscaling_factor=(2, 2), history_pick=4, skip_frames=1):
         self.name = "BreakOut" + str(time.time())
         self.env = gym.make('BreakoutDeterministic-v4')
-        self.image_shape = utils.get_image_shape(self.env, crop, downscaling_factor)
+        # self.image_shape = utils.get_image_shape(self.env, crop, downscaling_factor)
+        self.image_shape = (84, 84)
         self.history_pick = history_pick
         self.state_space_size = history_pick * np.prod(self.image_shape)
-        self.action_space_size = 3
+        self.action_space_size = self.env.action_space.n
         self.state_shape = [None, self.history_pick] + list(self.image_shape)
         self.history = []
         self.skip_frames = skip_frames
-        self.action_dict = {0: 0, 2: 2, 1: 3}
+        self.action_dict = {0: 0, 1: 1, 2: 2, 3: 3}
         self.crop = crop
         self.downscaling_factor = downscaling_factor
 
@@ -179,13 +180,21 @@ class BreakOut:
 
     def reset(self):
         self.env.reset()
+        self.life_remaining = 5
         # First action should be to fire
         return self.step(1)[0]
 
     def step(self, action):
-        paction = self.map_action(action)
-        next_state, reward, done, _ = self.env.step(action)
-        info = {'true_done': done}
+        action = self.map_action(action)
+        for i in range(self.skip_frames):
+            next_state, reward, done, info = self.env.step(action)
+            info.update({'true_done': False})
+            if info['ale.lives'] < self.life_remaining:
+                done = True
+            if info['ale.lives'] == 0:  
+                info['true_done'] = True 
+                break
+        self.life_remaining = info['ale.lives']
         return self.process(next_state), reward, done, info
 
     def render(self):
@@ -204,7 +213,9 @@ class BreakOut:
     def add_history(self, state, action, reward):
         if len(self.history) >= self.history_pick:
             self.history.pop(0)
-        self.history.append(utils.process_image(state, self.crop, self.downscaling_factor))
+        # self.history.append(utils.process_image(state, self.crop, self.downscaling_factor))
+        self.history.append(utils.process_nature_atari(state))
+
 
 env_dict = {
     "Classic_Control": Classic_Control,

@@ -49,7 +49,7 @@ class Pong:
 
     def __init__(self, crop=(34, -16, 8, -8), downscaling_factor=(2, 2), history_pick=4, skip_frames=1):
         self.name = "Pong_" + str(time.time())
-        self.env = gym.make('PongDeterministic-v4')
+        self.env = gym.make('Pong-v0')
         self.image_shape = utils.get_image_shape(self.env, crop, downscaling_factor)
         self.history_pick = history_pick
         self.state_space_size = history_pick * np.prod(self.image_shape)
@@ -104,7 +104,7 @@ class Pong:
 
 class CarRacing:
 
-    def __init__(self, crop=(None, None, None, None), downscaling_factor=(2, 2), history_pick=1, skip_frames=4):
+    def __init__(self, crop=(None, None, None, None), downscaling_factor=(2, 2), history_pick=4, skip_frames=4):
         self.name = "CarRacing" + str(time.time())
         self.env = gym.make('CarRacing-v0')
         self.image_shape = utils.get_image_shape(self.env, crop, downscaling_factor)
@@ -157,7 +157,7 @@ class CarRacing:
 
 class BreakOut:
 
-    def __init__(self, crop=(34, -16, 8, -8), downscaling_factor=(2, 2), history_pick=1, skip_frames=1):
+    def __init__(self, crop=(34, -16, 8, -8), downscaling_factor=(2, 2), history_pick=4, skip_frames=1):
         self.name = "BreakOut" + str(time.time())
         self.env = gym.make('BreakoutDeterministic-v4')
         self.image_shape = utils.get_image_shape(self.env, crop, downscaling_factor)

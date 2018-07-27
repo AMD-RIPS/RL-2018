@@ -22,21 +22,21 @@ DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 class DQN_Agent:
     # architecture, explore_rate and learning_rate are strings, see respective files for definitions
 
-    def __init__(self, environment, architecture, explore_rate, learning_rate):
+    def __init__(self, environment, architecture, explore_rate, learning_rate, model_name=None):
         self.env = environment
         self.architecture = arch.arch_dict[architecture]()
         self.explore_rate = expl.expl_dict[explore_rate]()
         self.learning_rate = lrng.lrng_dict[learning_rate]()
-        self.model_path = os.path.dirname(os.path.realpath(__file__)) + '/models/{}'.format(str(self.env))
+        self.model_path = os.path.dirname(os.path.realpath(__file__)) + '/models/' + model_name if model_name else str(self.env)
         self.log_path = self.model_path + '/log'
         self.initialize_tf_variables()
 
-    def set_training_parameters(self, discount, batch_size, memory_capacity, num_episodes, learning_rate_drop_frame_limit=100000, save = False):
+    def set_training_parameters(self, discount, batch_size, memory_capacity, num_episodes, delta = 1, learning_rate_drop_frame_limit=100000):
         self.discount = discount
         self.replay_memory = rplm.Replay_Memory(memory_capacity, batch_size)
         self.training_metadata = metadata.Training_Metadata(num_episodes=num_episodes, frame_limit=learning_rate_drop_frame_limit)
-        self.training_metadata.num_episodes = num_episodes
-        if save: utils.document_parameters(self)
+        self.delta = delta
+        utils.document_parameters(self)
 
     def initialize_tf_variables(self):
         # Setting up game specific variables
@@ -62,7 +62,8 @@ class DQN_Agent:
         self.DDQN_QVals = tf.reduce_sum(tf.multiply(self.Q_value, self.DDQN_greedy_action_onehot), axis = 1)
 
         # Training related
-        self.loss = tf.reduce_mean(tf.square(self.y_tf - self.Q_value_at_action), name='loss')
+        # self.loss = tf.losses.mean_squared_error(self.y_tf, self.Q_value_at_action)
+        self.loss = tf.losses.huber_loss(self.y_tf, self.Q_value_at_action)
         self.train_op = tf.train.AdamOptimizer(learning_rate=self.alpha).minimize(self.loss, name='train_minimize')
         self.fixed_target_weights = None
 
@@ -93,7 +94,7 @@ class DQN_Agent:
         y_batch = [None] * self.replay_memory.batch_size
 
         feed_dict = {self.state_tf: next_state_batch}
-        feed_dict.update(zip(self.trainable_variables, self.fixed_target_weights))
+        # feed_dict.update(zip(self.trainable_variables, self.fixed_target_weights))
 
         # Simple DQN
         # Q_value_batch = self.sess.run(self.Q_value, feed_dict=feed_dict)

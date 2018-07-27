@@ -48,7 +48,7 @@ class convolutional_architecture_2_layers:
         return output
 
     def __str__(self):
-        return "conv2 with no dropout"
+        return "conv2 with dropout 0.7"
 
 
 class atari_paper:

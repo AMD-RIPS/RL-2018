@@ -34,7 +34,8 @@ class DQN_Agent:
     def set_training_parameters(self, discount, batch_size, memory_capacity, num_episodes, delta = 1, learning_rate_drop_frame_limit=100000):
         self.discount = discount
         self.replay_memory = rplm.Replay_Memory(memory_capacity, batch_size)
-        self.training_metadata = metadata.Training_Metadata(num_episodes=num_episodes, frame_limit=learning_rate_drop_frame_limit)
+        self.training_metadata = metadata.Training_Metadata(frame = self.sess.run(self.frames), frame_limit=learning_rate_drop_frame_limit, 
+            episode = self.sess.run(self.episode), num_episodes=num_episodes)
         self.delta = delta
         utils.document_parameters(self)
 
@@ -52,6 +53,12 @@ class DQN_Agent:
         self.alpha = tf.placeholder(dtype=tf.float32, name='alpha')
         self.test_score = tf.placeholder(dtype=tf.float32, name='test_score')
         self.avg_q = tf.placeholder(dtype=tf.float32, name='avg_q')
+
+        # Keep track of episode and frames
+        self.episode = tf.Variable(initial_value=0,trainable=False, name='episode')
+        self.frames = tf.Variable(initial_value=0,trainable=False, name='frames')
+        self.increment_frames_op = tf.assign(self.frames, self.frames+1, name='increment_frames_op')
+        self.increment_episode_op = tf.assign(self.episode, self.episode+1, name='increment_episode_op')
 
         # Operations
         self.Q_value = self.architecture.evaluate(self.state_tf, self.action_size)
@@ -83,7 +90,7 @@ class DQN_Agent:
         avg_q = tf.summary.scalar("Average Q-value", self.avg_q, collections=None, family=None)
         self.training_summary = tf.summary.merge([avg_q])
         self.test_summary = tf.summary.merge([test_score])
-        subprocess.Popen(['tensorboard', '--logdir', self.log_path])
+        # subprocess.Popen(['tensorboard', '--logdir', self.log_path])
 
         # Initialising variables and finalising graph
         self.sess.run(tf.global_variables_initializer())
@@ -121,6 +128,7 @@ class DQN_Agent:
     def train(self):
         for episode in range(self.training_metadata.num_episodes):
             self.training_metadata.increment_episode()
+            self.sess.run(self.increment_episode_op)
 
             # Setting up game environment
             state = self.env.reset()
@@ -135,6 +143,7 @@ class DQN_Agent:
                 if self.training_metadata.frame % 1000 == 0:
                     self.update_fixed_target_weights()
                 self.training_metadata.increment_frame()
+                self.sess.run(self.increment_frames_op)
 
                 # Choosing and performing action and updating the replay memory
                 action = self.get_action(state, epsilon)

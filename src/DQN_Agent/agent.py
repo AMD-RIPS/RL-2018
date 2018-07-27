@@ -31,7 +31,7 @@ class DQN_Agent:
         self.log_path = self.model_path + '/log'
         self.initialize_tf_variables()
 
-    def set_training_parameters(self, discount, batch_size, memory_capacity, num_episodes, delta = 1, learning_rate_drop_frame_limit=100000):
+    def set_training_parameters(self, discount, batch_size, memory_capacity, num_episodes, delta=1, learning_rate_drop_frame_limit=100000):
         self.discount = discount
         self.replay_memory = rplm.Replay_Memory(memory_capacity, batch_size)
         self.training_metadata = metadata.Training_Metadata(frame = self.sess.run(self.frames), frame_limit=learning_rate_drop_frame_limit, 
@@ -53,6 +53,7 @@ class DQN_Agent:
         self.alpha = tf.placeholder(dtype=tf.float32, name='alpha')
         self.test_score = tf.placeholder(dtype=tf.float32, name='test_score')
         self.avg_q = tf.placeholder(dtype=tf.float32, name='avg_q')
+        self.DDQN_greedy_action_onehot_placeholder = tf.placeholder(dtype=tf.float32, name='ddqn_greedy_action_onehot_placeholder')
 
         # Keep track of episode and frames
         self.episode = tf.Variable(initial_value=0,trainable=False, name='episode')
@@ -65,8 +66,8 @@ class DQN_Agent:
         self.Q_argmax = tf.argmax(self.Q_value[0], name='Q_argmax')
         self.Q_amax = tf.reduce_max(self.Q_value[0], name='Q_amax')
         self.Q_value_at_action = tf.reduce_sum(tf.multiply(self.Q_value, self.action_tf), axis=1, name='Q_value_at_action')
-        self.DDQN_greedy_action_onehot = tf.one_hot(tf.argmax(self.Q_value, axis = 1), depth=self.action_size)
-        self.DDQN_QVals = tf.reduce_sum(tf.multiply(self.Q_value, self.DDQN_greedy_action_onehot), axis = 1)
+        self.DDQN_greedy_action_onehot = tf.one_hot(tf.argmax(self.Q_value, axis=1), depth=self.action_size)
+        self.DDQN_QVals = tf.reduce_sum(tf.multiply(self.Q_value, self.DDQN_greedy_action_onehot_placeholder), axis=1)
 
         # Training related
         # self.loss = tf.losses.mean_squared_error(self.y_tf, self.Q_value_at_action)
@@ -100,15 +101,19 @@ class DQN_Agent:
         state_batch, action_batch, reward_batch, next_state_batch, done_batch = self.replay_memory.get_mini_batch()
         y_batch = [None] * self.replay_memory.batch_size
 
-        feed_dict = {self.state_tf: next_state_batch}
-        # feed_dict.update(zip(self.trainable_variables, self.fixed_target_weights))
-
         # Simple DQN
+        # feed_dict = {self.state_tf: next_state_batch}
+        # feed_dict.update(zip(self.trainable_variables, self.fixed_target_weights))
         # Q_value_batch = self.sess.run(self.Q_value, feed_dict=feed_dict)
         # y_batch = reward_batch + self.discount * np.multiply(np.invert(done_batch), np.amax(Q_value_batch, axis=1))
 
         # Double DQN
-        Q_value_batch = self.sess.run(self.DDQN_QVals, feed_dict)
+        DDQN_greedy_action_onehot = self.sess.run(self.DDQN_greedy_action_onehot, feed_dict={self.state_tf: next_state_batch})
+
+        feed_dict = {self.state_tf: next_state_batch, self.DDQN_greedy_action_onehot_placeholder: DDQN_greedy_action_onehot}
+        feed_dict.update(zip(self.trainable_variables, self.fixed_target_weights))
+
+        Q_value_batch = self.sess.run(self.DDQN_QVals, feed_dict=feed_dict)
         y_batch = reward_batch + self.discount * np.multiply(np.invert(done_batch), Q_value_batch)
 
         # Performing one step of optimization

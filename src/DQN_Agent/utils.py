@@ -15,14 +15,25 @@ def normalise_image(image):
     image = np.array(image)
     return (image - np.mean(image)) / np.std(image)
 
+def unit_image(image):
+    image  = np.array(image)
+    max_along_dim = np.amax(image)
+    return np.true_divide(image,max_along_dim)
+
+def grayscale_img(image):
+    return np.dot(image[...,:3], [0.299, 0.587, 0.114])
 
 def process_image(rgb_image, crop=(None, None, None, None), downscaling_factor=(1, 1)):
     rgb_image = rgb_image[crop[0]:crop[1], crop[2]:crop[3], :]
-    r, g, b = rgb_image[:, :, 0], rgb_image[:, :, 1], rgb_image[:, :, 2]
-    gray = 0.2989 * r + 0.5870 * g + 0.1140 * b
     gray = gray[::2, ::2]
     gray = normalise_image(gray)
     return gray
+
+def process_nature_atari(rgb_image, downscaling_dimension = (84, 84)):
+    gray = grayscale_img(rgb_image)
+    down_img = resize(gray, downscaling_dimension)
+    down_img = unit_image(down_img)
+    return down_img
 
 def show(image):
     im = Image.fromarray(image)

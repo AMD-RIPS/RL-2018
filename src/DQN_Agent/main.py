@@ -8,7 +8,7 @@ import tensorflow as tf
 
 print sys.argv[:]
 
-if(len(sys.argv) <= 2):
+if(len(sys.argv) < 2):
     print 'Usage: python main.py model_name'
     exit(1)
 

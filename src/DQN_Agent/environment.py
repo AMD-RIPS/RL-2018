@@ -153,11 +153,12 @@ class CarRacing:
             self.history.pop(0)
         self.history.append(utils.process_image(state, self.crop, self.downscaling_dimension))
 
+
 class StraightTrack:
 
     def __init__(self, crop=(None, None, None, None), downscaling_dimension=(84, 84), history_pick=4, skip_frames=4):
-        self.name = "CarRacing" + str(time.time())
-        self.env = gym.make('CarRacing-v0')
+        self.name = "StraightTrack" + str(time.time())
+        self.env = gym.make('StraightTrack-v0')
         self.downscaling_dimension = downscaling_dimension
         self.history_pick = history_pick
         self.state_space_size = history_pick * np.prod(self.downscaling_dimension)

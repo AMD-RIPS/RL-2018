@@ -151,7 +151,7 @@ class DQN_Agent:
                 self.sess.run(self.increment_frames_op)
 
                 # Choosing and performing action and updating the replay memory
-                action = self.get_action(state, epsilon)
+                action = self.get_action(state, epsilon)                
                 next_state, reward, done, info = self.env.step(action)
                 reward = np.sign(reward)
                 self.replay_memory.add(self.env, state, action, reward, next_state, done, self.action_size)
@@ -188,6 +188,7 @@ class DQN_Agent:
                 if visualize:
                     self.env.render()
                 action = self.get_action(state, epsilon=0)
+
                 next_state, reward, done, info = self.env.step(action)
                 state = next_state
                 cum_reward += reward

@@ -47,19 +47,18 @@ class Classic_Control:
 
 class Pong:
 
-    def __init__(self, crop=(34, -16, 8, -8), downscaling_factor=(2, 2), history_pick=4, skip_frames=1):
+    def __init__(self, crop=(34, -16, 8, -8), downscaling_dimension=(84, 84), history_pick=4, skip_frames=1):
         self.name = "Pong_" + str(time.time())
         self.env = gym.make('Pong-v0')
-        self.image_shape = utils.get_image_shape(self.env, crop, downscaling_factor)
+        self.downscaling_dimension = downscaling_dimension
         self.history_pick = history_pick
-        self.state_space_size = history_pick * np.prod(self.image_shape)
+        self.state_space_size = history_pick * np.prod(self.downscaling_dimension)
         self.action_space_size = 3
-        self.state_shape = [None, self.history_pick] + list(self.image_shape)
+        self.state_shape = [None, self.history_pick] + list(self.downscaling_dimension)
         self.history = []
         self.skip_frames = skip_frames
         self.action_dict = {0: 0, 1: 3, 2: 2}
         self.crop = crop
-        self.downscaling_factor = downscaling_factor
 
     def map_action(self, action):
         return self.action_dict[action]
@@ -86,7 +85,7 @@ class Pong:
     def process(self, state):
         self.add_history(state, None, None)
         if len(self.history) < self.history_pick:
-            zeros = np.zeros(self.image_shape)
+            zeros = np.zeros(self.downscaling_dimension)
             result = np.tile(zeros, ((self.history_pick - len(self.history)), 1, 1))
             result = np.concatenate((result, np.array(self.history)))
         else:
@@ -96,7 +95,7 @@ class Pong:
     def add_history(self, state, action, reward):
         if len(self.history) >= self.history_pick:
             self.history.pop(0)
-        self.history.append(utils.process_image(state, self.crop, self.downscaling_factor))
+        self.history.append(utils.process_image(state, self.crop, self.downscaling_dimension))
 
     def __str__(self):
         return "Pong_" + str(time.time())
@@ -104,24 +103,24 @@ class Pong:
 
 class CarRacing:
 
-    def __init__(self, crop=(None, None, None, None), downscaling_factor=(2, 2), history_pick=4, skip_frames=4):
+    def __init__(self, crop=(None, None, None, None), downscaling_dimension=(84, 84), history_pick=4, skip_frames=4):
         self.name = "CarRacing" + str(time.time())
         self.env = gym.make('CarRacing-v0')
-        self.image_shape = utils.get_image_shape(self.env, crop, downscaling_factor)
+        self.downscaling_dimension = downscaling_dimension
         self.history_pick = history_pick
-        self.state_space_size = history_pick * np.prod(self.image_shape)
+        self.state_space_size = history_pick * np.prod(self.downscaling_dimension)
         self.action_space_size = 3
-        self.state_shape = [None, self.history_pick] + list(self.image_shape)
+        self.state_shape = [None, self.history_pick] + list(self.downscaling_dimension)
         self.history = []
         self.skip_frames = skip_frames
         self.action_dict = {0: [-1, 0, 0], 1: [1, 0, 0], 2: [0, 1, 0], 3: [0, 0, 0.8]}
         self.crop = crop
-        self.downscaling_factor = downscaling_factor
 
     def sample_action_space(self):
         return np.random.randint(self.action_space_size)
 
     def map_action(self, action):
+        
         return self.action_dict[action]
 
     def reset(self):
@@ -142,7 +141,7 @@ class CarRacing:
     def process(self, state):
         self.add_history(state, None, None)
         if len(self.history) < self.history_pick:
-            zeros = np.zeros(self.image_shape)
+            zeros = np.zeros(self.downscaling_dimension)
             result = np.tile(zeros, ((self.history_pick - len(self.history)), 1, 1))
             result = np.concatenate((result, np.array(self.history)))
         else:
@@ -152,25 +151,23 @@ class CarRacing:
     def add_history(self, state, action, reward):
         if len(self.history) >= self.history_pick:
             self.history.pop(0)
-        self.history.append(utils.process_image(state, self.crop, self.downscaling_factor))
+        self.history.append(utils.process_image(state, self.crop, self.downscaling_dimension))
 
 
 class BreakOut:
 
-    def __init__(self, crop=(34, -16, 8, -8), downscaling_factor=(2, 2), history_pick=4, skip_frames=1):
+    def __init__(self, crop=(34, -16, 8, -8), downscaling_dimension = (84, 84), history_pick=4, skip_frames=1):
         self.name = "BreakOut" + str(time.time())
         self.env = gym.make('BreakoutDeterministic-v4')
-        # self.image_shape = utils.get_image_shape(self.env, crop, downscaling_factor)
-        self.image_shape = (84, 84)
+        self.downscaling_dimension = downscaling_dimension
         self.history_pick = history_pick
-        self.state_space_size = history_pick * np.prod(self.image_shape)
+        self.state_space_size = history_pick * np.prod(self.downscaling_dimension)
         self.action_space_size = self.env.action_space.n
-        self.state_shape = [None, self.history_pick] + list(self.image_shape)
+        self.state_shape = [None, self.history_pick] + list(self.downscaling_dimension)
         self.history = []
         self.skip_frames = skip_frames
         self.action_dict = {0: 0, 1: 1, 2: 2, 3: 3}
         self.crop = crop
-        self.downscaling_factor = downscaling_factor
 
     def map_action(self, action):
         return self.action_dict[action]
@@ -203,7 +200,7 @@ class BreakOut:
     def process(self, state):
         self.add_history(state, None, None)
         if len(self.history) < self.history_pick:
-            zeros = np.zeros(self.image_shape)
+            zeros = np.zeros(self.downscaling_dimension)
             result = np.tile(zeros, ((self.history_pick - len(self.history)), 1, 1))
             result = np.concatenate((result, np.array(self.history)))
         else:
@@ -213,7 +210,6 @@ class BreakOut:
     def add_history(self, state, action, reward):
         if len(self.history) >= self.history_pick:
             self.history.pop(0)
-        # self.history.append(utils.process_image(state, self.crop, self.downscaling_factor))
         self.history.append(utils.process_nature_atari(state))
 
 

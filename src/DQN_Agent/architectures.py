@@ -18,7 +18,7 @@ class basic_architecture:
         return output
 
     def __str__(self):
-        return "2 dense layers of size {0} and {1}".format(basic_layer_sizes[0], basic_layer_sizes[1])
+        return "2 dense layers of size {0} and {1}".format(self.layer_sizes[0], self.layer_sizes[1])
 
 
 class convolutional_architecture_1_layer:

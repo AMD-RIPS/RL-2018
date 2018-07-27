@@ -2,7 +2,6 @@ import sys
 sys.dont_write_bytecode = True
 
 import numpy as np
-from skimage.transform import downscale_local_mean
 from skimage.transform import resize
 import time
 from PIL import Image
@@ -10,7 +9,6 @@ from PIL import Image
 
 def pause():
     programPause = raw_input("Press the <ENTER> key to continue...")
-
 
 def normalise_image(image):
     image = np.array(image)
@@ -24,29 +22,22 @@ def unit_image(image):
 def grayscale_img(image):
     return np.dot(image[...,:3], [0.299, 0.587, 0.114])
 
-def process_image(rgb_image, crop=(None, None, None, None), downscaling_factor=(1, 1)):
+def process_image(rgb_image, crop=(None, None, None, None), downscaling_dimension=(84, 84)):
     rgb_image = rgb_image[crop[0]:crop[1], crop[2]:crop[3], :]
-    r, g, b = rgb_image[:, :, 0], rgb_image[:, :, 1], rgb_image[:, :, 2]
-    gray = 0.2989 * r + 0.5870 * g + 0.1140 * b
-    gray = gray[::2, ::2]
+    gray = grayscale_img(rgb_image)
+    gray = resize(gray, downscaling_dimension)
     gray = normalise_image(gray)
     return gray
 
 def process_nature_atari(rgb_image, downscaling_dimension = (84, 84)):
     gray = grayscale_img(rgb_image)
-    down_img = resize(gray, downscaling_dimension)
-    down_img = unit_image(down_img)
-    return down_img
+    downscaled_img = resize(gray, downscaling_dimension)
+    normalized_downscaled_img = unit_image(downscaled_img)
+    return normalized_downscaled_img
 
 def show(image):
     im = Image.fromarray(image)
     im.show()
-
-def get_image_shape(env, crop, downscaling_factor):
-    screen = env.reset()
-    image = process_image(screen, crop, downscaling_factor)
-    return np.shape(image)
-
 
 class Timer:
 

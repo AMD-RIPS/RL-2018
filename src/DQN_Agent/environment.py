@@ -153,6 +153,57 @@ class CarRacing:
             self.history.pop(0)
         self.history.append(utils.process_image(state, self.crop, self.downscaling_dimension))
 
+class StraightTrack:
+
+    def __init__(self, crop=(None, None, None, None), downscaling_dimension=(84, 84), history_pick=4, skip_frames=4):
+        self.name = "CarRacing" + str(time.time())
+        self.env = gym.make('CarRacing-v0')
+        self.downscaling_dimension = downscaling_dimension
+        self.history_pick = history_pick
+        self.state_space_size = history_pick * np.prod(self.downscaling_dimension)
+        self.action_space_size = 3
+        self.state_shape = [None, self.history_pick] + list(self.downscaling_dimension)
+        self.history = []
+        self.skip_frames = skip_frames
+        self.action_dict = {0: [-1, 0, 0], 1: [1, 0, 0], 2: [0, 1, 0], 3: [0, 0, 0.8]}
+        self.crop = crop
+
+    def sample_action_space(self):
+        return np.random.randint(self.action_space_size)
+
+    def map_action(self, action):
+        
+        return self.action_dict[action]
+
+    def reset(self):
+        return self.process(self.env.reset())
+
+    def step(self, action):
+        action = self.map_action(action)
+        for i in range(self.skip_frames):
+            next_state, reward, done, info = self.env.step(action)
+            info = {'true_done': done}
+            if done:
+                break
+        return self.process(next_state), reward, done, info
+
+    def render(self):
+        self.env.render()
+
+    def process(self, state):
+        self.add_history(state, None, None)
+        if len(self.history) < self.history_pick:
+            zeros = np.zeros(self.downscaling_dimension)
+            result = np.tile(zeros, ((self.history_pick - len(self.history)), 1, 1))
+            result = np.concatenate((result, np.array(self.history)))
+        else:
+            result = np.array(self.history)
+        return result
+
+    def add_history(self, state, action, reward):
+        if len(self.history) >= self.history_pick:
+            self.history.pop(0)
+        self.history.append(utils.process_image(state, self.crop, self.downscaling_dimension))
 
 class BreakOut:
 
@@ -217,5 +268,6 @@ env_dict = {
     "Classic_Control": Classic_Control,
     "Pong": Pong,
     "CarRacing": CarRacing,
+    "StraightTrack": StraightTrack,
     "BreakOut": BreakOut
 }

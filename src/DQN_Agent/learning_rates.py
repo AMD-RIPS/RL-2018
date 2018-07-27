@@ -13,7 +13,7 @@ class Basic:
         return 0.0005
 
     def __str__(self):
-        return '0.001'
+        return '0.0005'
 
 
 class Atari:

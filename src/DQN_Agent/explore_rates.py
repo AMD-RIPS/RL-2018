@@ -13,7 +13,7 @@ class Basic:
         return max(0.05, 0.8 - 2 * float(training_metadata.episode) / training_metadata.num_episodes)
 
     def __str__(self):
-        return 'max(0.05, 0.8 - 2*float(episode)/num_episodes)'
+        return 'max(0.05, 0.8 - 2 * float(episode) / num_episodes)'
 
 
 class Atari:

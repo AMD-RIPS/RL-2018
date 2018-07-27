@@ -3,6 +3,7 @@ sys.dont_write_bytecode = True
 
 import numpy as np
 from skimage.transform import downscale_local_mean
+from skimage.transform import resize
 import time
 from PIL import Image
 
@@ -71,4 +72,4 @@ def document_parameters(agent):
         file.write('Batch Size: ' + str(agent.replay_memory.batch_size) + '\n')
         file.write('Memory Capacity: ' + str(agent.replay_memory.memory_capacity) + '\n')
         file.write('Num Episodes: ' + str(agent.training_metadata.num_episodes) + '\n')
-        file.write('Learning Rate Drop Frame Limit: ' + str(agent.training_metadata.frame_limit))
+        file.write('Learning Rate Drop Frame Limit: ' + str(agent.training_metadata.frame_limit) + '\n')

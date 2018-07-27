@@ -1,45 +1,3 @@
-import sys
-sys.dont_write_bytecode = True
-
-import numpy as np
-import random
-from utils import pause
-import sumtree
-
-
-class Replay_Memory:
-
-    def __init__(self, memory_capacity, batch_size):
-        self.memory_capacity = memory_capacity
-        self.batch_size = batch_size
-        self.memory = []
-        self.history = []
-
-    def length(self):
-        return len(self.memory)
-
-    def get_mini_batch(self):
-        mini_batch = random.sample(self.memory, self.batch_size)
-        state_batch = [data[0] for data in mini_batch]
-        action_batch = [data[1] for data in mini_batch]
-        reward_batch = [data[2] for data in mini_batch]
-        next_state_batch = [data[3] for data in mini_batch]
-        done_batch = [data[4] for data in mini_batch]
-        return state_batch, action_batch, reward_batch, next_state_batch, done_batch
-
-    def add(self, environment, state, action, reward, next_state, done, action_size):
-        one_hot_action = np.zeros(action_size)
-        one_hot_action[action] = 1
-        self.memory.append((state, one_hot_action, reward, next_state, done))
-        if (len(self.memory) > self.memory_capacity):
-            self.memory.pop(0)
-
-    def get_q_grid(self, size):
-        return [data[0] for data in random.sample(self.memory, size)]
-
-
-#####################################################################################################
-
 # MIT License
 
 # Copyright (c) 2016 
@@ -54,8 +12,12 @@ class Replay_Memory:
 # The above copyright notice and this permission notice shall be included in all
 # copies or substantial portions of the Software.
 
+# import numpy
+# import random
+# import sum_tree
 
-class Prioritized_Experience_Replay():
+
+class Experience(object):
     """ The class represents prioritized experience replay buffer.
 
     The class has functions: store samples, pick samples with 
@@ -66,12 +28,12 @@ class Prioritized_Experience_Replay():
 
     """
     
-    def __init__(self, memory_capacity, batch_size, alpha = 1):
+    def __init__(self, memory_size, batch_size, alpha):
         """ Prioritized experience replay buffer initialization.
         
         Parameters
         ----------
-        memory_capacity : int
+        memory_size : int
             sample size to be stored
         batch_size : int
             batch size to be selected by `select` method
@@ -79,13 +41,10 @@ class Prioritized_Experience_Replay():
             exponent determine how much prioritization.
             Prob_i \sim priority_i**alpha/sum(priority**alpha)
         """
-        self.tree = sumtree.SumTree(memory_capacity)
-        self.memory_capacity = memory_capacity
+        self.tree = sum_tree.SumTree(memory_size)
+        self.memory_size = memory_size
         self.batch_size = batch_size
         self.alpha = alpha
-
-    def length(self):
-        return self.tree.filled_size()
 
     def add(self, data, priority):
         """ Add new sample.
@@ -111,11 +70,14 @@ class Prioritized_Experience_Replay():
         out : 
             list of samples
         weights: 
-            list of weights
+            list of weight
         indices:
             list of sample indices
             The indices indicate sample positions in a sum tree.
         """
+        
+        if self.tree.filled_size() < self.batch_size:
+            return None, None, None
 
         out = []
         indices = []
@@ -125,7 +87,7 @@ class Prioritized_Experience_Replay():
             r = random.random()
             data, priority, index = self.tree.find(r)
             priorities.append(priority)
-            weights.append((1./self.memory_capacity/priority)**beta if priority > 1e-16 else 0)
+            weights.append((1./self.memory_size/priority)**beta if priority > 1e-16 else 0)
             indices.append(index)
             out.append(data)
             self.priority_update([index], [0]) # To avoid duplicating

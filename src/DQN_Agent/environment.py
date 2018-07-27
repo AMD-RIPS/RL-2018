@@ -187,11 +187,10 @@ class BreakOut:
         action = self.map_action(action)
         for i in range(self.skip_frames):
             next_state, reward, done, info = self.env.step(action)
-            info.update({'true_done': False})
+            info.update({'true_done': done})
             if info['ale.lives'] < self.life_remaining:
                 done = True
             if info['ale.lives'] == 0:  
-                info['true_done'] = True 
                 break
         self.life_remaining = info['ale.lives']
         return self.process(next_state), reward, done, info

@@ -72,7 +72,8 @@ class DQN_Agent:
         # Training related
         # self.loss = tf.losses.mean_squared_error(self.y_tf, self.Q_value_at_action)
         self.loss = tf.losses.huber_loss(self.y_tf, self.Q_value_at_action)
-        self.train_op = tf.train.AdamOptimizer(learning_rate=self.alpha).minimize(self.loss, name='train_minimize')
+        self.optimizer = tf.train.AdamOptimizer(learning_rate=self.alpha)
+        self.train_op = self.optimizer.minimize(self.loss, name='train_minimize')
         self.fixed_target_weights = None
 
         # Tensorflow session setup
@@ -145,7 +146,7 @@ class DQN_Agent:
             alpha = self.learning_rate.get(self.training_metadata)
             while not done:
                 # Updating fixed target weights every 1000 frames
-                if self.training_metadata.frame % 1000 == 0:
+                if self.training_metadata.frame % 100 == 0:
                     self.update_fixed_target_weights()
                 self.training_metadata.increment_frame()
                 self.sess.run(self.increment_frames_op)
@@ -168,6 +169,8 @@ class DQN_Agent:
             avg_q = self.estimate_avg_q()
 
             # Saving tensorboard data and model weights
+            score = self.test_Q(num_test_episodes=5, visualize=False)
+            print(score)
             if episode % 30 == 0:
                 score = self.test_Q(num_test_episodes=5, visualize=False)
                 print(score)

@@ -10,10 +10,6 @@ from PIL import Image
 def pause():
     programPause = raw_input("Press the <ENTER> key to continue...")
 
-def normalise_image(image):
-    image = np.array(image)
-    return (image - np.mean(image)) / np.std(image)
-
 def unit_image(image):
     image  = np.array(image)
     max_along_dim = np.amax(image)
@@ -26,7 +22,7 @@ def process_image(rgb_image, crop=(None, None, None, None), downscaling_dimensio
     rgb_image = rgb_image[crop[0]:crop[1], crop[2]:crop[3], :]
     gray = grayscale_img(rgb_image)
     gray = resize(gray, downscaling_dimension)
-    gray = normalise_image(gray)
+    gray = unit_image(gray)
     return gray
 
 def process_nature_atari(rgb_image, downscaling_dimension = (84, 84)):

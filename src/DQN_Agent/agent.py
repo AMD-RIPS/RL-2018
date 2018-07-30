@@ -11,6 +11,7 @@ import architectures as arch
 import learning_rates as lrng
 import explore_rates as expl
 import replay_memory as rplm
+import prioritized_replay_memory as prplm
 import metadata
 import utils
 import time
@@ -33,7 +34,7 @@ class DQN_Agent:
 
     def set_training_parameters(self, discount, batch_size, memory_capacity, num_episodes, delta=1, learning_rate_drop_frame_limit=100000):
         self.discount = discount
-        self.replay_memory = rplm.Prioritized_Replay_Memory(memory_capacity, batch_size)
+        self.replay_memory = prplm.Prioritized_Replay_Memory(memory_capacity, batch_size)
         self.training_metadata = metadata.Training_Metadata(frame=self.sess.run(self.frames), frame_limit=learning_rate_drop_frame_limit,
                                                             episode=self.sess.run(self.episode), num_episodes=num_episodes)
         self.delta = delta
@@ -103,7 +104,7 @@ class DQN_Agent:
         avg_q = tf.summary.scalar("Average Q-value", self.avg_q, collections=None, family=None)
         self.training_summary = tf.summary.merge([avg_q])
         self.test_summary = tf.summary.merge([test_score])
-        # subprocess.Popen(['tensorboard', '--logdir', self.log_path])
+        subprocess.Popen(['tensorboard', '--logdir', self.log_path])
 
         # Initialising variables and finalising graph
         self.sess.run(tf.global_variables_initializer())
@@ -129,7 +130,7 @@ class DQN_Agent:
 
         feed = {self.state_tf: state_batch, self.action_tf: action_batch, self.y_tf: y_batch, self.grad_weights: weights, self.alpha: alpha}
         new_priorities = self.sess.run(self.td_error, feed_dict=feed)
-        self.replay_memory.priority_update(indices, new_priorities)   
+        self.replay_memory.priority_update(indices, new_priorities)
         self.sess.run(self.train_op, feed_dict=feed)
 
     def get_action(self, state, epsilon):
@@ -157,7 +158,7 @@ class DQN_Agent:
             alpha = self.learning_rate.get(self.training_metadata)
             while not done:
                 # Updating fixed target weights every 1000 frames
-                if self.training_metadata.frame % 200 == 0:
+                if self.training_metadata.frame % 1000 == 0:
                     self.update_fixed_target_weights()
                 self.training_metadata.increment_frame()
                 self.sess.run(self.increment_frames_op)
@@ -181,7 +182,6 @@ class DQN_Agent:
             
             # Saving tensorboard data and model weights
             score = self.test_Q(num_test_episodes=5, visualize=False)
-            print(score)
             if episode % 30 == 0:
                 score = self.test_Q(num_test_episodes=5, visualize=False)
                 print(score)

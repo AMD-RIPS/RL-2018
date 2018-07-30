@@ -45,7 +45,8 @@ class Prioritized_Replay_Memory():
         data = (state, one_hot_action, reward, next_state, done)
         self.tree.add(data, td_error**self.alpha)
 
-    def get_mini_batch(self, beta=0.4):
+    def get_mini_batch(self, training_metadata):
+        beta = min(1, 0.4 + training_metadata.frame * (1.0 - 0.4) / 100000)
         out = []
         indices = []
         weights = []

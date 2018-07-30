@@ -34,7 +34,6 @@ class Classic_Control:
     def render(self):
         self.env.render()
 
-    # Returns a (sample_space_size, ) vector
     def process(self, x):
         return x
 

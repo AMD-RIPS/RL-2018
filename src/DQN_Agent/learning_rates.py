@@ -10,10 +10,10 @@ class Basic:
         pass
 
     def get(self, training_metadata):
-        return 0.005
+        return 0.0005
 
     def __str__(self):
-        return '0.005'
+        return '0.0005'
 
 
 class Atari:

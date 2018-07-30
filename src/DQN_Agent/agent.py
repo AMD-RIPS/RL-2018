@@ -125,7 +125,6 @@ class DQN_Agent:
         fixed_feed_dict.update({self.action_tf: greedy_actions})
         Q_batch = self.sess.run(self.Q_value_at_action, feed_dict=fixed_feed_dict)
         ######################################################################################################
-
         y_batch = reward_batch + self.discount * np.multiply(np.invert(done_batch), Q_batch)
 
         feed = {self.state_tf: state_batch, self.action_tf: action_batch, self.y_tf: y_batch, self.grad_weights: weights, self.alpha: alpha}
@@ -157,6 +156,7 @@ class DQN_Agent:
             epsilon = self.explore_rate.get(self.training_metadata)
             alpha = self.learning_rate.get(self.training_metadata)
             while not done:
+                self.env.render()
                 # Updating fixed target weights every 1000 frames
                 if self.training_metadata.frame % 1000 == 0:
                     self.update_fixed_target_weights()
@@ -179,9 +179,8 @@ class DQN_Agent:
             if not self.q_grid and self.replay_memory.length() > 500:
                 self.q_grid = self.replay_memory.get_q_grid(100)
             avg_q = self.estimate_avg_q()
-            
+
             # Saving tensorboard data and model weights
-            score = self.test_Q(num_test_episodes=5, visualize=False)
             if episode % 30 == 0:
                 score = self.test_Q(num_test_episodes=5, visualize=False)
                 print(score)

@@ -111,7 +111,7 @@ class DQN_Agent:
         self.sess.graph.finalize()
 
     def experience_replay(self, alpha):
-        state_batch, action_batch, reward_batch, next_state_batch, done_batch, weights, indices = self.replay_memory.get_mini_batch()
+        state_batch, action_batch, reward_batch, next_state_batch, done_batch, weights, indices = self.replay_memory.get_mini_batch(self.training_metadata)
         y_batch = [None] * self.replay_memory.batch_size
         fixed_feed_dict = {self.state_tf: next_state_batch}
         fixed_feed_dict.update(zip(self.trainable_variables, self.fixed_target_weights))

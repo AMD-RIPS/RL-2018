@@ -33,9 +33,9 @@ class DQN_Agent:
 
     def set_training_parameters(self, discount, batch_size, memory_capacity, num_episodes, delta=1, learning_rate_drop_frame_limit=100000):
         self.discount = discount
-        self.replay_memory = rplm.Replay_Memory(memory_capacity, batch_size)
-        self.training_metadata = metadata.Training_Metadata(frame = self.sess.run(self.frames), frame_limit=learning_rate_drop_frame_limit, 
-            episode = self.sess.run(self.episode), num_episodes=num_episodes)
+        self.replay_memory = rplm.Prioritized_Replay_Memory(memory_capacity, batch_size)
+        self.training_metadata = metadata.Training_Metadata(frame=self.sess.run(self.frames), frame_limit=learning_rate_drop_frame_limit,
+                                                            episode=self.sess.run(self.episode), num_episodes=num_episodes)
         self.delta = delta
         utils.document_parameters(self)
 
@@ -51,27 +51,38 @@ class DQN_Agent:
         self.action_tf = tf.placeholder(shape=[None, self.action_size], dtype=tf.float32, name='action_tf')
         self.y_tf = tf.placeholder(dtype=tf.float32, name='y_tf')
         self.alpha = tf.placeholder(dtype=tf.float32, name='alpha')
+        self.grad_weights = tf.placeholder(dtype=tf.float32, name='weighted_grads')
         self.test_score = tf.placeholder(dtype=tf.float32, name='test_score')
         self.avg_q = tf.placeholder(dtype=tf.float32, name='avg_q')
-        self.DDQN_greedy_action_onehot_placeholder = tf.placeholder(dtype=tf.float32, name='ddqn_greedy_action_onehot_placeholder')
 
         # Keep track of episode and frames
-        self.episode = tf.Variable(initial_value=0,trainable=False, name='episode')
-        self.frames = tf.Variable(initial_value=0,trainable=False, name='frames')
-        self.increment_frames_op = tf.assign(self.frames, self.frames+1, name='increment_frames_op')
-        self.increment_episode_op = tf.assign(self.episode, self.episode+1, name='increment_episode_op')
+        self.episode = tf.Variable(initial_value=0, trainable=False, name='episode')
+        self.frames = tf.Variable(initial_value=0, trainable=False, name='frames')
+        self.increment_frames_op = tf.assign(self.frames, self.frames + 1, name='increment_frames_op')
+        self.increment_episode_op = tf.assign(self.episode, self.episode + 1, name='increment_episode_op')
 
         # Operations
+        # NAME                      DESCRIPTION                                         FEED DEPENDENCIES
+        # Q_value                   Value of Q at given state(s)                        state_tf
+        # Q_argmax                  Action(s) maximizing Q at given state(s)            state_tf
+        # Q_amax                    Maximal action value(s) at given state(s)           state_tf
+        # Q_value_at_action         Q value at specific (action, state) pair(s)         state_tf, action_tf
+        # onehot_greedy_action      One-hot encodes greedy action(s) at given state(s)  state_tf
         self.Q_value = self.architecture.evaluate(self.state_tf, self.action_size)
-        self.Q_argmax = tf.argmax(self.Q_value[0], name='Q_argmax')
-        self.Q_amax = tf.reduce_max(self.Q_value[0], name='Q_amax')
+        self.Q_argmax = tf.argmax(self.Q_value, axis=1, name='Q_argmax')
+        self.Q_amax = tf.reduce_max(self.Q_value, axis=1, name='Q_max')
         self.Q_value_at_action = tf.reduce_sum(tf.multiply(self.Q_value, self.action_tf), axis=1, name='Q_value_at_action')
-        self.DDQN_greedy_action_onehot = tf.one_hot(tf.argmax(self.Q_value, axis=1), depth=self.action_size)
-        self.DDQN_QVals = tf.reduce_sum(tf.multiply(self.Q_value, self.DDQN_greedy_action_onehot_placeholder), axis=1)
+        self.onehot_greedy_action = tf.one_hot(self.Q_argmax, depth=self.action_size)
 
         # Training related
+        # NAME                          FEED DEPENDENCIES
+        # td_error                      y_tf, state_tf, action_tf
+        # loss                          y_tf, state_tf, action_tf, grad_weights
+        # train_op                      y_tf, state_tf, action_tf, grad_weights, alpha
+
         # self.loss = tf.losses.mean_squared_error(self.y_tf, self.Q_value_at_action)
-        self.loss = tf.losses.huber_loss(self.y_tf, self.Q_value_at_action)
+        self.td_error = tf.abs(tf.subtract(self.y_tf, self.Q_value_at_action))
+        self.loss = tf.multiply(self.grad_weights, tf.losses.huber_loss(self.y_tf, self.Q_value_at_action))
         self.optimizer = tf.train.AdamOptimizer(learning_rate=self.alpha)
         self.train_op = self.optimizer.minimize(self.loss, name='train_minimize')
         self.fixed_target_weights = None
@@ -99,34 +110,34 @@ class DQN_Agent:
         self.sess.graph.finalize()
 
     def experience_replay(self, alpha):
-        state_batch, action_batch, reward_batch, next_state_batch, done_batch = self.replay_memory.get_mini_batch()
+        state_batch, action_batch, reward_batch, next_state_batch, done_batch, weights, indices = self.replay_memory.get_mini_batch()
         y_batch = [None] * self.replay_memory.batch_size
+        fixed_feed_dict = {self.state_tf: next_state_batch}
+        fixed_feed_dict.update(zip(self.trainable_variables, self.fixed_target_weights))
 
-        # Simple DQN
-        # feed_dict = {self.state_tf: next_state_batch}
-        # feed_dict.update(zip(self.trainable_variables, self.fixed_target_weights))
-        # Q_value_batch = self.sess.run(self.Q_value, feed_dict=feed_dict)
-        # y_batch = reward_batch + self.discount * np.multiply(np.invert(done_batch), np.amax(Q_value_batch, axis=1))
+        # Simple DQN #########################################################################################
+        # Q_batch = self.sess.run(self.Q_amax, feed_dict=fixed_feed_dict)
+        ######################################################################################################
 
-        # Double DQN
-        DDQN_greedy_action_onehot = self.sess.run(self.DDQN_greedy_action_onehot, feed_dict={self.state_tf: next_state_batch})
+        # Double DQN #########################################################################################
+        greedy_actions = self.sess.run(self.onehot_greedy_action, feed_dict={self.state_tf: next_state_batch})
+        fixed_feed_dict.update({self.action_tf: greedy_actions})
+        Q_batch = self.sess.run(self.Q_value_at_action, feed_dict=fixed_feed_dict)
+        ######################################################################################################
 
-        feed_dict = {self.state_tf: next_state_batch, self.DDQN_greedy_action_onehot_placeholder: DDQN_greedy_action_onehot}
-        feed_dict.update(zip(self.trainable_variables, self.fixed_target_weights))
+        y_batch = reward_batch + self.discount * np.multiply(np.invert(done_batch), Q_batch)
 
-        Q_value_batch = self.sess.run(self.DDQN_QVals, feed_dict=feed_dict)
-        y_batch = reward_batch + self.discount * np.multiply(np.invert(done_batch), Q_value_batch)
-
-        # Performing one step of optimization
-        self.sess.run(self.train_op, feed_dict={self.y_tf: y_batch, self.action_tf: action_batch,
-                                                self.state_tf: state_batch, self.alpha: alpha})
+        feed = {self.state_tf: state_batch, self.action_tf: action_batch, self.y_tf: y_batch, self.grad_weights: weights, self.alpha: alpha}
+        new_priorities = self.sess.run(self.td_error, feed_dict=feed)
+        self.replay_memory.priority_update(indices, new_priorities)   
+        self.sess.run(self.train_op, feed_dict=feed)
 
     def get_action(self, state, epsilon):
         # Perorming epsilon-greedy action selection
         if random.random() < epsilon:
             return self.env.sample_action_space()
         else:
-            return self.sess.run(self.Q_argmax, feed_dict={self.state_tf: [state]})
+            return self.sess.run(self.Q_argmax, feed_dict={self.state_tf: [state]})[0]
 
     def update_fixed_target_weights(self):
         self.fixed_target_weights = self.sess.run(self.trainable_variables)
@@ -146,16 +157,16 @@ class DQN_Agent:
             alpha = self.learning_rate.get(self.training_metadata)
             while not done:
                 # Updating fixed target weights every 1000 frames
-                if self.training_metadata.frame % 100 == 0:
+                if self.training_metadata.frame % 200 == 0:
                     self.update_fixed_target_weights()
                 self.training_metadata.increment_frame()
                 self.sess.run(self.increment_frames_op)
 
                 # Choosing and performing action and updating the replay memory
-                action = self.get_action(state, epsilon)                
+                action = self.get_action(state, epsilon)
                 next_state, reward, done, info = self.env.step(action)
                 reward = np.sign(reward)
-                self.replay_memory.add(self.env, state, action, reward, next_state, done, self.action_size)
+                self.replay_memory.add(self, state, action, reward, next_state, done)
 
                 # Performing experience replay if replay memory populated
                 if self.replay_memory.length() > self.replay_memory.batch_size:
@@ -167,7 +178,7 @@ class DQN_Agent:
             if not self.q_grid and self.replay_memory.length() > 500:
                 self.q_grid = self.replay_memory.get_q_grid(100)
             avg_q = self.estimate_avg_q()
-
+            
             # Saving tensorboard data and model weights
             score = self.test_Q(num_test_episodes=5, visualize=False)
             print(score)

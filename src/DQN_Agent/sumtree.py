@@ -1,3 +1,19 @@
+# MIT License
+
+# Copyright (c) 2016 
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# Link to repo: https://github.com/takoika/PrioritizedExperienceReplay
+
 import math
 
 class SumTree(object):
@@ -5,8 +21,8 @@ class SumTree(object):
         self.max_size = max_size
         self.tree_level = math.ceil(math.log(max_size+1, 2))+1
         self.tree_size = 2**self.tree_level-1
-        self.tree = [0 for i in range(self.tree_size)]
-        self.data = [None for i in range(self.max_size)]
+        self.tree = [0 for i in range(int(self.tree_size))]
+        self.data = [None for i in range(int(self.max_size))]
         self.size = 0
         self.cursor = 0
 
@@ -19,11 +35,11 @@ class SumTree(object):
         self.val_update(index, value)
 
     def get_val(self, index):
-        tree_index = 2**(self.tree_level-1)-1+index
+        tree_index = int(2**(self.tree_level-1)-1+index)
         return self.tree[tree_index]
 
     def val_update(self, index, value):
-        tree_index = 2**(self.tree_level-1)-1+index
+        tree_index = int(2**(self.tree_level-1)-1+index)
         diff = value-self.tree[tree_index]
         self.reconstruct(tree_index, diff)
 
@@ -40,7 +56,7 @@ class SumTree(object):
 
     def _find(self, value, index):
         if 2**(self.tree_level-1)-1 <= index:
-            return self.data[index-(2**(self.tree_level-1)-1)], self.tree[index], index-(2**(self.tree_level-1)-1)
+            return self.data[int(index-(2**(self.tree_level-1)-1))], self.tree[index], index-(2**(self.tree_level-1)-1)
 
         left = self.tree[2*index+1]
 

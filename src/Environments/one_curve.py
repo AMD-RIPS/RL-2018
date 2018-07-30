@@ -105,7 +105,7 @@ class OneTurn(gym.Env):
     }
 
     def __init__(self):
-        self.seed(2)
+        self.seed()
         self.contactListener_keepref = FrictionDetector(self)
         self.world = Box2D.b2World((0,0), contactListener=self.contactListener_keepref)
         self.viewer = None

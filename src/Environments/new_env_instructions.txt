@@ -23,7 +23,11 @@ register(
     reward_threshold=900,
 )
 
-4. make sure it is working
+4. test if working
 import gym
 gym.make('StraightTrack-v0')
 gym.make('OneCurve-v0')
+
+5. note: for deterministic results, set the environment seed before calling env.reset()
+env.seed(seed_num)
+

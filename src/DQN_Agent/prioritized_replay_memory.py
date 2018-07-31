@@ -1,6 +1,6 @@
 # MIT License
 
-# Copyright (c) 2016
+# Copyright (c) 2016 
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -12,7 +12,7 @@
 # The above copyright notice and this permission notice shall be included in all
 # copies or substantial portions of the Software.
 
-# Link to repo: https://github.com/takoika/PrioritizedExperienceReplay
+# github repo: https://github.com/takoika/PrioritizedExperienceReplay
 
 import sys
 sys.dont_write_bytecode = True
@@ -50,29 +50,27 @@ class Prioritized_Replay_Memory():
         indices = []
         weights = []
         priorities = []
-        for _ in range(self.batch_size):
-            r = random.random()
-            data, priority, index = self.tree.find(r)
+        segment = self.tree.total() / float(self.batch_size)
+        for i in range(self.batch_size):
+            r = i + random.random()*segment
+            data, priority, index = self.tree.get(r)
             priorities.append(priority)
             weights.append((1. / self.memory_capacity / priority)**beta if priority > 1e-16 else 0)
             indices.append(index)
             out.append(data)
-            self.priority_update([index], [0])  # To avoid duplicating
-
-        self.priority_update(indices, priorities)  # Revert priorities
-
         weights /= max(weights)  # Normalize for stability
-        state_batch = [data[0] for data in out]
-        action_batch = [data[1] for data in out]
-        reward_batch = [data[2] for data in out]
-        next_state_batch = [data[3] for data in out]
-        done_batch = [data[4] for data in out]
+
+        state_batch = [d[0] for d in out]
+        action_batch = [d[1] for d in out]
+        reward_batch = [d[2] for d in out]
+        next_state_batch = [d[3] for d in out]
+        done_batch = [d[4] for d in out]
 
         return state_batch, action_batch, reward_batch, next_state_batch, done_batch, weights, map(int, indices)
 
     def priority_update(self, indices, priorities):
-        for i, p in zip(indices, priorities):
-            self.tree.val_update(i, p**self.alpha)
+        for idx, priority in zip(indices, priorities):
+            self.tree.update(idx, priority**self.alpha)
 
     def reset_alpha(self, alpha):
         self.alpha, old_alpha = alpha, self.alpha

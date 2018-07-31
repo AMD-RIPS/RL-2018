@@ -1,9 +1,0 @@
-Environment: Pong_1532714100.07
-Architecture: Architecture used in the atari paper
-Explore Rate: max(0.1, 0.1 + 0.5*(1 - float(training_metadata.frame) / training_metadata.frame_limit))
-Learning Rate: 0.00001
-Discount: 0.99
-Batch Size: 32
-Memory Capacity: 10000
-Num Episodes: 100000
-Learning Rate Drop Frame Limit: 100000

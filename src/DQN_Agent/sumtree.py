@@ -1,6 +1,6 @@
 # MIT License
 
-# Copyright (c) 2016
+# Copyright (c) Chanwoong joo
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -12,66 +12,74 @@
 # The above copyright notice and this permission notice shall be included in all
 # copies or substantial portions of the Software.
 
-# Link to repo: https://github.com/takoika/PrioritizedExperienceReplay
+# github repo: https://github.com/rlcode/per
 
 import math
+import numpy as np
+import matplotlib.pyplot as plt
 
+class SumTree:
+    write = 0
 
-class SumTree(object):
+    def __init__(self, capacity):
+        self.capacity = capacity
+        self.tree = np.zeros(2 * capacity - 1)
+        self.data = np.zeros(capacity, dtype=object)
+        self.n_entries = 0
 
-    def __init__(self, max_size):
-        self.max_size = max_size
-        self.tree_level = math.ceil(math.log(max_size + 1, 2)) + 1
-        self.tree_size = 2**self.tree_level - 1
-        self.tree = [0 for i in range(int(self.tree_size))]
-        self.data = [None for i in range(int(self.max_size))]
-        self.size = 0
-        self.cursor = 0
+    # update to the root node
+    def _propagate(self, idx, change):
+        parent = (idx - 1) // 2
 
-    def add(self, contents, value):
-        index = self.cursor
-        self.cursor = (self.cursor + 1) % self.max_size
-        self.size = min(self.size + 1, self.max_size)
+        self.tree[parent] += change
 
-        self.data[index] = contents
-        self.val_update(index, value)
+        if parent != 0:
+            self._propagate(parent, change)
 
-    def get_val(self, index):
-        tree_index = int(2**(self.tree_level - 1) - 1 + index)
-        return self.tree[tree_index]
+    # find sample on leaf node
+    def _retrieve(self, idx, s):
+        left = 2 * idx + 1
+        right = left + 1
 
-    def val_update(self, index, value):
-        tree_index = int(2**(self.tree_level - 1) - 1 + index)
-        diff = value - self.tree[tree_index]
-        self.reconstruct(tree_index, diff)
+        if left >= len(self.tree):
+            return idx
 
-    def reconstruct(self, tindex, diff):
-        self.tree[tindex] += diff
-        if not tindex == 0:
-            tindex = int((tindex - 1) / 2)
-            self.reconstruct(tindex, diff)
-
-    def find(self, value, norm=True):
-        if norm:
-            value *= self.tree[0]
-        return self._find(value, 0)
-
-    def _find(self, value, index):
-        if 2**(self.tree_level - 1) - 1 <= index:
-            return self.data[int(index - (2**(self.tree_level - 1) - 1))], self.tree[index], index - (2**(self.tree_level - 1) - 1)
-
-        left = self.tree[2 * index + 1]
-
-        if value <= left:
-            return self._find(value, 2 * index + 1)
+        if s <= self.tree[left]:
+            return self._retrieve(left, s)
         else:
-            return self._find(value - left, 2 * (index + 1))
+            return self._retrieve(right, s - self.tree[left])
 
-    def print_tree(self):
-        for k in range(1, self.tree_level + 1):
-            for j in range(2**(k - 1) - 1, 2**k - 1):
-                print(self.tree[j])
-            print()
+    def total(self):
+        return self.tree[0]
+
+    # store priority and sample
+    def add(self, data, priority):
+        idx = self.write + self.capacity - 1
+
+        self.data[self.write] = data
+        self.update(idx, priority)
+
+        self.write += 1
+        if self.write >= self.capacity:
+            self.write = 0
+
+        if self.n_entries < self.capacity:
+            self.n_entries += 1
+
+    # update priority
+    def update(self, idx, priority):
+        change = priority - self.tree[idx]
+
+        self.tree[idx] = priority
+        self._propagate(idx, change)
+
+    # get priority and sample
+
+    def get(self, s):
+        idx = self._retrieve(0, s)
+        dataIdx = idx - self.capacity + 1
+
+        return self.data[dataIdx], self.tree[idx], idx
 
     def filled_size(self):
-        return self.size
+        return self.n_entries

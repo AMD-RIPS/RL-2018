@@ -102,7 +102,7 @@ class Pong:
 
 class CarRacing:
 
-    def __init__(self, type=None, crop=(None, None, None, None), downscaling_dimension=(84, 84), history_pick=4, skip_frames=4):
+    def __init__(self, type=None, crop=(None, None, None, None), downscaling_dimension=(84, 84), history_pick=4, skip_frames=4, seed=None):
         # use a simplified version of CarRacing
         if type is not "StraightTrack" and type is not "OneCurve":
             type = "CarRacing"
@@ -117,15 +117,17 @@ class CarRacing:
         self.skip_frames = skip_frames
         self.action_dict = {0: [-1, 0, 0], 1: [1, 0, 0], 2: [0, 1, 0], 3: [0, 0, 0.8]}
         self.crop = crop
+        self.seed = seed
 
     def sample_action_space(self):
         return np.random.randint(self.action_space_size)
 
     def map_action(self, action):
-        
         return self.action_dict[action]
 
     def reset(self):
+        if self.seed:
+            self.env.seed(self.seed)
         return self.process(self.env.reset())
 
     def step(self, action):

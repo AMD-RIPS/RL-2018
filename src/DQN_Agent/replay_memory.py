@@ -10,12 +10,18 @@ import sumtree
 class Replay_Memory:
 
     def __init__(self, memory_capacity, batch_size):
+        self.is_full = False
         self.memory_capacity = memory_capacity
         self.batch_size = batch_size
         self.memory = []
 
     def length(self):
         return len(self.memory)
+
+    def full(self):
+        if self.is_full: return True
+        self.is_full = len(self.memory) == self.memory_capacity
+        return self.is_full
 
     def get_mini_batch(self, *args, **kwargs):
         mini_batch = random.sample(self.memory, self.batch_size)

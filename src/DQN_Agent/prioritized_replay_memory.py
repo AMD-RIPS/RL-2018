@@ -20,11 +20,13 @@ sys.dont_write_bytecode = True
 import numpy as np
 import random
 import sumtree
+from utils import pause
 
 
 class Prioritized_Replay_Memory():
 
     def __init__(self, memory_capacity, batch_size, alpha=0.6):
+        self.is_full = False
         self.tree = sumtree.SumTree(memory_capacity)
         self.memory_capacity = memory_capacity
         self.batch_size = batch_size
@@ -32,6 +34,11 @@ class Prioritized_Replay_Memory():
 
     def length(self):
         return self.tree.filled_size()
+
+    def full(self):
+        if self.is_full: return True
+        self.is_full = self.tree.filled_size() == self.memory_capacity
+        return self.is_full
 
     def get_q_grid(self, size, training_metadata):
         grid = self.get_mini_batch(training_metadata)[0]

@@ -143,7 +143,7 @@ class DQN_Agent:
         self.fixed_target_weights = self.sess.run(self.trainable_variables)
 
     def train(self):
-        self.pre_train()
+        # self.pre_train()
         for episode in range(self.training_metadata.num_episodes):
             self.training_metadata.increment_episode()
             self.sess.run(self.increment_episode_op)
@@ -157,7 +157,6 @@ class DQN_Agent:
             epsilon = self.explore_rate.get(self.training_metadata)
             alpha = self.learning_rate.get(self.training_metadata)
             while not done:
-                self.env.render()
                 # Updating fixed target weights every 1000 frames
                 if self.training_metadata.frame % 1000 == 0:
                     self.update_fixed_target_weights()
@@ -171,7 +170,7 @@ class DQN_Agent:
                 self.replay_memory.add(self, state, action, reward, next_state, done)
 
                 # Performing experience replay if replay memory populated
-                if self.replay_memory.length() == self.replay_memory.memory_capacity:
+                if self.replay_memory.full(): 
                     self.experience_replay(alpha)
                 state = next_state
                 done = info['true_done']

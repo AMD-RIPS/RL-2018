@@ -218,7 +218,7 @@ class OneCurve(gym.Env):
         #assert i2!=-1
 
         track = track[i1:i2-1]
-        track = track[:50]
+        track = track[10:40]
         # diff0 = track[1][0] - track[0][0]
         # diff2 = track[1][2] - track[0][2]
         # diff3 = track[1][3] - track[0][3]

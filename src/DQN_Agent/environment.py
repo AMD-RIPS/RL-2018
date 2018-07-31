@@ -157,9 +157,9 @@ class CarRacing:
 
 class BreakOut:
 
-    def __init__(self, crop=(34, -16, 8, -8), downscaling_dimension = (84, 84), history_pick=4, skip_frames=1):
+    def __init__(self, crop=(34, -16, 8, -8), downscaling_dimension = (84, 84), history_pick=4, skip_frames=4):
         self.name = "BreakOut" + str(time.time())
-        self.env = gym.make('BreakoutDeterministic-v4')
+        self.env = gym.make('BreakoutNoFrameskip-v4')
         self.downscaling_dimension = downscaling_dimension
         self.history_pick = history_pick
         self.state_space_size = history_pick * np.prod(self.downscaling_dimension)

@@ -34,7 +34,7 @@ class DQN_Agent:
 
     def set_training_parameters(self, discount, batch_size, memory_capacity, num_episodes, delta=1, learning_rate_drop_frame_limit=100000):
         self.discount = discount
-        self.replay_memory = prplm.Prioritized_Replay_Memory(memory_capacity, batch_size)
+        self.replay_memory = rplm.Replay_Memory(memory_capacity, batch_size)
         self.training_metadata = metadata.Training_Metadata(frame=self.sess.run(self.frames), frame_limit=learning_rate_drop_frame_limit,
                                                             episode=self.sess.run(self.episode), num_episodes=num_episodes)
         self.delta = delta
@@ -158,7 +158,7 @@ class DQN_Agent:
             while not done:
                 self.env.render()
                 # Updating fixed target weights every 1000 frames
-                if self.training_metadata.frame % 1000 == 0:
+                if self.training_metadata.frame % 100 == 0:
                     self.update_fixed_target_weights()
                 self.training_metadata.increment_frame()
                 self.sess.run(self.increment_frames_op)
@@ -177,7 +177,7 @@ class DQN_Agent:
 
             # Creating q_grid if not yet defined and calculating average q-value
             if not self.q_grid and self.replay_memory.length() > 500:
-                self.q_grid = self.replay_memory.get_q_grid(100)
+                self.q_grid = self.replay_memory.get_q_grid(size=100, training_metadata=self.training_metadata)
             avg_q = self.estimate_avg_q()
 
             # Saving tensorboard data and model weights

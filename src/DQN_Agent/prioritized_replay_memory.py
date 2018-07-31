@@ -33,8 +33,8 @@ class Prioritized_Replay_Memory():
     def length(self):
         return self.tree.filled_size()
 
-    def get_q_grid(self, size):
-        grid = self.get_mini_batch(beta=0)[0]
+    def get_q_grid(self, size, training_metadata):
+        grid = self.get_mini_batch(training_metadata)[0]
         return grid
 
     def add(self, agent, state, action, reward, next_state, done):
@@ -45,8 +45,7 @@ class Prioritized_Replay_Memory():
         data = (state, one_hot_action, reward, next_state, done)
         self.tree.add(data, td_error**self.alpha)
 
-    def get_mini_batch(self, training_metadata):
-        beta = min(1, 0.4 + training_metadata.frame * (1.0 - 0.4) / 100000)
+    def get_mini_batch(self, training_metadata, beta = 0.8):
         out = []
         indices = []
         weights = []

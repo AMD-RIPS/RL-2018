@@ -17,7 +17,7 @@ class Replay_Memory:
     def length(self):
         return len(self.memory)
 
-    def get_mini_batch(self):
+    def get_mini_batch(self, *args, **kwargs):
         mini_batch = random.sample(self.memory, self.batch_size)
         state_batch = [data[0] for data in mini_batch]
         action_batch = [data[1] for data in mini_batch]
@@ -34,8 +34,8 @@ class Replay_Memory:
         if (len(self.memory) > self.memory_capacity):
             self.memory.pop(0)
 
-    def get_q_grid(self, size):
+    def get_q_grid(self, size, *args, **kwargs):
         return [data[0] for data in random.sample(self.memory, size)]
 
-    def priority_update(self, *args):
+    def priority_update(self, *args, **kwargs):
         pass

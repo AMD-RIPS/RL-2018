@@ -79,7 +79,7 @@ class nature_paper:
             kernel_initializer=tf.contrib.layers.xavier_initializer(), name='layer3_out')
         layer4_out = tf.layers.dense(tf.layers.flatten(layer3_out), 512, activation=tf.nn.relu, name='layer4_out')
         output =  tf.layers.dense(layer4_out, action_size, activation=None, name='output')
-    return output
+        return output
 
     def __str__(self):
         return "Architecture used in the nature paper in 2015"

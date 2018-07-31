@@ -105,7 +105,7 @@ class OneCurve(gym.Env):
     }
 
     def __init__(self):
-        self.seed()
+        self.seed(2)
         self.contactListener_keepref = FrictionDetector(self)
         self.world = Box2D.b2World((0,0), contactListener=self.contactListener_keepref)
         self.viewer = None
@@ -219,7 +219,6 @@ class OneCurve(gym.Env):
 
         track = track[i1:i2-1]
         track = track[:50]
-
         # diff0 = track[1][0] - track[0][0]
         # diff2 = track[1][2] - track[0][2]
         # diff3 = track[1][3] - track[0][3]
@@ -289,7 +288,10 @@ class OneCurve(gym.Env):
         step_reward = 0
         done = False
         if action is not None: # First step without action, called from reset()
+            # NOTE remove -0.1 per time step for experimental purposes
             self.reward -= 0.1
+            #self.reward -= 1
+
             # We actually don't want to count fuel spent, we want car to be faster.
             #self.reward -=  10 * self.car.fuel_spent / ENGINE_POWER
             self.car.fuel_spent = 0.0

@@ -111,7 +111,7 @@ class CarRacing:
         self.downscaling_dimension = downscaling_dimension
         self.history_pick = history_pick
         self.state_space_size = history_pick * np.prod(self.downscaling_dimension)
-        self.action_space_size = 3
+        self.action_space_size = 4
         self.state_shape = [None, self.history_pick] + list(self.downscaling_dimension)
         self.history = []
         self.skip_frames = skip_frames

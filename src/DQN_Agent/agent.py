@@ -32,9 +32,14 @@ class DQN_Agent:
         self.log_path = self.model_path + '/log'
         self.initialize_tf_variables()
 
-    def set_training_parameters(self, discount, batch_size, memory_capacity, num_episodes, delta=1, learning_rate_drop_frame_limit=100000):
+    def set_training_parameters(self, discount, batch_size, memory_capacity, num_episodes,
+                                delta=1, learning_rate_drop_frame_limit=100000, target_update_frequency=1000, replay_method='regular'):
+        self.target_update_frequency = target_update_frequency
         self.discount = discount
-        self.replay_memory = prplm.Prioritized_Replay_Memory(memory_capacity, batch_size)
+        if replay_method == 'regular':
+            self.replay_memory = rplm.Replay_Memory(memory_capacity, batch_size)
+        else:
+            self.replay_memory = prplm.Prioritized_Replay_Memory(memory_capacity, batch_size)
         self.training_metadata = metadata.Training_Metadata(frame=self.sess.run(self.frames), frame_limit=learning_rate_drop_frame_limit,
                                                             episode=self.sess.run(self.episode), num_episodes=num_episodes)
         self.delta = delta
@@ -117,13 +122,13 @@ class DQN_Agent:
         fixed_feed_dict.update(zip(self.trainable_variables, self.fixed_target_weights))
 
         # Simple DQN #########################################################################################
-        # Q_batch = self.sess.run(self.Q_amax, feed_dict=fixed_feed_dict)
+        Q_batch = self.sess.run(self.Q_amax, feed_dict=fixed_feed_dict)
         ######################################################################################################
 
         # Double DQN #########################################################################################
-        greedy_actions = self.sess.run(self.onehot_greedy_action, feed_dict={self.state_tf: next_state_batch})
-        fixed_feed_dict.update({self.action_tf: greedy_actions})
-        Q_batch = self.sess.run(self.Q_value_at_action, feed_dict=fixed_feed_dict)
+        # greedy_actions = self.sess.run(self.onehot_greedy_action, feed_dict={self.state_tf: next_state_batch})
+        # fixed_feed_dict.update({self.action_tf: greedy_actions})
+        # Q_batch = self.sess.run(self.Q_value_at_action, feed_dict=fixed_feed_dict)
         ######################################################################################################
         y_batch = reward_batch + self.discount * np.multiply(np.invert(done_batch), Q_batch)
 
@@ -158,7 +163,7 @@ class DQN_Agent:
             alpha = self.learning_rate.get(self.training_metadata)
             while not done:
                 # Updating fixed target weights every 1000 frames
-                if self.training_metadata.frame % 1000 == 0:
+                if self.training_metadata.frame % self.target_update_frequency == 0:
                     self.update_fixed_target_weights()
                 self.training_metadata.increment_frame()
                 self.sess.run(self.increment_frames_op)
@@ -170,7 +175,7 @@ class DQN_Agent:
                 self.replay_memory.add(self, state, action, reward, next_state, done)
 
                 # Performing experience replay if replay memory populated
-                if self.replay_memory.full(): 
+                if self.replay_memory.full():
                     self.experience_replay(alpha)
                 state = next_state
                 done = info['true_done']
@@ -181,7 +186,7 @@ class DQN_Agent:
             avg_q = self.estimate_avg_q()
 
             # Saving tensorboard data and model weights
-            if episode % 30 == 0:
+            if episode % 1 == 0:
                 score = self.test_Q(num_test_episodes=5, visualize=False)
                 print(score)
                 self.writer.add_summary(self.sess.run(self.test_summary,
@@ -220,15 +225,15 @@ class DQN_Agent:
         # randomly play until the replay memory has n memories if at the very beginning of the training
         # else gain memory based on most recent epsilon
         epsilon = self.explore_rate.get(self.training_metadata)
-        while self.replay_memory.length()<50000:
+        while self.replay_memory.length() < 50000:
             state = self.env.reset()
             self.env.render()
             done = False
             while not done:
                 # Choosing and performing action and updating the replay memory
-                action = self.get_action(state, epsilon) 
+                action = self.get_action(state, epsilon)
                 next_state, reward, done, info = self.env.step(action)
-                reward  = np.sign(reward)
+                reward = np.sign(reward)
                 self.replay_memory.add(self, state, action, reward, next_state, done)
                 state = next_state
                 done = info['true_done']

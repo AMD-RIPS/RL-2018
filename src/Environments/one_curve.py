@@ -105,7 +105,7 @@ class OneCurve(gym.Env):
     }
 
     def __init__(self):
-        self.seed(2)
+        self.seed()
         self.contactListener_keepref = FrictionDetector(self)
         self.world = Box2D.b2World((0,0), contactListener=self.contactListener_keepref)
         self.viewer = None
@@ -218,28 +218,17 @@ class OneCurve(gym.Env):
         #assert i2!=-1
 
         track = track[i1:i2-1]
-        track = track[10:40]
-        # diff0 = track[1][0] - track[0][0]
-        # diff2 = track[1][2] - track[0][2]
-        # diff3 = track[1][3] - track[0][3]
-
-        # for i in range(1, 75):
-        #     track[i] = (track[i-1][0] + diff0, track[i-1][1], track[i-1][2] + diff2, track[i-1][3] + diff3)
-        #     print track[i]
-
-        # for i in range(50, 75):
-        #     track[i] = (track[i-1][0], track[i-1][1], track[i-1][2], track[i-1][3])
-        #     print track[i]
+        track = track[9:40]
 
         # Create tiles
-        for i in range(len(track)):
+        for i in range(1, len(track)):
             alpha1, beta1, x1, y1 = track[i]
             alpha2, beta2, x2, y2 = track[i-1]
+
             road1_l = (x1 - TRACK_WIDTH*math.cos(beta1), y1 - TRACK_WIDTH*math.sin(beta1))
             road1_r = (x1 + TRACK_WIDTH*math.cos(beta1), y1 + TRACK_WIDTH*math.sin(beta1))
             road2_l = (x2 - TRACK_WIDTH*math.cos(beta2), y2 - TRACK_WIDTH*math.sin(beta2))
             road2_r = (x2 + TRACK_WIDTH*math.cos(beta2), y2 + TRACK_WIDTH*math.sin(beta2))
-
 
             t = self.world.CreateStaticBody( fixtures = fixtureDef(
                 shape=polygonShape(vertices=[road1_l, road1_r, road2_r, road2_l])
@@ -252,8 +241,7 @@ class OneCurve(gym.Env):
             t.fixtures[0].sensor = True
             self.road_poly.append(( [road1_l, road1_r, road2_r, road2_l], t.color ))
             self.road.append(t)
-
-        self.track = track
+        self.track = track[1:]
         return True
 
     def reset(self):

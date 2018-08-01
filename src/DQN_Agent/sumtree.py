@@ -27,6 +27,10 @@ class SumTree:
         self.data = np.zeros(capacity, dtype=object)
         self.n_entries = 0
 
+    def fill_up(self, data):
+        for _ in range(self.capacity - 1):
+            self.add(data, 1e-16)
+
     # update to the root node
     def _propagate(self, idx, change):
         parent = (idx - 1) // 2

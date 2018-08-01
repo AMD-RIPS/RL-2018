@@ -28,7 +28,7 @@ Pong = {
 		'discount': .99, 
 		'batch_size': 32, 
 		'memory_capacity': 100000, 
-		'num_episodes': 3000,
+		'num_episodes': 10000,
 		'score_limit': 19, 
 		'replay_method': 'prioritized'
 	}

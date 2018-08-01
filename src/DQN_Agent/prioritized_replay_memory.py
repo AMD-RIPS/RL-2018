@@ -26,19 +26,14 @@ from utils import pause
 class Prioritized_Replay_Memory():
 
     def __init__(self, memory_capacity, batch_size, alpha=0.6):
-        self.is_full = False
         self.tree = sumtree.SumTree(memory_capacity)
         self.memory_capacity = memory_capacity
         self.batch_size = batch_size
         self.alpha = alpha
+        self.is_empty = True
 
     def length(self):
         return self.tree.filled_size()
-
-    def full(self):
-        if self.is_full: return True
-        self.is_full = self.tree.filled_size() == self.memory_capacity
-        return self.is_full
 
     def get_q_grid(self, size, training_metadata):
         grid = self.get_mini_batch(training_metadata)[0]
@@ -51,6 +46,9 @@ class Prioritized_Replay_Memory():
         td_error = agent.sess.run(agent.td_error, feed_dict={agent.y_tf: y, agent.state_tf: [state], agent.action_tf: [one_hot_action]})
         data = (state, one_hot_action, reward, next_state, done)
         self.tree.add(data, td_error**self.alpha)
+        if self.is_empty:
+            self.is_empty = False
+            self.tree.fill_up(data)
 
     def get_mini_batch(self, training_metadata, beta = 0.8):
         out = []

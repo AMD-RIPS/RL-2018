@@ -46,8 +46,8 @@ class Classic_Control:
 
 class Pong:
 
-    def __init__(self, crop=(34, -16, 8, -8), downscaling_dimension=(84, 84), history_pick=4, skip_frames=1):
-        game_version = 'Pong-v0'
+    def __init__(self, crop=(34, -16, 8, -8), downscaling_dimension=(84, 84), history_pick=4, skip_frames=4):
+        game_version = 'PongNoFrameskip-v4'
         self.name = game_version + '_' + str(time.time())
         self.env = gym.make(game_version)
         self.downscaling_dimension = downscaling_dimension

@@ -32,7 +32,7 @@ class DQN_Agent:
         self.initialize_tf_variables()
 
     def set_training_parameters(self, discount, batch_size, memory_capacity, num_episodes, score_limit, 
-                                delta=1, learning_rate_drop_frame_limit=100000, target_update_frequency=10, replay_method='regular'):
+                                delta=1, learning_rate_drop_frame_limit=100000, target_update_frequency=1000, replay_method='regular'):
         self.target_update_frequency = target_update_frequency
         self.discount = discount
         if replay_method == 'regular':
@@ -161,7 +161,7 @@ class DQN_Agent:
             done = False
             epsilon = self.explore_rate.get(self.training_metadata)
             alpha = self.learning_rate.get(self.training_metadata)
-
+            print("Episode {0}/{1} \t Epsilon: {2} \t Alpha: {3}".format(episode, self.training_metadata.num_episodes, epsilon, alpha))
             while not done:
                 # Updating fixed target weights every #target_update_frequency frames
                 if self.training_metadata.frame % self.target_update_frequency == 0 and (self.training_metadata.frame != 0):
@@ -174,7 +174,7 @@ class DQN_Agent:
                 self.replay_memory.add(self, state, action, reward, next_state, done)
 
                 # Performing experience replay if replay memory populated
-                if self.replay_memory.full():
+                if self.replay_memory.length() > 10*self.replay_memory.batch_size:
                     self.sess.run(self.increment_frames_op)
                     self.training_metadata.increment_frame()
                     self.experience_replay(alpha)
@@ -182,10 +182,10 @@ class DQN_Agent:
                 done = info['true_done']
 
             # Creating q_grid if not yet defined and calculating average q-value
-            if self.replay_memory.full():
+            if self.replay_memory.length() > 10*self.replay_memory.batch_size:
                 self.q_grid = self.replay_memory.get_q_grid(size=100, training_metadata=self.training_metadata)
             avg_q = self.estimate_avg_q()
-            print('Score: {0},\t epsilon: {1},\t learning rate: {2}'.format(self.test_Q(5), epsilon, alpha))
+
             # Saving tensorboard data and model weights
             if (episode % 30 == 0) and (episode != 0):
                 score = self.test_Q(num_test_episodes=5, visualize=False)
@@ -193,8 +193,7 @@ class DQN_Agent:
                 self.writer.add_summary(self.sess.run(self.test_summary,
                                                       feed_dict={self.test_score: score}), episode / 30)
                 self.saver.save(self.sess, self.model_path + '/data.chkp')
-                if score > self.score_limit and episode > 200:
-                    break
+                if score > self.score_limit and episode > 200: return
 
             self.writer.add_summary(self.sess.run(self.training_summary, feed_dict={self.avg_q: avg_q}), episode)
 

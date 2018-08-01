@@ -1,11 +1,12 @@
 How to add new gym environments
 
-1. copy 'straight_track.py', 'one_curve.py'
+1. copy 'straight_track.py', 'one_curve.py', 'two_curve.py'
 to ~/.local/lib/python2.7/site-packages/gyms/envs/box2d/
 
 2. add the following to ~/.local/lib/python2.7/site-packages/gyms/envs/box2d/__init__.py
 from gym.envs.box2d.straight_track import StraightTrack
 from gym.envs.box2d.one_curve import OneCurve
+from gym.envs.box2d.two_curve import TwoCurve
 
 3. add the following to ~/.local/lib/python2.7/site-packages/gyms/envs/__init__.py
 # Custom Tracks
@@ -23,11 +24,18 @@ register(
     reward_threshold=900,
 )
 
+register(
+    id='TwoCurve-v0',
+    entry_point='gym.envs.box2d:TwoCurve',
+    max_episode_steps=500,
+    reward_threshold=900,
+)
+
 4. test if working
 import gym
 gym.make('StraightTrack-v0')
 gym.make('OneCurve-v0')
+gym.make('TwoCurve-v0')
 
-5. note: for deterministic results, set the environment seed before calling env.reset()
-env.seed(seed_num)
+5. note: OneCurve (seed=2) and TwoCurve (seed=5) are deterministic
 

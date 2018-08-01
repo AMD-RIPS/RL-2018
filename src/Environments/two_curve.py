@@ -1,4 +1,4 @@
-# Fixed track with one curve (seed = 2)
+# Fixed track with two curves (S shape)
 
 import sys, math
 import numpy as np
@@ -220,17 +220,16 @@ class OneCurve(gym.Env):
         #assert i2!=-1
 
         track = track[i1:i2-1]
-        track = track[9:40]
-
+        track = track[146:197]
         # Create tiles
         for i in range(1, len(track)):
             alpha1, beta1, x1, y1 = track[i]
             alpha2, beta2, x2, y2 = track[i-1]
-
             road1_l = (x1 - TRACK_WIDTH*math.cos(beta1), y1 - TRACK_WIDTH*math.sin(beta1))
             road1_r = (x1 + TRACK_WIDTH*math.cos(beta1), y1 + TRACK_WIDTH*math.sin(beta1))
             road2_l = (x2 - TRACK_WIDTH*math.cos(beta2), y2 - TRACK_WIDTH*math.sin(beta2))
             road2_r = (x2 + TRACK_WIDTH*math.cos(beta2), y2 + TRACK_WIDTH*math.sin(beta2))
+
 
             t = self.world.CreateStaticBody( fixtures = fixtureDef(
                 shape=polygonShape(vertices=[road1_l, road1_r, road2_r, road2_l])
@@ -243,11 +242,12 @@ class OneCurve(gym.Env):
             t.fixtures[0].sensor = True
             self.road_poly.append(( [road1_l, road1_r, road2_r, road2_l], t.color ))
             self.road.append(t)
+
         self.track = track[1:]
         return True
 
     def reset(self):
-        self.seed(2)
+        self.seed(5)
         self._destroy()
         self.reward = 0.0
         self.prev_reward = 0.0

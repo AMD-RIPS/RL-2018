@@ -32,8 +32,8 @@ class DQN_Agent:
         self.log_path = self.model_path + '/log'
         self.initialize_tf_variables()
 
-    def set_training_parameters(self, discount, batch_size, memory_capacity, num_episodes,
-                                delta=1, learning_rate_drop_frame_limit=100000, target_update_frequency=1000, replay_method='regular'):
+    def set_training_parameters(self, discount, batch_size, memory_capacity, num_episodes, score_limit, 
+                                delta=1, learning_rate_drop_frame_limit=100000, target_update_frequency=10, replay_method='regular'):
         self.target_update_frequency = target_update_frequency
         self.discount = discount
         if replay_method == 'regular':
@@ -43,6 +43,7 @@ class DQN_Agent:
         self.training_metadata = metadata.Training_Metadata(frame=self.sess.run(self.frames), frame_limit=learning_rate_drop_frame_limit,
                                                             episode=self.sess.run(self.episode), num_episodes=num_episodes)
         self.delta = delta
+        self.score_limit = score_limit
         utils.document_parameters(self)
 
     def initialize_tf_variables(self):
@@ -194,6 +195,8 @@ class DQN_Agent:
                 self.writer.add_summary(self.sess.run(self.test_summary,
                                                       feed_dict={self.test_score: score}), episode / 30)
                 self.saver.save(self.sess, self.model_path + '/data.chkp')
+                if score > self.score_limit and episode > 200:
+                    break
 
             self.writer.add_summary(self.sess.run(self.training_summary, feed_dict={self.avg_q: avg_q}), episode)
 

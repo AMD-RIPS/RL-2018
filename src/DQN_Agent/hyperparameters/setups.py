@@ -9,7 +9,7 @@ CartPole = {
 		'target_update_frequency': 200,
 		'discount': .99, 
 		'batch_size': 32, 
-		'memory_capacity': 10000, 
+		'memory_capacity': 1000, 
 		'num_episodes': 10000,
 		'replay_method': 'regular'
 	}

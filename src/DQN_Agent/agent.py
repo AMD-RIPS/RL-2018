@@ -122,13 +122,13 @@ class DQN_Agent:
         fixed_feed_dict.update(zip(self.trainable_variables, self.fixed_target_weights))
 
         # Simple DQN #########################################################################################
-        Q_batch = self.sess.run(self.Q_amax, feed_dict=fixed_feed_dict)
+        # Q_batch = self.sess.run(self.Q_amax, feed_dict=fixed_feed_dict)
         ######################################################################################################
 
         # Double DQN #########################################################################################
-        # greedy_actions = self.sess.run(self.onehot_greedy_action, feed_dict={self.state_tf: next_state_batch})
-        # fixed_feed_dict.update({self.action_tf: greedy_actions})
-        # Q_batch = self.sess.run(self.Q_value_at_action, feed_dict=fixed_feed_dict)
+        greedy_actions = self.sess.run(self.onehot_greedy_action, feed_dict={self.state_tf: next_state_batch})
+        fixed_feed_dict.update({self.action_tf: greedy_actions})
+        Q_batch = self.sess.run(self.Q_value_at_action, feed_dict=fixed_feed_dict)
         ######################################################################################################
         y_batch = reward_batch + self.discount * np.multiply(np.invert(done_batch), Q_batch)
 
@@ -162,7 +162,7 @@ class DQN_Agent:
             epsilon = self.explore_rate.get(self.training_metadata)
             alpha = self.learning_rate.get(self.training_metadata)
             while not done:
-                # Updating fixed target weights every 1000 frames
+                # Updating fixed target weights every #target_update_frequency frames
                 if self.training_metadata.frame % self.target_update_frequency == 0:
                     self.update_fixed_target_weights()
                 self.training_metadata.increment_frame()
@@ -190,7 +190,7 @@ class DQN_Agent:
                 score = self.test_Q(num_test_episodes=5, visualize=False)
                 print(score)
                 self.writer.add_summary(self.sess.run(self.test_summary,
-                                                      feed_dict={self.test_score: score}), episode / 30)
+                                                      feed_dict={self.test_score: score}), episode / 1)
                 self.saver.save(self.sess, self.model_path + '/data.chkp')
 
             self.writer.add_summary(self.sess.run(self.training_summary, feed_dict={self.avg_q: avg_q}), episode)

@@ -12,7 +12,7 @@ CartPole = {
 		'memory_capacity': 1000, 
 		'num_episodes': 10000,
 		'score_limit': 199, 
-		'replay_method': 'regular'
+		'replay_method': 'prioritized'
 	}
 }
 
@@ -30,7 +30,7 @@ Pong = {
 		'memory_capacity': 100000, 
 		'num_episodes': 3000,
 		'score_limit': 19, 
-		'replay_method': 'regular'
+		'replay_method': 'prioritized'
 	}
 }
 
@@ -54,7 +54,7 @@ BreakOut = {
 
 CarRacing = {
 	'general': {
-		'architecture': 'atari', 
+		'architecture': 'nature', 
 		'explore_rate': 'decay', 
 		'learning_rate': 'atari'
 	},

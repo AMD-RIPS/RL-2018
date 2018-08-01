@@ -12,7 +12,6 @@ import learning_rates as lrng
 import explore_rates as expl
 import replay_memory as rplm
 import prioritized_replay_memory as prplm
-import metadata
 import utils
 import time
 from tensorflow.python.saved_model import tag_constants
@@ -40,7 +39,7 @@ class DQN_Agent:
             self.replay_memory = rplm.Replay_Memory(memory_capacity, batch_size)
         else:
             self.replay_memory = prplm.Prioritized_Replay_Memory(memory_capacity, batch_size)
-        self.training_metadata = metadata.Training_Metadata(frame=self.sess.run(self.frames), frame_limit=learning_rate_drop_frame_limit,
+        self.training_metadata = utils.Training_Metadata(frame=self.sess.run(self.frames), frame_limit=learning_rate_drop_frame_limit,
                                                             episode=self.sess.run(self.episode), num_episodes=num_episodes)
         self.delta = delta
         self.score_limit = score_limit
@@ -163,7 +162,6 @@ class DQN_Agent:
             epsilon = self.explore_rate.get(self.training_metadata)
             alpha = self.learning_rate.get(self.training_metadata)
 
-            print('Episode {0}/{1}'.format(self.sess.run(self.episode), self.training_metadata.num_episodes))
             while not done:
                 # Updating fixed target weights every #target_update_frequency frames
                 if self.training_metadata.frame % self.target_update_frequency == 0 and (self.training_metadata.frame != 0):
@@ -177,7 +175,7 @@ class DQN_Agent:
 
                 # Performing experience replay if replay memory populated
                 if self.replay_memory.full():
-		    self.sess.run(self.increment_frames_op)
+                    self.sess.run(self.increment_frames_op)
                     self.training_metadata.increment_frame()
                     self.experience_replay(alpha)
                 state = next_state
@@ -187,7 +185,7 @@ class DQN_Agent:
             if self.replay_memory.full():
                 self.q_grid = self.replay_memory.get_q_grid(size=100, training_metadata=self.training_metadata)
             avg_q = self.estimate_avg_q()
-
+            print('Score: {0},\t epsilon: {1},\t learning rate: {2}'.format(self.test_Q(5), epsilon, alpha))
             # Saving tensorboard data and model weights
             if (episode % 30 == 0) and (episode != 0):
                 score = self.test_Q(num_test_episodes=5, visualize=False)

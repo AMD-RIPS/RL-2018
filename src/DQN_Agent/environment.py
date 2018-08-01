@@ -162,6 +162,9 @@ class CarRacing:
             self.history.pop(0)
         self.history.append(utils.process_image(state, self.crop, self.downscaling_dimension))
 
+    def __str__(self):
+    	return self.name
+
 class BreakOut:
 
     def __init__(self, crop=(34, -16, 8, -8), downscaling_dimension = (84, 84), history_pick=4, skip_frames=4):

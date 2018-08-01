@@ -11,6 +11,7 @@ CartPole = {
 		'batch_size': 32, 
 		'memory_capacity': 1000, 
 		'num_episodes': 10000,
+		'score_limit': 199,
 		'replay_method': 'regular'
 	}
 }
@@ -28,6 +29,7 @@ Pong = {
 		'batch_size': 32, 
 		'memory_capacity': 100000, 
 		'num_episodes': 3000,
+		'score_limit': 19,
 		'replay_method': 'regular'
 	}
 }
@@ -45,6 +47,7 @@ BreakOut = {
 		'batch_size': 32, 
 		'memory_capacity': 100000, 
 		'num_episodes': 10000,
+		'score_limit': 300,
 		'replay_method': 'regular'
 	}
 }
@@ -62,6 +65,7 @@ CarRacing = {
 		'batch_size': 32, 
 		'memory_capacity': 100000, 
 		'num_episodes': 10000,
+		'score_limit': 980,
 		'replay_method': 'regular'
 	}
 }

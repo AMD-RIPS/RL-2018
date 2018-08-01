@@ -22,10 +22,10 @@ class Atari:
         pass
 
     def get(self, training_metadata):
-        return 0.00001
+        return 0.00025
 
     def __str__(self):
-        return '0.00001'
+        return '0.00025'
 
 lrng_dict = {
     'basic': Basic,

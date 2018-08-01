@@ -54,8 +54,8 @@ BreakOut = {
 
 CarRacing = {
 	'general': {
-		'architecture': 'atari', 
-		'explore_rate': 'atari', 
+		'architecture': 'nature', 
+		'explore_rate': 'decay', 
 		'learning_rate': 'atari'
 	},
 

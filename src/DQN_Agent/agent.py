@@ -148,7 +148,6 @@ class DQN_Agent:
         self.fixed_target_weights = self.sess.run(self.trainable_variables)
 
     def train(self):
-        # self.pre_train()
         for episode in range(self.training_metadata.num_episodes):
             self.training_metadata.increment_episode()
             self.sess.run(self.increment_episode_op)
@@ -186,11 +185,11 @@ class DQN_Agent:
             avg_q = self.estimate_avg_q()
 
             # Saving tensorboard data and model weights
-            if episode % 1 == 0:
+            if episode % 30 == 0:
                 score = self.test_Q(num_test_episodes=5, visualize=False)
                 print(score)
                 self.writer.add_summary(self.sess.run(self.test_summary,
-                                                      feed_dict={self.test_score: score}), episode / 1)
+                                                      feed_dict={self.test_score: score}), episode / 30)
                 self.saver.save(self.sess, self.model_path + '/data.chkp')
 
             self.writer.add_summary(self.sess.run(self.training_summary, feed_dict={self.avg_q: avg_q}), episode)
@@ -221,22 +220,6 @@ class DQN_Agent:
             return 0
         return np.average(np.amax(self.sess.run(self.Q_value, feed_dict={self.state_tf: self.q_grid}), axis=1))
 
-    def pre_train(self):
-        # randomly play until the replay memory has n memories if at the very beginning of the training
-        # else gain memory based on most recent epsilon
-        epsilon = self.explore_rate.get(self.training_metadata)
-        while self.replay_memory.length() < 50000:
-            state = self.env.reset()
-            self.env.render()
-            done = False
-            while not done:
-                # Choosing and performing action and updating the replay memory
-                action = self.get_action(state, epsilon)
-                next_state, reward, done, info = self.env.step(action)
-                reward = np.sign(reward)
-                self.replay_memory.add(self, state, action, reward, next_state, done)
-                state = next_state
-                done = info['true_done']
 
     def load(self, path):
         self.saver.restore(self.sess, path)

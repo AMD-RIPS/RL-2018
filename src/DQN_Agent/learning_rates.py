@@ -10,10 +10,10 @@ class Basic:
         pass
 
     def get(self, training_metadata):
-        return 0.005
+        return max(0.005, 0.05* (1 - 2 * float(training_metadata.episode) / training_metadata.num_episodes))
 
     def __str__(self):
-        return '0.005'
+        return 'max(0.005, 0.05* (1 - 2 * float(training_metadata.episode) / training_metadata.num_episodes))'
 
 
 class Atari:

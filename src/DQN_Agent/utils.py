@@ -12,8 +12,9 @@ def pause():
 
 def unit_image(image):
     image  = np.array(image)
-    max_along_dim = np.amax(image)
-    return np.true_divide(image,max_along_dim)
+    # max_along_dim = np.amax(image)
+    # return np.true_divide(image,max_along_dim)
+    return np.true_divide(image,255)
 
 def grayscale_img(image):
     return np.dot(image[...,:3], [0.299, 0.587, 0.114])

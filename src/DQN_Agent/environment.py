@@ -11,7 +11,7 @@ import time
 
 class Classic_Control:
 
-    def __init__(self, game):
+    def __init__(self, game='CartPole-v1'):
         self.name = game + str(time.time())
         self.env = gym.make(game)
         self.state_space_size = np.shape(self.env.observation_space)[0]
@@ -47,8 +47,9 @@ class Classic_Control:
 class Pong:
 
     def __init__(self, crop=(34, -16, 8, -8), downscaling_dimension=(84, 84), history_pick=4, skip_frames=1):
-        self.name = "Pong_" + str(time.time())
-        self.env = gym.make('Pong-v0')
+        game_version = 'Pong-v0'
+        self.name = game_version + '_' + str(time.time())
+        self.env = gym.make(game_version)
         self.downscaling_dimension = downscaling_dimension
         self.history_pick = history_pick
         self.state_space_size = history_pick * np.prod(self.downscaling_dimension)
@@ -70,13 +71,15 @@ class Pong:
 
     def step(self, action):
         action = self.map_action(action)
+        total_reward = 0
         for i in range(self.skip_frames):
             next_state, reward, done, info = self.env.step(action)
             info = {'true_done': done}
+            total_reward += reward
             if reward == -1: done = True
             if done:
                 break
-        return self.process(next_state), reward, done, info
+        return self.process(next_state), total_reward, done, info
 
     def render(self):
         self.env.render()
@@ -97,7 +100,7 @@ class Pong:
         self.history.append(utils.process_image(state, self.crop, self.downscaling_dimension))
 
     def __str__(self):
-        return "Pong_" + str(time.time())
+        return self.name
 
 
 class CarRacing:
@@ -132,12 +135,14 @@ class CarRacing:
 
     def step(self, action):
         action = self.map_action(action)
+        total_reward = 0
         for i in range(self.skip_frames):
             next_state, reward, done, info = self.env.step(action)
+            total_reward += reward
             info = {'true_done': done}
             if done:
                 break
-        return self.process(next_state), reward, done, info
+        return self.process(next_state), total_reward, done, info
 
     def render(self):
         self.env.render()
@@ -160,8 +165,9 @@ class CarRacing:
 class BreakOut:
 
     def __init__(self, crop=(34, -16, 8, -8), downscaling_dimension = (84, 84), history_pick=4, skip_frames=4):
-        self.name = "BreakOut" + str(time.time())
-        self.env = gym.make('BreakoutNoFrameskip-v4')
+        game_version = 'BreakoutNoFrameskip-v4'
+        self.name = game_version + '_' + str(time.time())
+        self.env = gym.make(game_version)
         self.downscaling_dimension = downscaling_dimension
         self.history_pick = history_pick
         self.state_space_size = history_pick * np.prod(self.downscaling_dimension)
@@ -186,15 +192,17 @@ class BreakOut:
 
     def step(self, action):
         action = self.map_action(action)
+        total_reward = 0
         for i in range(self.skip_frames):
             next_state, reward, done, info = self.env.step(action)
+            total_reward += reward
             info.update({'true_done': done})
             if info['ale.lives'] < self.life_remaining:
                 done = True
             if info['ale.lives'] == 0:  
                 break
         self.life_remaining = info['ale.lives']
-        return self.process(next_state), reward, done, info
+        return self.process(next_state), total_reward, done, info
 
     def render(self):
         self.env.render()
@@ -214,9 +222,12 @@ class BreakOut:
             self.history.pop(0)
         self.history.append(utils.process_nature_atari(state))
 
+    def __str__(self):
+        return self.name
+
 
 env_dict = {
-    "Classic_Control": Classic_Control,
+    "CartPole": Classic_Control,
     "Pong": Pong,
     "CarRacing": CarRacing,
     "BreakOut": BreakOut

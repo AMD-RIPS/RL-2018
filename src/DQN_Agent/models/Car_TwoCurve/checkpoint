@@ -1,0 +1,2 @@
+model_checkpoint_path: "/home/pgerber/Documents/RL-2018/src/DQN_Agent/models/Car_TwoCurve/data.chkp-540"
+all_model_checkpoint_paths: "/home/pgerber/Documents/RL-2018/src/DQN_Agent/models/Car_TwoCurve/data.chkp-540"

@@ -50,6 +50,7 @@ class Pong:
         game_version = 'PongNoFrameskip-v4'
         self.name = game_version + '_' + str(time.time())
         self.env = gym.make(game_version)
+        self.env = gym.wrappers.Monitor(self.env, '../../videos/pong_deterministic')
         self.downscaling_dimension = downscaling_dimension
         self.history_pick = history_pick
         self.state_space_size = history_pick * np.prod(self.downscaling_dimension)
@@ -105,10 +106,7 @@ class Pong:
 
 class CarRacing:
 
-    def __init__(self, type=None, crop=(None, None, None, None), downscaling_dimension=(84, 84), history_pick=4, skip_frames=4, seed=None):
-        # use a simplified version of CarRacing
-        if type is not "StraightTrack" and type is not "OneCurve":
-            type = "CarRacing"
+    def __init__(self, type="CarRacing", crop=(None, None, None, None), downscaling_dimension=(84, 84), history_pick=4, seed=None):
         self.name = type + str(time.time())
         self.env = gym.make(type + '-v0')
         self.downscaling_dimension = downscaling_dimension
@@ -117,7 +115,6 @@ class CarRacing:
         self.action_space_size = 4
         self.state_shape = [None, self.history_pick] + list(self.downscaling_dimension)
         self.history = []
-        self.skip_frames = skip_frames
         self.action_dict = {0: [-1, 0, 0], 1: [1, 0, 0], 2: [0, 1, 0], 3: [0, 0, 0.8]}
         self.crop = crop
         self.seed = seed
@@ -136,7 +133,7 @@ class CarRacing:
     def step(self, action):
         action = self.map_action(action)
         total_reward = 0
-        for i in range(self.skip_frames):
+        for i in range(random.choice([3, 4, 5])):
             next_state, reward, done, info = self.env.step(action)
             total_reward += reward
             info = {'true_done': done}

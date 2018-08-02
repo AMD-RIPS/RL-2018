@@ -93,7 +93,7 @@ class DQN_Agent:
         self.train_op = self.optimizer.minimize(self.loss, name='train_minimize')
 
         # Tensorflow session setup
-        self.saver = tf.train.Saver()
+        self.saver = tf.train.Saver(max_to_keep=None)
         config = tf.ConfigProto()
         config.allow_soft_placement = True
         config.gpu_options.allow_growth = True
@@ -192,19 +192,17 @@ class DQN_Agent:
                 print(score)
                 self.writer.add_summary(self.sess.run(self.test_summary,
                                                       feed_dict={self.test_score: score}), episode / 30)
-                self.saver.save(self.sess, self.model_path + '/data.chkp')
+                self.saver.save(self.sess, self.model_path + '/data.chkp', global_step=self.training_metadata.episode)
                 if score > self.score_limit and episode > 200: return
 
             self.writer.add_summary(self.sess.run(self.training_summary, feed_dict={self.avg_q: avg_q}), episode)
 
     def test_Q(self, num_test_episodes=10, visualize=False):
         cum_reward = 0
-        start_time = time.time()
-        elapsed_time = 0
         for episode in range(num_test_episodes):
             done = False
             state = self.env.reset()
-            while not done and not elapsed_time > 60:
+            while not done:
                 if visualize:
                     self.env.render()
                 action = self.get_action(state, epsilon=0)
@@ -213,10 +211,7 @@ class DQN_Agent:
                 state = next_state
                 cum_reward += reward
                 done = info['true_done']
-                elapsed_time = time.time() - start_time
-                if elapsed_time > 60:
-                    num_test_episodes = episode
-        return cum_reward / max(1, float(num_test_episodes))
+        return cum_reward / num_test_episodes
 
     def estimate_avg_q(self):
         if not self.q_grid:

@@ -1,0 +1,10 @@
+Environment: TwoCurve1533230280.93
+Architecture: Architecture used in the atari paper
+Explore Rate: max(0.1, (1 - float(training_metadata.frame) / training_metadata.frame_limit))
+Learning Rate: 0.00025
+Discount: 0.99
+Batch Size: 32
+Memory Capacity: 10000
+Num Episodes: 10000
+Learning Rate Drop Frame Limit: 100000
+replay type: regular

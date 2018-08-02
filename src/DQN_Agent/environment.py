@@ -112,10 +112,10 @@ class CarRacing:
         self.downscaling_dimension = downscaling_dimension
         self.history_pick = history_pick
         self.state_space_size = history_pick * np.prod(self.downscaling_dimension)
-        self.action_space_size = 4
+        self.action_space_size = 5
         self.state_shape = [None, self.history_pick] + list(self.downscaling_dimension)
         self.history = []
-        self.action_dict = {0: [-1, 0, 0], 1: [1, 0, 0], 2: [0, 1, 0], 3: [0, 0, 0.8]}
+        self.action_dict = {0: [-1, 0, 0], 1: [1, 0, 0], 2: [0, 1, 0], 3: [0, 0, 0.8], 4: [0, 0, 0]}
         self.crop = crop
         self.seed = seed
 

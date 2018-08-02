@@ -100,7 +100,7 @@ class FrictionDetector(contactListener):
             obj.tiles.remove(tile)
             #print tile.road_friction, "DEL", len(obj.tiles) -- should delete to zero when on grass (this works)
 
-class OneCurve(gym.Env):
+class TwoCurve(gym.Env):
     metadata = {
         'render.modes': ['human', 'rgb_array', 'state_pixels'],
         'video.frames_per_second' : FPS
@@ -445,7 +445,7 @@ if __name__=="__main__":
         if k==key.RIGHT and a[0]==+1.0: a[0] = 0
         if k==key.UP:    a[1] = 0
         if k==key.DOWN:  a[2] = 0
-    env = OneCurve()
+    env = TwoCurve()
     env.render()
     record_video = False
     if record_video:

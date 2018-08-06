@@ -112,13 +112,10 @@ class CarRacing:
         self.downscaling_dimension = downscaling_dimension
         self.history_pick = history_pick
         self.state_space_size = history_pick * np.prod(self.downscaling_dimension)
-        self.action_space_size = 4
-        # self.action_space_size = 4
-        # self.action_space_size = 7
+        self.action_space_size = 5
         self.state_shape = [None, self.history_pick] + list(self.downscaling_dimension)
         self.history = []
         self.action_dict = {0: [-1, 0, 0], 1: [1, 0, 0], 2: [0, 1, 0], 3: [0, 0, 0.8], 4: [0, 0, 0]}
-        # self.action_dict = {0: [-1, 0, 0], 1: [1, 0, 0], 2: [0, 1, 0], 3: [0, 0, 0.8]}
         self.crop = crop
         self.seed = seed
         self.test = test
@@ -137,10 +134,7 @@ class CarRacing:
     def step(self, action):
         action = self.map_action(action)
         total_reward = 0
-        if self.test: 
-            n=1
-        else: 
-            n = random.choice([2, 3, 4])
+        n = 1 if self.test else random.choice([2, 3, 4])
         for i in range(n):
             next_state, reward, done, info = self.env.step(action)
             total_reward += reward

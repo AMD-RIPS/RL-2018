@@ -152,7 +152,8 @@ class DQN_Agent:
         self.fixed_target_weights = self.sess.run(self.trainable_variables)
 
     def train(self):
-        for episode in range(self.training_metadata.num_episodes):
+        while self.sess.run(self.episode) < self.training_metadata.num_episodes:
+            episode = self.sess.run(self.episode)
             self.training_metadata.increment_episode()
             self.sess.run(self.increment_episode_op)
 
@@ -211,7 +212,6 @@ class DQN_Agent:
                 if visualize:
                     self.test_env.render()
                 action = self.get_action(state, epsilon=0)
-                if action == 3: print('Brack was used')
                 next_state, reward, done, info = self.test_env.step(action)
                 state = next_state
                 # reward_eps += reward

@@ -16,3 +16,4 @@ control.set_training_parameters(**setups.setup_dict[game]['training'])
 # control.load("/home/jguan/Documents/RIPS/RL-2018/src/DQN_Agent/models/fixedtrack_4actions/data.chkp-9991")
 control.train()
 print(control.test_Q(10, visualize=True))
+

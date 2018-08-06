@@ -22,8 +22,9 @@ DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 class DQN_Agent:
     # architecture, explore_rate and learning_rate are strings, see respective files for definitions
 
-    def __init__(self, environment, architecture, explore_rate, learning_rate, model_name=None):
-        self.env = environment
+    def __init__(self, training_environment, testing_environment, architecture, explore_rate, learning_rate, model_name=None):
+        self.env = training_environment
+        self.test_env = testing_environment
         self.architecture = arch.arch_dict[architecture]()
         self.explore_rate = expl.expl_dict[explore_rate]()
         self.learning_rate = lrng.lrng_dict[learning_rate]()
@@ -39,8 +40,10 @@ class DQN_Agent:
             self.replay_memory = rplm.Replay_Memory(memory_capacity, batch_size)
         else:
             self.replay_memory = prplm.Prioritized_Replay_Memory(memory_capacity, batch_size)
-        self.training_metadata = utils.Training_Metadata(frame=self.sess.run(self.frames), frame_limit=learning_rate_drop_frame_limit,
-                                                            episode=self.sess.run(self.episode), num_episodes=num_episodes)
+        # self.training_metadata = utils.Training_Metadata(frame=self.sess.run(self.frames), frame_limit=learning_rate_drop_frame_limit,
+                                                            # episode=self.sess.run(self.episode), num_episodes=num_episodes)
+        self.training_metadata = utils.Training_Metadata(frame=0, frame_limit=learning_rate_drop_frame_limit,
+                                                            episode=0, num_episodes=num_episodes)
         self.delta = delta
         self.score_limit = score_limit
         utils.document_parameters(self)
@@ -108,7 +111,7 @@ class DQN_Agent:
         avg_q = tf.summary.scalar("Average Q-value", self.avg_q, collections=None, family=None)
         self.training_summary = tf.summary.merge([avg_q])
         self.test_summary = tf.summary.merge([test_score])
-        subprocess.Popen(['tensorboard', '--logdir', self.log_path])
+        # subprocess.Popen(['tensorboard', '--logdir', self.log_path])
 
         # Initialising variables and finalising graph
         self.sess.run(tf.global_variables_initializer())
@@ -182,35 +185,41 @@ class DQN_Agent:
                 done = info['true_done']
 
             # Creating q_grid if not yet defined and calculating average q-value
-            if self.replay_memory.length() > 10*self.replay_memory.batch_size:
+            if self.replay_memory.length() > 100*self.replay_memory.batch_size:
                 self.q_grid = self.replay_memory.get_q_grid(size=100, training_metadata=self.training_metadata)
             avg_q = self.estimate_avg_q()
 
             # Saving tensorboard data and model weights
             if (episode % 30 == 0) and (episode != 0):
-                score = self.test_Q(num_test_episodes=5, visualize=False)
+                score = self.test_Q(num_test_episodes=5, visualize=True)
                 print(score)
                 self.writer.add_summary(self.sess.run(self.test_summary,
                                                       feed_dict={self.test_score: score}), episode / 30)
                 self.saver.save(self.sess, self.model_path + '/data.chkp', global_step=self.training_metadata.episode)
-                if score > self.score_limit and episode > 200: return
+                if score > self.score_limit and self.training_metadata.frame > self.training_metadata.frame_limit: return
 
             self.writer.add_summary(self.sess.run(self.training_summary, feed_dict={self.avg_q: avg_q}), episode)
 
     def test_Q(self, num_test_episodes=10, visualize=False):
         cum_reward = 0
+        # reward_eps_arr = []
         for episode in range(num_test_episodes):
             done = False
-            state = self.env.reset()
+            state = self.test_env.reset()
+            # reward_eps = 0
             while not done:
                 if visualize:
-                    self.env.render()
+                    self.test_env.render()
                 action = self.get_action(state, epsilon=0)
-
-                next_state, reward, done, info = self.env.step(action)
+                if action == 3: print('Brack was used')
+                next_state, reward, done, info = self.test_env.step(action)
                 state = next_state
+                # reward_eps += reward
                 cum_reward += reward
                 done = info['true_done']
+            # reward_eps_arr.append(reward_eps)
+        # reward_eps_arr = np.asarray(reward_eps_arr)
+        # np.savetxt("reward_eps_5_random.csv", reward_eps_arr, delimiter=",")
         return cum_reward / num_test_episodes
 
     def estimate_avg_q(self):

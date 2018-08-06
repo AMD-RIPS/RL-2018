@@ -106,18 +106,22 @@ class Pong:
 
 class CarRacing:
 
-    def __init__(self, type="CarRacing", crop=(None, None, None, None), downscaling_dimension=(84, 84), history_pick=4, seed=None):
+    def __init__(self, type="CarRacing", crop=(None, None, None, None), downscaling_dimension=(84, 84), history_pick=4, seed=None, test=False):
         self.name = type + str(time.time())
         self.env = gym.make(type + '-v0')
         self.downscaling_dimension = downscaling_dimension
         self.history_pick = history_pick
         self.state_space_size = history_pick * np.prod(self.downscaling_dimension)
-        self.action_space_size = 5
+        self.action_space_size = 4
+        # self.action_space_size = 4
+        # self.action_space_size = 7
         self.state_shape = [None, self.history_pick] + list(self.downscaling_dimension)
         self.history = []
         self.action_dict = {0: [-1, 0, 0], 1: [1, 0, 0], 2: [0, 1, 0], 3: [0, 0, 0.8], 4: [0, 0, 0]}
+        # self.action_dict = {0: [-1, 0, 0], 1: [1, 0, 0], 2: [0, 1, 0], 3: [0, 0, 0.8]}
         self.crop = crop
         self.seed = seed
+        self.test = test
 
     def sample_action_space(self):
         return np.random.randint(self.action_space_size)
@@ -133,11 +137,15 @@ class CarRacing:
     def step(self, action):
         action = self.map_action(action)
         total_reward = 0
-        for i in range(random.choice([3, 4, 5])):
+        if self.test: 
+            n=1
+        else: 
+            n = random.choice([2, 3, 4])
+        for i in range(n):
             next_state, reward, done, info = self.env.step(action)
             total_reward += reward
             info = {'true_done': done}
-            if done:
+            if info['true_done']:
                 break
         return self.process(next_state), total_reward, done, info
 

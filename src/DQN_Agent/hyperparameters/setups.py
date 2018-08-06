@@ -54,7 +54,7 @@ BreakOut = {
 
 CarRacing = {
 	'general': {
-		'architecture': 'atari', 
+		'architecture': 'nature', 
 		'explore_rate': 'decay', 
 		'learning_rate': 'atari'
 	},
@@ -65,7 +65,7 @@ CarRacing = {
 		'batch_size': 32, 
 		'memory_capacity': 10000, 
 		'num_episodes': 10000,
-		'score_limit': 980, 
+		'score_limit': 900, 
 		'replay_method': 'regular'
 	}
 }

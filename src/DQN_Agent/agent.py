@@ -166,7 +166,11 @@ class DQN_Agent:
             epsilon = self.explore_rate.get(self.training_metadata)
             alpha = self.learning_rate.get(self.training_metadata)
             print("Episode {0}/{1} \t Epsilon: {2} \t Alpha: {3}".format(episode, self.training_metadata.num_episodes, epsilon, alpha))
+            counter = True  
             while not done:
+                if counter: 
+                    eight_frame_reward = 0
+                counter = not counter
                 # Updating fixed target weights every #target_update_frequency frames
                 if self.training_metadata.frame % self.target_update_frequency == 0 and (self.training_metadata.frame != 0):
                     self.update_fixed_target_weights()
@@ -174,7 +178,9 @@ class DQN_Agent:
                 # Choosing and performing action and updating the replay memory
                 action = self.get_action(state, epsilon)
                 next_state, reward, done, info = self.env.step(action)
-
+                eight_frame_reward += reward
+                if eight_frame_reward < -0.5:
+                    reward = -2
                 self.replay_memory.add(self, state, action, reward, next_state, done)
 
                 # Performing experience replay if replay memory populated

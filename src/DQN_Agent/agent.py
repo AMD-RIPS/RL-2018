@@ -197,7 +197,9 @@ class DQN_Agent:
                 self.writer.add_summary(self.sess.run(self.test_summary,
                                                       feed_dict={self.test_score: score}), episode / 30)
                 self.saver.save(self.sess, self.model_path + '/data.chkp', global_step=self.training_metadata.episode)
-                if score > self.score_limit and self.training_metadata.frame > self.training_metadata.frame_limit: return
+                if score > self.score_limit and self.training_metadata.frame > self.training_metadata.frame_limit: 
+                    if self.test_Q(100) > self.score_limit:
+                        return
 
             self.writer.add_summary(self.sess.run(self.training_summary, feed_dict={self.avg_q: avg_q}), episode)
 

@@ -1,0 +1,2 @@
+model_checkpoint_path: "/home/patrikgerber96/Documents/Git/RL-2018/src/DQN_Agent/models/slow/data.chkp-121"
+all_model_checkpoint_paths: "/home/patrikgerber96/Documents/Git/RL-2018/src/DQN_Agent/models/slow/data.chkp-121"

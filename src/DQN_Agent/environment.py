@@ -115,7 +115,7 @@ class CarRacing:
         self.action_space_size = 5
         self.state_shape = [None, self.history_pick] + list(self.downscaling_dimension)
         self.history = []
-        self.action_dict = {0: [-1, 0, 0], 1: [1, 0, 0], 2: [0, 1, 0], 3: [0, 0, 0.8], 4: [0, 0, 0]}
+        self.action_dict = {0: [-1, 0, 0], 1: [1, 0, 0], 2: [0, 0.5, 0], 3: [0, 0, 0.8], 4: [0, 0, 0]}
         self.crop = crop
         self.seed = seed
         self.test = test
@@ -128,7 +128,7 @@ class CarRacing:
 
     def reset(self):
         if self.seed:
-            self.env.seed(self.seed)
+            self.env.seed(random.choice(self.seed))
         return self.process(self.env.reset())
 
     def step(self, action):
@@ -162,7 +162,7 @@ class CarRacing:
         self.history.append(utils.process_image(state, self.crop, self.downscaling_dimension))
 
     def __str__(self):
-    	return self.name
+    	return self.name + '\n seed: {0} \n Action space: {1}'.format(self.seed, self.action_dict)
 
 class BreakOut:
 

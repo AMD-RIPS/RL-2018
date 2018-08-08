@@ -179,8 +179,8 @@ class DQN_Agent:
                 action = self.get_action(state, epsilon)
                 next_state, reward, done, info = self.env.step(action)
                 eight_frame_reward += reward
-                if eight_frame_reward < -0.5:
-                    reward = -2
+                # if eight_frame_reward < -0.5:
+                #     reward = -2
                 self.replay_memory.add(self, state, action, reward, next_state, done)
 
                 # Performing experience replay if replay memory populated
@@ -198,7 +198,7 @@ class DQN_Agent:
 
             # Saving tensorboard data and model weights
             if (episode % 30 == 0) and (episode != 0):
-                score = self.test_Q(num_test_episodes=5, visualize=True)
+                score = self.test_Q(num_test_episodes=5)
                 print(score)
                 self.writer.add_summary(self.sess.run(self.test_summary,
                                                       feed_dict={self.test_score: score}), episode / 30)

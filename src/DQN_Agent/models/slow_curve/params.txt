@@ -1,0 +1,9 @@
+Environment: CarRacing1533663244.97/n seed: [5, 6, 7] /n Action space: {0: [-1, 0, 0.2], 1: [1, 0, 0.2], 2: [0, 0.5, 0], 3: [0, 0, 0.8], 4: [0, 0, 0]}
+Architecture: Architecture used in the nature paper in 2015
+Explore Rate: max(0.1, (1 - float(training_metadata.frame) / training_metadata.frame_limit))
+Learning Rate: 0.00025
+Discount: 0.99
+Batch Size: 32
+Memory Capacity: 10000
+Num Episodes: 10000
+Learning Rate Drop Frame Limit: 100000

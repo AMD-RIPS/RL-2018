@@ -5,7 +5,8 @@ import numpy as np
 from skimage.transform import resize
 import time
 from PIL import Image
-
+import cv2 as cv
+import matplotlib.pyplot as plt
 
 def pause():
     programPause = raw_input("Press the <ENTER> key to continue...")
@@ -19,12 +20,20 @@ def unit_image(image):
 def grayscale_img(image):
     return np.dot(image[...,:3], [0.299, 0.587, 0.114])
 
-def process_image(rgb_image, crop=(None, None, None, None), downscaling_dimension=(84, 84)):
+def process_image(rgb_image, crop=(None, None, None, None), downscaling_dimension=(84, 84), detect_edges=False):
     rgb_image = rgb_image[crop[0]:crop[1], crop[2]:crop[3], :]
-    gray = grayscale_img(rgb_image)
-    gray = resize(gray, downscaling_dimension)
-    gray = unit_image(gray)
-    return gray
+    if detect_edges:
+        edgy = cv.Canny(rgb_image, 220, 250, apertureSize=3)
+        edgy = resize(edgy, downscaling_dimension)
+        result = edgy
+    else:
+        gray = grayscale_img(rgb_image)
+        gray = resize(gray, downscaling_dimension)
+        gray = unit_image(gray)
+        result = gray
+    plt.imshow(result, cmap='gray')
+    plt.show()
+    return result
 
 def process_nature_atari(rgb_image, downscaling_dimension = (84, 84)):
     gray = grayscale_img(rgb_image)

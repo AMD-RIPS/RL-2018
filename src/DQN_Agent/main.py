@@ -12,7 +12,16 @@ game = 'CarRacing'
 fixed_1track_seed = [108]
 fixed_3track_seed = [104, 106, 108]
 
-training_environment = env.env_dict[game](seed=fixed_1track_seed)
+# One curve
+training_environment = env.env_dict[game](type='OneCurve')
+
+# Two curve
+# training_environment = env.env_dict[game](type='ShortTrack')
+
+# Fixed full track
+# training_environment = env.env_dict[game](seed=fixed_1track_seed)
+
+
 testing_environment = env.env_dict[game](test=True)
 control = agent.DQN_Agent(training_environment=training_environment, testing_environment=testing_environment, model_name=sys.argv[1], **setups.setup_dict[game]['general'])
 # control.load("path/to/checkpoint/file")

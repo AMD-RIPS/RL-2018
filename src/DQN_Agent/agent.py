@@ -167,7 +167,7 @@ class DQN_Agent:
                 self.replay_memory.add(self, state, action, reward, next_state, done)
 
                 # Performing experience replay if replay memory populated
-                if self.replay_memory.length() > 2500:
+                if self.replay_memory.length() > 10*self.replay_memory.batch_size:
                     self.sess.run(self.increment_frames_op)
                     self.training_metadata.increment_frame()
                     self.experience_replay(alpha)
@@ -175,7 +175,7 @@ class DQN_Agent:
                 done = info['true_done']
 
             # Creating q_grid if not yet defined and calculating average q-value
-            if self.replay_memory.length() > 2500:
+            if self.replay_memory.length() > 100*self.replay_memory.batch_size:
                 self.q_grid = self.replay_memory.get_q_grid(size=200, training_metadata=self.training_metadata)
             avg_q = self.estimate_avg_q()
 

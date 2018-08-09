@@ -1,4 +1,4 @@
-# Fixed track with one curve (seed = 2)
+# Fixed track with two curves (S shape)
 
 import sys, math
 import numpy as np
@@ -13,6 +13,7 @@ from gym.utils import colorize, seeding
 
 import pyglet
 from pyglet import gl
+import random
 
 # Easiest continuous control task to learn from pixels, a top-down racing environment.
 # Discreet control is reasonable in this environment as well, on/off discretisation is
@@ -219,14 +220,42 @@ class OneCurve(gym.Env):
         #assert i1!=-1
         #assert i2!=-1
 
-        track = track[i1:i2-1]
-        track = track[9:40]
 
+
+        track = track[i1:i2-1]
+        
+        first_beta = track[0][1]
+        first_perp_x = math.cos(first_beta)
+        first_perp_y = math.sin(first_beta)
+        # # Length of perpendicular jump to put together head and tail
+        # well_glued_together = np.sqrt(
+        #     np.square( first_perp_x*(track[0][2] - track[-1][2]) ) +
+        #     np.square( first_perp_y*(track[0][3] - track[-1][3]) ))
+        # if well_glued_together > TRACK_DETAIL_STEP:
+        #     return False
+
+        # Red-white border on hard turns
+        border = [False]*len(track)
+        for i in range(len(track)):
+            good = True
+            oneside = 0
+            for neg in range(BORDER_MIN_COUNT):
+                beta1 = track[i-neg-0][1]
+                beta2 = track[i-neg-1][1]
+                good &= abs(beta1 - beta2) > TRACK_TURN_RATE*0.2
+                oneside += np.sign(beta1 - beta2)
+            good &= abs(oneside) == BORDER_MIN_COUNT
+            border[i] = good
+        for i in range(len(track)):
+            for neg in range(BORDER_MIN_COUNT):
+                border[i-neg] |= border[i]
+
+        n = random.randint(0, len(track) - 31)
+        track = track[n:n+31]
         # Create tiles
         for i in range(1, len(track)):
             alpha1, beta1, x1, y1 = track[i]
             alpha2, beta2, x2, y2 = track[i-1]
-
             road1_l = (x1 - TRACK_WIDTH*math.cos(beta1), y1 - TRACK_WIDTH*math.sin(beta1))
             road1_r = (x1 + TRACK_WIDTH*math.cos(beta1), y1 + TRACK_WIDTH*math.sin(beta1))
             road2_l = (x2 - TRACK_WIDTH*math.cos(beta2), y2 - TRACK_WIDTH*math.sin(beta2))
@@ -243,11 +272,18 @@ class OneCurve(gym.Env):
             t.fixtures[0].sensor = True
             self.road_poly.append(( [road1_l, road1_r, road2_r, road2_l], t.color ))
             self.road.append(t)
+            if border[i]:
+                side = np.sign(beta2 - beta1)
+                b1_l = (x1 + side* TRACK_WIDTH        *math.cos(beta1), y1 + side* TRACK_WIDTH        *math.sin(beta1))
+                b1_r = (x1 + side*(TRACK_WIDTH+BORDER)*math.cos(beta1), y1 + side*(TRACK_WIDTH+BORDER)*math.sin(beta1))
+                b2_l = (x2 + side* TRACK_WIDTH        *math.cos(beta2), y2 + side* TRACK_WIDTH        *math.sin(beta2))
+                b2_r = (x2 + side*(TRACK_WIDTH+BORDER)*math.cos(beta2), y2 + side*(TRACK_WIDTH+BORDER)*math.sin(beta2))
+                self.road_poly.append(( [b1_l, b1_r, b2_r, b2_l], (1,1,1) if i%2==0 else (1,0,0) ))
+
         self.track = track[1:]
         return True
 
     def reset(self):
-        self.seed(2)
         self._destroy()
         self.reward = 0.0
         self.prev_reward = 0.0
@@ -455,12 +491,14 @@ if __name__=="__main__":
     env.reset()
     while True:
         env.reset()
+        env.render()
+        raw_input()
         total_reward = 0.0
         steps = 0
         restart = False
-        while True:
-            s, r, done, info = env.step(a)
-            total_reward += r
+    #    while True:
+    #        s, r, done, info = env.step(a)
+    #        total_reward += r
             # if steps % 200 == 0 or done:
     #             print("\naction " + str(["{:+0.2f}".format(x) for x in a]))
     #             print("step {} total_reward {:+0.2f}".format(steps, total_reward))
@@ -468,7 +506,7 @@ if __name__=="__main__":
                 # plt.imshow(s)
                 # plt.savefig("test.jpeg")
                 # steps += 1
-            if not record_video: # Faster, but you can as well call env.render() every time to play full window.
-                env.render()
-            if done or restart: break
+    #        if not record_video: # Faster, but you can as well call env.render() every time to play full window.
+    #            env.render()
+    #        if done or restart: break
     env.close()

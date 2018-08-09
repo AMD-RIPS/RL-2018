@@ -220,8 +220,36 @@ class ShortTrack(gym.Env):
         #assert i1!=-1
         #assert i2!=-1
 
+
+
         track = track[i1:i2-1]
         
+        first_beta = track[0][1]
+        first_perp_x = math.cos(first_beta)
+        first_perp_y = math.sin(first_beta)
+        # # Length of perpendicular jump to put together head and tail
+        # well_glued_together = np.sqrt(
+        #     np.square( first_perp_x*(track[0][2] - track[-1][2]) ) +
+        #     np.square( first_perp_y*(track[0][3] - track[-1][3]) ))
+        # if well_glued_together > TRACK_DETAIL_STEP:
+        #     return False
+
+        # Red-white border on hard turns
+        border = [False]*len(track)
+        for i in range(len(track)):
+            good = True
+            oneside = 0
+            for neg in range(BORDER_MIN_COUNT):
+                beta1 = track[i-neg-0][1]
+                beta2 = track[i-neg-1][1]
+                good &= abs(beta1 - beta2) > TRACK_TURN_RATE*0.2
+                oneside += np.sign(beta1 - beta2)
+            good &= abs(oneside) == BORDER_MIN_COUNT
+            border[i] = good
+        for i in range(len(track)):
+            for neg in range(BORDER_MIN_COUNT):
+                border[i-neg] |= border[i]
+
         n = random.randint(0, len(track) - 51)
         track = track[n:n+51]
         # Create tiles
@@ -244,6 +272,13 @@ class ShortTrack(gym.Env):
             t.fixtures[0].sensor = True
             self.road_poly.append(( [road1_l, road1_r, road2_r, road2_l], t.color ))
             self.road.append(t)
+            if border[i]:
+                side = np.sign(beta2 - beta1)
+                b1_l = (x1 + side* TRACK_WIDTH        *math.cos(beta1), y1 + side* TRACK_WIDTH        *math.sin(beta1))
+                b1_r = (x1 + side*(TRACK_WIDTH+BORDER)*math.cos(beta1), y1 + side*(TRACK_WIDTH+BORDER)*math.sin(beta1))
+                b2_l = (x2 + side* TRACK_WIDTH        *math.cos(beta2), y2 + side* TRACK_WIDTH        *math.sin(beta2))
+                b2_r = (x2 + side*(TRACK_WIDTH+BORDER)*math.cos(beta2), y2 + side*(TRACK_WIDTH+BORDER)*math.sin(beta2))
+                self.road_poly.append(( [b1_l, b1_r, b2_r, b2_l], (1,1,1) if i%2==0 else (1,0,0) ))
 
         self.track = track[1:]
         return True

@@ -189,11 +189,13 @@ class DQN_Agent:
 
             self.writer.add_summary(self.sess.run(self.training_summary, feed_dict={self.avg_q: avg_q}), episode)
 
-    def test_Q(self, num_test_episodes, visualize):
+    def test_Q(self, num_test_episodes, visualize, test_curves=False):
         cum_reward = 0
         for episode in range(num_test_episodes):
             done = False
             state = self.test_env.reset()
+            if not visualize:   # need to render for accurate scores
+                self.test_env.render()
             while not done:
                 if visualize:
                     self.test_env.render()

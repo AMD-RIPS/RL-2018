@@ -128,7 +128,7 @@ class CarRacing:
 
     def reset(self):
         if self.seed:
-            self.env.seed(self.seed)
+            self.env.seed(random.choice(self.seed))
         return self.process(self.env.reset())
 
     def step(self, action):
@@ -139,8 +139,7 @@ class CarRacing:
             next_state, reward, done, info = self.env.step(action)
             total_reward += reward
             info = {'true_done': done}
-            if info['true_done']:
-                break
+            if done: break
         return self.process(next_state), total_reward, done, info
 
     def render(self):
@@ -162,7 +161,7 @@ class CarRacing:
         self.history.append(utils.process_image(state, self.crop, self.downscaling_dimension))
 
     def __str__(self):
-    	return self.name
+    	return self.name + '\nseed: {0}\nactions: {1}\n'.format(self.seed, self.action_dict)
 
 class BreakOut:
 

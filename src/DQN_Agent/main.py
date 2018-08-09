@@ -9,11 +9,12 @@ import hyperparameters.setups as setups
 
 game = 'CarRacing'
 
-training_environment = env.env_dict[game](seed=5)
+fixed_1track_seed = [108]
+fixed_3track_seed = [104, 106, 108]
+
+training_environment = env.env_dict[game](seed=fixed_1track_seed)
 testing_environment = env.env_dict[game](test=True)
 control = agent.DQN_Agent(training_environment=training_environment, testing_environment=testing_environment, model_name=sys.argv[1], **setups.setup_dict[game]['general'])
+# control.load("path/to/checkpoint/file")
 control.set_training_parameters(**setups.setup_dict[game]['training'])
-# control.load("/home/jguan/Documents/RIPS/RL-2018/src/DQN_Agent/models/fixedtrack_4actions/data.chkp-9991")
 control.train()
-print(control.test_Q(10, visualize=True))
-

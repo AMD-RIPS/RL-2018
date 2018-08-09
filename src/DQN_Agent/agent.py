@@ -11,7 +11,6 @@ import architectures as arch
 import learning_rates as lrng
 import explore_rates as expl
 import replay_memory as rplm
-import prioritized_replay_memory as prplm
 import utils
 import time
 from tensorflow.python.saved_model import tag_constants
@@ -32,20 +31,15 @@ class DQN_Agent:
         self.log_path = self.model_path + '/log'
         self.initialize_tf_variables()
 
-    def set_training_parameters(self, discount, batch_size, memory_capacity, num_episodes, score_limit, 
-                                delta=1, learning_rate_drop_frame_limit=100000, target_update_frequency=1000, replay_method='regular'):
+    def set_training_parameters(self, batch_size, memory_capacity, num_episodes, learning_rate_drop_frame_limit, target_update_frequency, discount=0.99, delta=1):
         self.target_update_frequency = target_update_frequency
         self.discount = discount
-        if replay_method == 'regular':
-            self.replay_memory = rplm.Replay_Memory(memory_capacity, batch_size)
-        else:
-            self.replay_memory = prplm.Prioritized_Replay_Memory(memory_capacity, batch_size)
+        self.replay_memory = rplm.Replay_Memory(memory_capacity, batch_size)
         # self.training_metadata = utils.Training_Metadata(frame=self.sess.run(self.frames), frame_limit=learning_rate_drop_frame_limit,
                                                             # episode=self.sess.run(self.episode), num_episodes=num_episodes)
         self.training_metadata = utils.Training_Metadata(frame=0, frame_limit=learning_rate_drop_frame_limit,
                                                             episode=0, num_episodes=num_episodes)
         self.delta = delta
-        self.score_limit = score_limit
         utils.document_parameters(self)
 
     def initialize_tf_variables(self):
@@ -125,15 +119,10 @@ class DQN_Agent:
         fixed_feed_dict = {self.state_tf: next_state_batch}
         fixed_feed_dict.update(zip(self.trainable_variables, self.fixed_target_weights))
 
-        # Simple DQN #########################################################################################
-        # Q_batch = self.sess.run(self.Q_amax, feed_dict=fixed_feed_dict)
-        ######################################################################################################
-
-        # Double DQN #########################################################################################
         greedy_actions = self.sess.run(self.onehot_greedy_action, feed_dict={self.state_tf: next_state_batch})
         fixed_feed_dict.update({self.action_tf: greedy_actions})
         Q_batch = self.sess.run(self.Q_value_at_action, feed_dict=fixed_feed_dict)
-        ######################################################################################################
+
         y_batch = reward_batch + self.discount * np.multiply(np.invert(done_batch), Q_batch)
 
         feed = {self.state_tf: state_batch, self.action_tf: action_batch, self.y_tf: y_batch, self.grad_weights: weights, self.alpha: alpha}
@@ -142,7 +131,7 @@ class DQN_Agent:
         self.sess.run(self.train_op, feed_dict=feed)
 
     def get_action(self, state, epsilon):
-        # Perorming epsilon-greedy action selection
+        # Performing epsilon-greedy action selection
         if random.random() < epsilon:
             return self.env.sample_action_space()
         else:
@@ -187,7 +176,7 @@ class DQN_Agent:
 
             # Creating q_grid if not yet defined and calculating average q-value
             if self.replay_memory.length() > 100*self.replay_memory.batch_size:
-                self.q_grid = self.replay_memory.get_q_grid(size=100, training_metadata=self.training_metadata)
+                self.q_grid = self.replay_memory.get_q_grid(size=200, training_metadata=self.training_metadata)
             avg_q = self.estimate_avg_q()
 
             # Saving tensorboard data and model weights
@@ -197,31 +186,22 @@ class DQN_Agent:
                 self.writer.add_summary(self.sess.run(self.test_summary,
                                                       feed_dict={self.test_score: score}), episode / 30)
                 self.saver.save(self.sess, self.model_path + '/data.chkp', global_step=self.training_metadata.episode)
-                if score > self.score_limit and self.training_metadata.frame > self.training_metadata.frame_limit: 
-                    if self.test_Q(100) > self.score_limit:
-                        return
 
             self.writer.add_summary(self.sess.run(self.training_summary, feed_dict={self.avg_q: avg_q}), episode)
 
-    def test_Q(self, num_test_episodes=10, visualize=False):
+    def test_Q(self, num_test_episodes, visualize):
         cum_reward = 0
-        # reward_eps_arr = []
         for episode in range(num_test_episodes):
             done = False
             state = self.test_env.reset()
-            # reward_eps = 0
             while not done:
                 if visualize:
                     self.test_env.render()
                 action = self.get_action(state, epsilon=0)
                 next_state, reward, done, info = self.test_env.step(action)
                 state = next_state
-                # reward_eps += reward
                 cum_reward += reward
                 done = info['true_done']
-            # reward_eps_arr.append(reward_eps)
-        # reward_eps_arr = np.asarray(reward_eps_arr)
-        # np.savetxt("reward_eps_5_random.csv", reward_eps_arr, delimiter=",")
         return cum_reward / num_test_episodes
 
     def estimate_avg_q(self):

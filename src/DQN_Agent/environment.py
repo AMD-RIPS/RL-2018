@@ -137,6 +137,8 @@ class CarRacing:
         n = 1 if self.test else random.choice([2, 3, 4])
         for i in range(n):
             next_state, reward, done, info = self.env.step(action)
+            if not self.test:
+                reward = self.clip_reward(reward)
             total_reward += reward
             info = {'true_done': done}
             if done: break
@@ -159,6 +161,13 @@ class CarRacing:
         if len(self.history) >= self.history_pick:
             self.history.pop(0)
         self.history.append(utils.process_image(state, self.crop, self.downscaling_dimension))
+
+    def clip_reward(self, reward):
+        if reward > 0:
+            clipped_reward = reward/20
+        else:
+            clipped_reward = -0.005
+        return clipped_reward
 
     def __str__(self):
     	return self.name + '\nseed: {0}\nactions: {1}\n'.format(self.seed, self.action_dict)

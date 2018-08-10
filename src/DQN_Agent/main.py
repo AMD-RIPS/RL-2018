@@ -13,13 +13,13 @@ fixed_1track_seed = [108]
 fixed_3track_seed = [104, 106, 108]
 
 # One curve
-training_environment = env.env_dict[game](type='OneCurve', detect_edges=False)
+# training_environment = env.env_dict[game](type='OneCurve', detect_edges=True)
 
 # Two curve
 # training_environment = env.env_dict[game](type='ShortTrack')
 
 # Fixed full track
-# training_environment = env.env_dict[game](seed=fixed_1track_seed)
+training_environment = env.env_dict[game](seed=fixed_1track_seed)
 
 
 testing_environment = env.env_dict[game](test=True)

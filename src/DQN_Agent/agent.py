@@ -137,6 +137,11 @@ class DQN_Agent:
         else:
             return self.sess.run(self.Q_argmax, feed_dict={self.state_tf: [state]})[0]
 
+    def calculate_reward(self, reward, in_grass, frames_grass):
+        if in_grass and frames_grass > 10:
+            reward = -1
+        return reward
+
     def update_fixed_target_weights(self):
         self.fixed_target_weights = self.sess.run(self.trainable_variables)
 
@@ -155,14 +160,19 @@ class DQN_Agent:
             epsilon = self.explore_rate.get(self.training_metadata)
             alpha = self.learning_rate.get(self.training_metadata)
             print("Episode {0}/{1} \t Epsilon: {2} \t Alpha: {3}".format(episode, self.training_metadata.num_episodes, epsilon, alpha))
+            frames_grass = 0
             while not done:
+                self.env.render()
                 # Updating fixed target weights every #target_update_frequency frames
                 if self.training_metadata.frame % self.target_update_frequency == 0 and (self.training_metadata.frame != 0):
                     self.update_fixed_target_weights()
 
                 # Choosing and performing action and updating the replay memory
                 action = self.get_action(state, epsilon)
-                next_state, reward, done, info = self.env.step(action)
+                next_state, reward, done, info, in_grass = self.env.step(action)
+                reward = self.calculate_reward(reward, in_grass, frames_grass)
+                frames_grass += 1
+                print(reward)
 
                 self.replay_memory.add(self, state, action, reward, next_state, done)
 
@@ -198,7 +208,7 @@ class DQN_Agent:
                 if visualize:
                     self.test_env.render()
                 action = self.get_action(state, epsilon=0)
-                next_state, reward, done, info = self.test_env.step(action)
+                next_state, reward, done, info, _ = self.test_env.step(action)
                 state = next_state
                 cum_reward += reward
                 done = info['true_done']

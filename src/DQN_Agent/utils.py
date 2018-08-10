@@ -31,9 +31,20 @@ def process_image(rgb_image, crop=(None, None, None, None), downscaling_dimensio
         gray = resize(gray, downscaling_dimension)
         gray = unit_image(gray)
         result = gray
-    plt.imshow(result, cmap='gray')
-    plt.show()
+    # plt.imshow(result, cmap='gray')
+    # plt.show()
     return result
+
+def in_grass(state):
+    cropped = state[66:78, 43:53]
+    # plt.imshow(state)
+    # plt.show()
+    #red = np.sum(cropped[..., 0])
+    green = np.sum(cropped[..., 1] >= 204)
+    #blue = np.sum(cropped[..., 2])
+    #biggest = red < green and blue < green
+    #return biggest
+    return green >= 45
 
 def process_nature_atari(rgb_image, downscaling_dimension = (84, 84)):
     gray = grayscale_img(rgb_image)

@@ -141,20 +141,22 @@ class CarRacing:
             total_reward += reward
             info = {'true_done': done}
             if done: break
-        return self.process(next_state), total_reward, done, info
+        processed_next_state, in_grass = self.process(next_state)    
+        return processed_next_state, total_reward, done, info, in_grass
 
     def render(self):
         self.env.render()
 
     def process(self, state):
         self.add_history(state, None, None)
+        in_grass = utils.in_grass(state)
         if len(self.history) < self.history_pick:
             zeros = np.zeros(self.downscaling_dimension)
             result = np.tile(zeros, ((self.history_pick - len(self.history)), 1, 1))
             result = np.concatenate((result, np.array(self.history)))
         else:
             result = np.array(self.history)
-        return result
+        return result, in_grass
 
     def add_history(self, state, action, reward):
         if len(self.history) >= self.history_pick:

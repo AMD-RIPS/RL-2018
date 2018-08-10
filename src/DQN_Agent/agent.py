@@ -140,6 +140,10 @@ class DQN_Agent:
     def calculate_reward(self, reward, in_grass, frames_grass):
         if in_grass and frames_grass > 10:
             reward = -1
+        if not in_grass and reward < 0:
+            reward = -1
+        if reward > 0:
+            reward /= 3
         return reward
 
     def update_fixed_target_weights(self):

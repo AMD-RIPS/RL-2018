@@ -35,10 +35,10 @@ class DQN_Agent:
         self.target_update_frequency = target_update_frequency
         self.discount = discount
         self.replay_memory = rplm.Replay_Memory(memory_capacity, batch_size)
-        # self.training_metadata = utils.Training_Metadata(frame=self.sess.run(self.frames), frame_limit=learning_rate_drop_frame_limit,
-                                                            # episode=self.sess.run(self.episode), num_episodes=num_episodes)
-        self.training_metadata = utils.Training_Metadata(frame=0, frame_limit=learning_rate_drop_frame_limit,
-                                                            episode=0, num_episodes=num_episodes)
+        self.training_metadata = utils.Training_Metadata(frame=self.sess.run(self.frames), frame_limit=learning_rate_drop_frame_limit,
+                                                            episode=self.sess.run(self.episode), num_episodes=num_episodes)
+        # self.training_metadata = utils.Training_Metadata(frame=0, frame_limit=learning_rate_drop_frame_limit,
+                                                            # episode=0, num_episodes=num_episodes)
         self.delta = delta
         utils.document_parameters(self)
 
@@ -184,10 +184,10 @@ class DQN_Agent:
                 score = self.test_Q(num_test_episodes=5, visualize=True)
                 print(score)
                 self.writer.add_summary(self.sess.run(self.test_summary,
-                                                      feed_dict={self.test_score: score}), episode / 30)
+                                                      feed_dict={self.test_score: score}), self.training_metadata.episode / 30)
                 self.saver.save(self.sess, self.model_path + '/data.chkp', global_step=self.training_metadata.episode)
 
-            self.writer.add_summary(self.sess.run(self.training_summary, feed_dict={self.avg_q: avg_q}), episode)
+            self.writer.add_summary(self.sess.run(self.training_summary, feed_dict={self.avg_q: avg_q}), self.training_metadata)
 
     def test_Q(self, num_test_episodes, visualize):
         cum_reward = 0

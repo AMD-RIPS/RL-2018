@@ -24,6 +24,6 @@ training_environment = env.env_dict[game](type='ShortTrack')
 
 testing_environment = env.env_dict[game](test=True)
 control = agent.DQN_Agent(training_environment=training_environment, testing_environment=testing_environment, model_name=sys.argv[1], **setups.setup_dict[game]['general'])
-# control.load("path/to/checkpoint/file")
+# control.load("/home/jguan/Documents/RIPS/RL-2018/src/DQN_Agent/models/clip_reward_1/100/data.chkp-1501")
 control.set_training_parameters(**setups.setup_dict[game]['training'])
 control.train()

@@ -140,10 +140,6 @@ class DQN_Agent:
     def calculate_reward(self, reward, in_grass, frames_grass):
         if in_grass and frames_grass > 10:
             reward = -1
-        if not in_grass and reward < 0:
-            reward = -1
-        if reward > 0:
-            reward /= 3
         return reward
 
     def update_fixed_target_weights(self):
@@ -156,7 +152,7 @@ class DQN_Agent:
             self.sess.run(self.increment_episode_op)
 
             # Setting up game environment
-            state = self.env.reset()
+            state, _ = self.env.reset()
             self.env.render()
 
             # Setting up parameters for the episode
@@ -166,7 +162,6 @@ class DQN_Agent:
             print("Episode {0}/{1} \t Epsilon: {2} \t Alpha: {3}".format(episode, self.training_metadata.num_episodes, epsilon, alpha))
             frames_grass = 0
             while not done:
-                self.env.render()
                 # Updating fixed target weights every #target_update_frequency frames
                 if self.training_metadata.frame % self.target_update_frequency == 0 and (self.training_metadata.frame != 0):
                     self.update_fixed_target_weights()
@@ -176,7 +171,6 @@ class DQN_Agent:
                 next_state, reward, done, info, in_grass = self.env.step(action)
                 reward = self.calculate_reward(reward, in_grass, frames_grass)
                 frames_grass += 1
-                print(reward)
 
                 self.replay_memory.add(self, state, action, reward, next_state, done)
 
@@ -207,7 +201,7 @@ class DQN_Agent:
         cum_reward = 0
         for episode in range(num_test_episodes):
             done = False
-            state = self.test_env.reset()
+            state, _ = self.test_env.reset()
             while not done:
                 if visualize:
                     self.test_env.render()

@@ -31,8 +31,6 @@ def process_image(rgb_image, crop=(None, None, None, None), downscaling_dimensio
         gray = resize(gray, downscaling_dimension)
         gray = unit_image(gray)
         result = gray
-    plt.imshow(result, cmap='gray')
-    plt.show()
     return result
 
 def process_nature_atari(rgb_image, downscaling_dimension = (84, 84)):

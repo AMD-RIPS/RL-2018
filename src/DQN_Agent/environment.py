@@ -138,8 +138,7 @@ class CarRacing:
         for i in range(n):
             next_state, reward, done, info = self.env.step(action)
             if not self.test:
-                # reward = self.clip_reward(reward)
-                reward = reward
+                reward = self.clip_reward(reward)
             total_reward += reward
             info = {'true_done': done}
             if done: break
@@ -165,9 +164,9 @@ class CarRacing:
 
     def clip_reward(self, reward):
         if reward > 0:
-            clipped_reward = reward/2
+            clipped_reward = reward/20
         else:
-            clipped_reward = -0.1
+            clipped_reward = -1
         return clipped_reward
 
     def __str__(self):

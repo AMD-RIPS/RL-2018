@@ -106,7 +106,7 @@ class Pong:
 
 class CarRacing:
 
-    def __init__(self, type="CarRacing", crop=(None, None, None, None), downscaling_dimension=(84, 84), history_pick=4, seed=None, test=False):
+    def __init__(self, type="CarRacing", crop=(None, None, None, None), downscaling_dimension=(84, 84), history_pick=4, seed=None, test=False, detect_edges=False):
         self.name = type + str(time.time())
         self.env = gym.make(type + '-v0')
         self.downscaling_dimension = downscaling_dimension
@@ -119,6 +119,7 @@ class CarRacing:
         self.crop = crop
         self.seed = seed
         self.test = test
+        self.detect_edges = detect_edges
 
     def sample_action_space(self):
         return np.random.randint(self.action_space_size)
@@ -158,7 +159,7 @@ class CarRacing:
     def add_history(self, state, action, reward):
         if len(self.history) >= self.history_pick:
             self.history.pop(0)
-        self.history.append(utils.process_image(state, self.crop, self.downscaling_dimension))
+        self.history.append(utils.process_image(state, crop=self.crop, downscaling_dimension=self.downscaling_dimension, detect_edges=self.detect_edges))
 
     def __str__(self):
     	return self.name + '\nseed: {0}\nactions: {1}\n'.format(self.seed, self.action_dict)

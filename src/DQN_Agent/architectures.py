@@ -120,7 +120,7 @@ class nature_paper_dropout:
         return output
 
     def __str__(self):
-        return "Architecture used in the nature paper in 2015 with dropout on dense layers, 0.7 keep prob."
+        return "Architecture used in the nature paper in 2015 with dropout on dense hidden layer, 0.7 keep prob."
 
 class dropout_conv_layer:
 
@@ -139,7 +139,7 @@ class dropout_conv_layer:
         return output
 
     def __str__(self):
-        return "Architecture used in the nature paper in 2015 with dropout on dense layers, 0.7 keep prob."
+        return "Architecture used in the nature paper in 2015 with dropout on 2nd conv layer, 0.7 keep prob."
 
 arch_dict = {
     'basic': basic_architecture,

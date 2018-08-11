@@ -84,20 +84,43 @@ class nature_paper:
     def __str__(self):
         return "Architecture used in the nature paper in 2015"
 
+# class nature_paper_batchnorm:
+
+#     def evaluate(self, input, action_size):
+#         layer1_out = tf.contrib.layers.batch_norm(tf.layers.conv2d(input, filters=32, kernel_size=[8,8],
+#             strides=[4,4], padding='same', activation=tf.nn.relu, data_format='channels_first', 
+#             kernel_initializer=tf.contrib.layers.xavier_initializer(), name='layer1_out'), data_format='NCHW')
+#         layer2_out = tf.contrib.layers.batch_norm(tf.layers.conv2d(layer1_out, filters=64, kernel_size=[4,4],
+#             strides=[2,2], padding='same', activation=tf.nn.relu, data_format='channels_first', 
+#             kernel_initializer=tf.contrib.layers.xavier_initializer(), name='layer2_out'), data_format='NCHW')
+#         layer3_out = tf.contrib.layers.batch_norm(tf.layers.conv2d(layer2_out, filters=64, kernel_size=[3,3],
+#             strides=[1,1], padding='same', activation=tf.nn.relu, data_format='channels_first', 
+#             kernel_initializer=tf.contrib.layers.xavier_initializer(), name='layer3_out'), data_format='NCHW')
+#         layer4_out = tf.contrib.layers.batch_norm(tf.layers.dense(tf.layers.flatten(layer3_out), 512, activation=tf.nn.relu, name='layer4_out'))
+#         output =  tf.contrib.layers.batch_norm(tf.layers.dense(layer4_out, action_size, activation=None, name='output'))
+#         return output
+
+#     def __str__(self):
+#         return "Architecture used in the nature paper in 2015 with batchnorm on every layer"
+
 class nature_paper_batchnorm:
 
     def evaluate(self, input, action_size):
         layer1_out = tf.contrib.layers.batch_norm(tf.layers.conv2d(input, filters=32, kernel_size=[8,8],
-            strides=[4,4], padding='same', activation=tf.nn.relu, data_format='channels_first', 
-            kernel_initializer=tf.contrib.layers.xavier_initializer(), name='layer1_out'), data_format='NCHW')
+            strides=[4,4], padding='same', data_format='channels_first', activation = None,
+            kernel_initializer=tf.contrib.layers.xavier_initializer(), name='layer1_out'), 
+            activation_fn=tf.nn.relu, data_format='NCHW')
         layer2_out = tf.contrib.layers.batch_norm(tf.layers.conv2d(layer1_out, filters=64, kernel_size=[4,4],
-            strides=[2,2], padding='same', activation=tf.nn.relu, data_format='channels_first', 
-            kernel_initializer=tf.contrib.layers.xavier_initializer(), name='layer2_out'), data_format='NCHW')
+            strides=[2,2], padding='same', data_format='channels_first', activation = None,
+            kernel_initializer=tf.contrib.layers.xavier_initializer(), name='layer2_out'), 
+            activation_fn=tf.nn.relu, data_format='NCHW')
         layer3_out = tf.contrib.layers.batch_norm(tf.layers.conv2d(layer2_out, filters=64, kernel_size=[3,3],
-            strides=[1,1], padding='same', activation=tf.nn.relu, data_format='channels_first', 
-            kernel_initializer=tf.contrib.layers.xavier_initializer(), name='layer3_out'), data_format='NCHW')
-        layer4_out = tf.contrib.layers.batch_norm(tf.layers.dense(tf.layers.flatten(layer3_out), 512, activation=tf.nn.relu, name='layer4_out'))
-        output =  tf.contrib.layers.batch_norm(tf.layers.dense(layer4_out, action_size, activation=None, name='output'))
+            strides=[1,1], padding='same', data_format='channels_first', activation = None,
+            kernel_initializer=tf.contrib.layers.xavier_initializer(), name='layer3_out'), 
+            activation_fn=tf.nn.relu, data_format='NCHW')
+        layer4_out = tf.contrib.layers.batch_norm(tf.layers.dense(tf.layers.flatten(layer3_out), 
+            512, activation=None, name='layer4_out'), activation_fn=tf.nn.relu)
+        output =  tf.layers.dense(layer4_out, action_size, activation=None, name='output')
         return output
 
     def __str__(self):

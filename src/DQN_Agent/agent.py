@@ -187,7 +187,7 @@ class DQN_Agent:
                                                       feed_dict={self.test_score: score}), self.training_metadata.episode / 30)
                 self.saver.save(self.sess, self.model_path + '/data.chkp', global_step=self.training_metadata.episode)
 
-            self.writer.add_summary(self.sess.run(self.training_summary, feed_dict={self.avg_q: avg_q}), self.training_metadata)
+            self.writer.add_summary(self.sess.run(self.training_summary, feed_dict={self.avg_q: avg_q}), self.training_metadata.episode)
 
     def test_Q(self, num_test_episodes, visualize):
         cum_reward = 0

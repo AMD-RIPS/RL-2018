@@ -54,7 +54,7 @@ BreakOut = {
 
 CarRacing = {
 	'general': {
-		'architecture': 'dropout_conv_layer', 
+		'architecture': 'nature_batchnorm', 
 		'explore_rate': 'decay', 
 		'learning_rate': 'atari'
 	},
@@ -63,7 +63,7 @@ CarRacing = {
 		'target_update_frequency': 1000,
 		'batch_size': 32, 
 		'memory_capacity': 100000, 
-		'num_episodes': 3000,
+		'num_episodes': 5000,
 		'learning_rate_drop_frame_limit': 250000
 	}
 }

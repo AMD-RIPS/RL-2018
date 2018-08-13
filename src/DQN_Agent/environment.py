@@ -164,7 +164,7 @@ class CarRacing:
 
     def clip_reward(self, reward):
         if reward > 0:
-            clipped_reward = reward*0.313
+            clipped_reward = reward*0.313*20
         else:
             clipped_reward = -1
         return clipped_reward

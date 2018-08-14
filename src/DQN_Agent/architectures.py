@@ -157,8 +157,8 @@ class dropout_conv_layer:
         layer3_out = tf.layers.conv2d(layer2_out, filters=64, kernel_size=[3,3],
             strides=[1,1], padding='same', activation=tf.nn.relu, data_format='channels_first', 
             kernel_initializer=tf.contrib.layers.xavier_initializer(), name='layer3_out')
-        layer4_out = tf.layers.dense(tf.layers.flatten(layer3_out), 512, activation=tf.nn.relu)
-        output =  tf.layers.dense(layer4_out, action_size, activation=None)
+        layer4_out = tf.layers.dense(tf.layers.flatten(layer3_out), 512, activation=tf.nn.relu, name='layer4_out')
+        output =  tf.layers.dense(layer4_out, action_size, activation=None, name='output')
         return output
 
     def __str__(self):

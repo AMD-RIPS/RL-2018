@@ -138,6 +138,7 @@ class CarRacing:
         n = 1 if self.test else random.choice([2, 3, 4])
         for i in range(n):
             next_state, reward, done, info = self.env.step(action)
+            reward = self.clip_reward(reward)
             total_reward += reward
             info = {'true_done': done}
             if done: break
@@ -155,6 +156,13 @@ class CarRacing:
         else:
             result = np.array(self.history)
         return result
+
+    def clip_reward(self, reward):
+        if reward > 0:
+            clipped_reward = reward*0.313*20
+        else:
+            clipped_reward = -0.1
+        return clipped_reward
 
     def add_history(self, state, action, reward):
         if len(self.history) >= self.history_pick:

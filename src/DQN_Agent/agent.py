@@ -130,12 +130,12 @@ class DQN_Agent:
         self.replay_memory.priority_update(indices, new_priorities)
         self.sess.run(self.train_op, feed_dict=feed)
 
-    def get_action(self, state, epsilon):
+    def get_action(self, state, epsilon, drop_p = 0.7):
         # Performing epsilon-greedy action selection
         if random.random() < epsilon:
             return self.env.sample_action_space()
         else:
-            return self.sess.run(self.Q_argmax, feed_dict={self.state_tf: [state]})[0]
+            return self.sess.run(self.Q_argmax, feed_dict={self.state_tf: [state], drop_p: drop_p})[0]
 
     def update_fixed_target_weights(self):
         self.fixed_target_weights = self.sess.run(self.trainable_variables)
@@ -167,7 +167,7 @@ class DQN_Agent:
                 self.replay_memory.add(self, state, action, reward, next_state, done)
 
                 # Performing experience replay if replay memory populated
-                if self.replay_memory.length() > 10*self.replay_memory.batch_size:
+                if self.replay_memory.length() > 2000:
                     self.sess.run(self.increment_frames_op)
                     self.training_metadata.increment_frame()
                     self.experience_replay(alpha)
@@ -175,7 +175,7 @@ class DQN_Agent:
                 done = info['true_done']
 
             # Creating q_grid if not yet defined and calculating average q-value
-            if self.replay_memory.length() > 100*self.replay_memory.batch_size:
+            if self.replay_memory.length() > 5000:
                 self.q_grid = self.replay_memory.get_q_grid(size=200, training_metadata=self.training_metadata)
             avg_q = self.estimate_avg_q()
 
@@ -197,7 +197,7 @@ class DQN_Agent:
             while not done:
                 if visualize:
                     self.test_env.render()
-                action = self.get_action(state, epsilon=0)
+                action = self.get_action(state, epsilon=0, drop_p = 1)
                 next_state, reward, done, info = self.test_env.step(action)
                 state = next_state
                 cum_reward += reward

@@ -130,18 +130,19 @@ class DQN_Agent:
         self.replay_memory.priority_update(indices, new_priorities)
         self.sess.run(self.train_op, feed_dict=feed)
 
-    def get_action(self, state, epsilon, drop_p = 0.7):
+    def get_action(self, state, epsilon):
         # Performing epsilon-greedy action selection
         if random.random() < epsilon:
             return self.env.sample_action_space()
         else:
-            return self.sess.run(self.Q_argmax, feed_dict={self.state_tf: [state], drop_p: drop_p})[0]
+            return self.sess.run(self.Q_argmax, feed_dict={self.state_tf: [state]})[0]
 
     def update_fixed_target_weights(self):
         self.fixed_target_weights = self.sess.run(self.trainable_variables)
 
     def train(self):
         while self.sess.run(self.episode) < self.training_metadata.num_episodes:
+            self.architecture.drop_p=0.7
             episode = self.sess.run(self.episode)
             self.training_metadata.increment_episode()
             self.sess.run(self.increment_episode_op)
@@ -167,7 +168,7 @@ class DQN_Agent:
                 self.replay_memory.add(self, state, action, reward, next_state, done)
 
                 # Performing experience replay if replay memory populated
-                if self.replay_memory.length() > 2000:
+                if self.replay_memory.length() > 5000:
                     self.sess.run(self.increment_frames_op)
                     self.training_metadata.increment_frame()
                     self.experience_replay(alpha)
@@ -191,13 +192,14 @@ class DQN_Agent:
 
     def test_Q(self, num_test_episodes, visualize):
         cum_reward = 0
+        self.architecture.drop_p=1
         for episode in range(num_test_episodes):
             done = False
             state = self.test_env.reset()
             while not done:
                 if visualize:
                     self.test_env.render()
-                action = self.get_action(state, epsilon=0, drop_p = 1)
+                action = self.get_action(state, epsilon=0)
                 next_state, reward, done, info = self.test_env.step(action)
                 state = next_state
                 cum_reward += reward

@@ -123,14 +123,16 @@ class nature_paper_dropout:
         return "Architecture used in the nature paper in 2015 with dropout on dense layers, 0.7 keep prob."
 
 class dropout_conv_layer:
+    def __init__(self):
+        self.drop_p=0.7
 
-    def evaluate(self, input, action_size, drop_p):
+    def evaluate(self, input, action_size):
         layer1_out = tf.layers.conv2d(input, filters=32, kernel_size=[8,8],
             strides=[4,4], padding='same', activation=tf.nn.relu, data_format='channels_first', 
             kernel_initializer=tf.contrib.layers.xavier_initializer(), name='layer1_out')
         layer2_out = tf.nn.dropout(tf.layers.conv2d(layer1_out, filters=64, kernel_size=[4,4],
             strides=[2,2], padding='same', activation=tf.nn.relu, data_format='channels_first', 
-            kernel_initializer=tf.contrib.layers.xavier_initializer(), name='layer2_out'), drop_p, name='layer2_out')
+            kernel_initializer=tf.contrib.layers.xavier_initializer(), name='layer2_out'), self.drop_p, name='layer2_out')
         layer3_out = tf.layers.conv2d(layer2_out, filters=64, kernel_size=[3,3],
             strides=[1,1], padding='same', activation=tf.nn.relu, data_format='channels_first', 
             kernel_initializer=tf.contrib.layers.xavier_initializer(), name='layer3_out')

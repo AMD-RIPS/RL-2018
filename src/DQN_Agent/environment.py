@@ -138,7 +138,8 @@ class CarRacing:
         n = 1 if self.test else random.choice([2, 3, 4])
         for i in range(n):
             next_state, reward, done, info = self.env.step(action)
-            reward = self.clip_reward(reward)
+            if not self.test:
+                reward = self.clip_reward(reward)
             total_reward += reward
             info = {'true_done': done}
             if done: break

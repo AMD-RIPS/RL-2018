@@ -106,7 +106,7 @@ class Pong:
 
 class CarRacing:
 
-    def __init__(self, type="CarRacing", crop=(None, None, None, None), downscaling_dimension=(84, 84), history_pick=4, seed=None, test=False, detect_edges=False):
+    def __init__(self, type="CarRacing", crop=(None, None, None, None), downscaling_dimension=(84, 84), history_pick=4, seed=None, test=False, detect_edges=False, detect_grass=False):
         self.name = type + str(time.time())
         self.env = gym.make(type + '-v0')
         self.downscaling_dimension = downscaling_dimension
@@ -120,6 +120,7 @@ class CarRacing:
         self.seed = seed
         self.test = test
         self.detect_edges = detect_edges
+        self.detect_grass = detect_grass
 
     def sample_action_space(self):
         return np.random.randint(self.action_space_size)

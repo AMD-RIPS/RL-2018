@@ -137,9 +137,9 @@ class DQN_Agent:
         else:
             return self.sess.run(self.Q_argmax, feed_dict={self.state_tf: [state]})[0]
 
-    def calculate_reward(self, reward, in_grass, frames_grass):
-        if in_grass and frames_grass > 10:
-            reward = -1
+    def calculate_reward(self, reward, in_grass, grass_frames):
+        if self.env.detect_grass and in_grass and grass_frames > 10:
+            reward  = -1
         return reward
 
     def update_fixed_target_weights(self):
@@ -160,7 +160,7 @@ class DQN_Agent:
             epsilon = self.explore_rate.get(self.training_metadata)
             alpha = self.learning_rate.get(self.training_metadata)
             print("Episode {0}/{1} \t Epsilon: {2} \t Alpha: {3}".format(episode, self.training_metadata.num_episodes, epsilon, alpha))
-            frames_grass = 0
+            grass_frames = 0
             while not done:
                 # Updating fixed target weights every #target_update_frequency frames
                 if self.training_metadata.frame % self.target_update_frequency == 0 and (self.training_metadata.frame != 0):
@@ -169,8 +169,8 @@ class DQN_Agent:
                 # Choosing and performing action and updating the replay memory
                 action = self.get_action(state, epsilon)
                 next_state, reward, done, info, in_grass = self.env.step(action)
-                reward = self.calculate_reward(reward, in_grass, frames_grass)
-                frames_grass += 1
+                reward = self.calculate_reward(reward, in_grass, grass_frames)
+                grass_frames += 1
 
                 self.replay_memory.add(self, state, action, reward, next_state, done)
 

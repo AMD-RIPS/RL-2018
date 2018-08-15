@@ -23,7 +23,7 @@ def grayscale_img(image):
 def process_image(rgb_image, crop=(None, None, None, None), downscaling_dimension=(84, 84), detect_edges=False):
     rgb_image = rgb_image[crop[0]:crop[1], crop[2]:crop[3], :]
     if detect_edges:
-        edgy = cv.Canny(rgb_image, 220, 250, apertureSize=3)
+        edgy = cv.Canny(rgb_image, 150, 250, apertureSize=3)
         edgy = resize(edgy, downscaling_dimension)
         result = edgy
     else:
@@ -37,13 +37,7 @@ def process_image(rgb_image, crop=(None, None, None, None), downscaling_dimensio
 
 def in_grass(state):
     cropped = state[66:78, 43:53]
-    # plt.imshow(state)
-    # plt.show()
-    #red = np.sum(cropped[..., 0])
     green = np.sum(cropped[..., 1] >= 204)
-    #blue = np.sum(cropped[..., 2])
-    #biggest = red < green and blue < green
-    #return biggest
     return green >= 45
 
 def process_nature_atari(rgb_image, downscaling_dimension = (84, 84)):

@@ -30,12 +30,15 @@ class CarRacing:
         return np.random.randint(self.action_space_size)
 
     def map_action(self, action):
-        return self.action_dict[action]
+        action = self.action_dict[action]
+        if self.flip and action <= 1:
+            action = 1 - action
+        return action
 
     def reset(self):
         if self.seed:
             self.env.seed(random.choice(self.seed))
-        self.flip = random.random() > 0
+        self.flip = random.random() > 0.5
         return self.process(self.env.reset())
 
     def step(self, action):

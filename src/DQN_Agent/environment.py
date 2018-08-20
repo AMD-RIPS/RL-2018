@@ -135,7 +135,8 @@ class CarRacing:
     def step(self, action):
         action = self.map_action(action)
         total_reward = 0
-        n = 1 if self.test else random.choice([2, 3, 4])
+        # n = 2 if self.test else random.choice([2, 3, 4])
+        n = 3
         for i in range(n):
             next_state, reward, done, info = self.env.step(action)
             if not self.test:
@@ -160,7 +161,7 @@ class CarRacing:
 
     def clip_reward(self, reward):
         if reward > 0:
-            clipped_reward = reward*0.313
+            clipped_reward = np.floor(reward*0.313)
         else:
             clipped_reward = 0
         return clipped_reward

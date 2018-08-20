@@ -204,6 +204,8 @@ class DQN_Agent:
             done = False
             state, _ = self.test_env.reset()
             episode_reward = 0
+            if not visualize:
+                self.test_env.render()
             while not done:
                 if visualize:
                     self.test_env.render()

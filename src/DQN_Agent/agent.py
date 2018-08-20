@@ -190,8 +190,8 @@ class DQN_Agent:
 
             # Saving tensorboard data and model weights
             if (episode % 30 == 0) and (episode != 0):
-                score = self.test_Q(num_test_episodes=5, visualize=True)
-                print(score)
+                score, std, rewards = self.test_Q(num_test_episodes=5, visualize=True)
+                print('{0} +- {1}'.format(score, std))
                 self.writer.add_summary(self.sess.run(self.test_summary,
                                                       feed_dict={self.test_score: score}), episode / 30)
                 self.saver.save(self.sess, self.model_path + '/data.chkp', global_step=self.training_metadata.episode)

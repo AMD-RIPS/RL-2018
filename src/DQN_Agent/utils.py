@@ -11,10 +11,6 @@ import matplotlib.pyplot as plt
 def pause():
     programPause = raw_input("Press the <ENTER> key to continue...")
 
-def flip_state(image):
-    image[:82, :] = cv.flip(image[:82, :], 1)
-    return image
-
 def unit_image(image):
     image  = np.array(image)
     return np.true_divide(image,255)
@@ -23,8 +19,9 @@ def grayscale_img(image):
     return np.dot(image[...,:3], [0.299, 0.587, 0.114])
 
 def process_image(rgb_image, flip, detect_edges=False):
+    rgb_image = rgb_image[:84,]
     if flip:
-        rgb_image = flip_state(rgb_image)
+        rgb_image = cv.flip(rgb_image, 1)
     if detect_edges:
         edgy = cv.Canny(rgb_image, 150, 250, apertureSize=3)
         result = edgy
@@ -32,7 +29,6 @@ def process_image(rgb_image, flip, detect_edges=False):
         gray = grayscale_img(rgb_image)
         gray = unit_image(gray)
         result = gray
-    show(result)
     return result
 
 def in_grass(state):

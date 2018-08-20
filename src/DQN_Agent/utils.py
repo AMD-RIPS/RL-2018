@@ -18,8 +18,7 @@ def unit_image(image):
 def grayscale_img(image):
     return np.dot(image[...,:3], [0.299, 0.587, 0.114])
 
-def process_image(rgb_image, flip, detect_edges=False):
-    rgb_image = rgb_image[:84,]
+def process_image(rgb_image, flip, detect_edges=False):    
     if flip:
         rgb_image = cv.flip(rgb_image, 1)
     if detect_edges:
@@ -29,6 +28,7 @@ def process_image(rgb_image, flip, detect_edges=False):
         gray = grayscale_img(rgb_image)
         gray = unit_image(gray)
         result = gray
+    result = result[:84,]
     return result
 
 def in_grass(state):

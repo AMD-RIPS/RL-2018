@@ -1,6 +1,6 @@
 setup_dict = {
 	'general': {
-		'architecture': 'nature', 
+		'architecture': 'nature_dropout', 
 		'explore_rate': 'decay', 
 		'learning_rate': 'atari'
 	},

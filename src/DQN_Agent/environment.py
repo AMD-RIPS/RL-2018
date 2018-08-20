@@ -10,7 +10,7 @@ import time
 
 class CarRacing:
 
-    def __init__(self, type="CarRacing", history_pick=4, seed=None, test=False, detect_edges=False, detect_grass=False):
+    def __init__(self, type="CarRacing", history_pick=4, seed=None, test=False, detect_edges=False, detect_grass=False, flip=False):
         self.name = type + str(time.time())
         self.env = gym.make(type + '-v0')
         self.image_dimension = [84,96]
@@ -24,13 +24,14 @@ class CarRacing:
         self.test = test
         self.detect_edges = detect_edges
         self.detect_grass = detect_grass
-        self.flip = False
+        self.flip = flip
+        self.flip_episode = False
 
     def sample_action_space(self):
         return np.random.randint(self.action_space_size)
 
     def map_action(self, action):
-        if self.flip and action <= 1:
+        if self.flip_episode and action <= 1:
             action = 1 - action
         action = self.action_dict[action]
         return action
@@ -38,7 +39,7 @@ class CarRacing:
     def reset(self):
         if self.seed:
             self.env.seed(random.choice(self.seed))
-        self.flip = random.random() > 0.5 and not self.test
+        self.flip_episode = random.random() > 0.5 and not self.test and self.flip
         return self.process(self.env.reset())
 
     def step(self, action):
@@ -70,7 +71,7 @@ class CarRacing:
     def add_history(self, state):
         if len(self.history) >= self.history_pick:
             self.history.pop(0)
-        temp = utils.process_image(state, detect_edges=self.detect_edges, flip=self.flip)
+        temp = utils.process_image(state, detect_edges=self.detect_edges, flip=self.flip_episode)
         self.history.append(temp)
 
     def __str__(self):

@@ -116,7 +116,7 @@ class nature_paper_dropout:
             strides=[1,1], padding='same', activation=tf.nn.relu, data_format='channels_first', 
             kernel_initializer=tf.contrib.layers.xavier_initializer(), name='layer3_out')
         layer4_out = tf.nn.dropout(tf.layers.dense(tf.layers.flatten(layer3_out), 512, activation=tf.nn.relu), .7, name='layer4_out')
-        output =  tf.nn.dropout(tf.layers.dense(layer4_out, action_size, activation=None), .7, name='output')
+        output =  tf.layers.dense(layer4_out, action_size, activation=None, name='output')
         return output
 
     def __str__(self):

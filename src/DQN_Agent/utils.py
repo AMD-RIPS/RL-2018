@@ -8,19 +8,48 @@ from PIL import Image
 import cv2 as cv
 import matplotlib.pyplot as plt
 
+
 def pause():
     programPause = raw_input("Press the <ENTER> key to continue...")
 
+
 def unit_image(image):
-    image  = np.array(image)
-    return np.true_divide(image,255)
+    image = np.array(image)
+    return np.true_divide(image, 255)
+
 
 def grayscale_img(image):
-    return np.dot(image[...,:3], [0.299, 0.587, 0.114])
+    return np.dot(image[..., :3], [0.299, 0.587, 0.114])
 
-def process_image(rgb_image, flip, detect_edges=False):    
+def flip_image(image):
+    steer_left = (image[88, 47] == [0, 255, 0]).all()
+    gyro_left = (image[88, 71] == [255, 0, 0]).all()
+    if steer_left:
+        steer_length = sum(map(all, (image[88, :48] == [0, 255, 0])))
+    else:
+        steer_length = sum(map(all, (image[88, 48:] == [0, 255, 0])))
+    if gyro_left:
+        gyro_length = sum(map(all, (image[88, :72] == [255, 0, 0])))
+    else:
+        gyro_length = sum(map(all, (image[88, 72:] == [255, 0, 0])))
+
+    image[84:, 28:] = 0
+
+    if steer_left:
+        image[86:91, 48:(48 + steer_length)] = [0, 255, 0]
+    else:
+        image[86:91, (48 - steer_length):48] = [0, 255, 0]
+    if gyro_left:
+        image[86:91, 72:(72 + gyro_length)] = [255, 0, 0]
+    else:
+        image[86:91, (72 - gyro_length):72] = [255, 0, 0]
+
+    image[:84, :] = cv.flip(image[:84, :], 1)
+    return image
+
+def process_image(rgb_image, flip, detect_edges=False):
     if flip:
-        rgb_image = cv.flip(rgb_image, 1)
+        rgb_image = flip_image(rgb_image)
     if detect_edges:
         edgy = cv.Canny(rgb_image, 150, 250, apertureSize=3)
         result = edgy
@@ -28,18 +57,20 @@ def process_image(rgb_image, flip, detect_edges=False):
         gray = grayscale_img(rgb_image)
         gray = unit_image(gray)
         result = gray
-    result = result[:84,]
     return result
+
 
 def in_grass(state):
     cropped = state[66:78, 43:53]
     green = np.sum(cropped[..., 1] >= 204)
     return green >= 45
 
+
 def show(image):
     # Or with plt:
     plt.imshow(image, cmap='gray')
     plt.show()
+
 
 def document_parameters(agent):
     # document parameters
@@ -53,6 +84,7 @@ def document_parameters(agent):
         file.write('Memory Capacity: ' + str(agent.replay_memory.memory_capacity) + '\n')
         file.write('Num Episodes: ' + str(agent.training_metadata.num_episodes) + '\n')
         file.write('Learning Rate Drop Frame Limit: ' + str(agent.training_metadata.frame_limit) + '\n')
+
 
 class Training_Metadata:
 

@@ -13,7 +13,7 @@ class CarRacing:
     def __init__(self, type="CarRacing", history_pick=4, seed=None, test=False, detect_edges=False, detect_grass=False, flip=False):
         self.name = type + str(time.time())
         self.env = gym.make(type + '-v0')
-        self.image_dimension = [84,96]
+        self.image_dimension = [96,96]
         self.history_pick = history_pick
         self.state_space_size = history_pick * np.prod(self.image_dimension)
         self.action_space_size = 5
@@ -33,8 +33,7 @@ class CarRacing:
     def map_action(self, action):
         if self.flip_episode and action <= 1:
             action = 1 - action
-        action = self.action_dict[action]
-        return action
+        return self.action_dict[action]
 
     def reset(self):
         if self.seed:

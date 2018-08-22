@@ -7,9 +7,6 @@ import tensorflow as tf
 import random
 import os
 import subprocess
-import architectures as arch
-import learning_rates as lrng
-import explore_rates as expl
 import replay_memory as rplm
 import utils
 import time
@@ -19,26 +16,26 @@ DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 
 
 class DQN_Agent:
-    # architecture, explore_rate and learning_rate are strings, see respective files for definitions
 
-    def __init__(self, training_environment, testing_environment, architecture, explore_rate, learning_rate, model_name=None):
-        self.env = training_environment
-        self.test_env = testing_environment
-        self.architecture = arch.arch_dict[architecture]()
-        self.explore_rate = expl.expl_dict[explore_rate]()
-        self.learning_rate = lrng.lrng_dict[learning_rate]()
+    def __init__(self, environment, architecture, explore_rate, learning_rate,
+                 batch_size, memory_capacity, num_episodes, learning_rate_drop_frame_limit,
+                 target_update_frequency, discount=0.99, delta=1, model_name=None):
+        self.env = environment
+        self.architecture = architecture()
+        self.explore_rate = explore_rate()
+        self.learning_rate = learning_rate()
         self.model_path = os.path.dirname(os.path.realpath(__file__)) + '/models/' + model_name if model_name else str(self.env)
         self.log_path = self.model_path + '/log'
         self.initialize_tf_variables()
 
-    def set_training_parameters(self, batch_size, memory_capacity, num_episodes, learning_rate_drop_frame_limit, target_update_frequency, discount=0.99, delta=1):
+        # Training parameters setup
         self.target_update_frequency = target_update_frequency
         self.discount = discount
         self.replay_memory = rplm.Replay_Memory(memory_capacity, batch_size)
         # self.training_metadata = utils.Training_Metadata(frame=self.sess.run(self.frames), frame_limit=learning_rate_drop_frame_limit,
-                                                            # episode=self.sess.run(self.episode), num_episodes=num_episodes)
+        # 												   episode=self.sess.run(self.episode), num_episodes=num_episodes)
         self.training_metadata = utils.Training_Metadata(frame=0, frame_limit=learning_rate_drop_frame_limit,
-                                                            episode=0, num_episodes=num_episodes)
+                                                         episode=0, num_episodes=num_episodes)
         self.delta = delta
         utils.document_parameters(self)
 
@@ -54,7 +51,6 @@ class DQN_Agent:
         self.action_tf = tf.placeholder(shape=[None, self.action_size], dtype=tf.float32, name='action_tf')
         self.y_tf = tf.placeholder(dtype=tf.float32, name='y_tf')
         self.alpha = tf.placeholder(dtype=tf.float32, name='alpha')
-        self.grad_weights = tf.placeholder(dtype=tf.float32, name='weighted_grads')
         self.test_score = tf.placeholder(dtype=tf.float32, name='test_score')
         self.avg_q = tf.placeholder(dtype=tf.float32, name='avg_q')
 
@@ -79,13 +75,11 @@ class DQN_Agent:
 
         # Training related
         # NAME                          FEED DEPENDENCIES
-        # td_error                      y_tf, state_tf, action_tf
-        # loss                          y_tf, state_tf, action_tf, grad_weights
-        # train_op                      y_tf, state_tf, action_tf, grad_weights, alpha
+        # loss                          y_tf, state_tf, action_tf
+        # train_op                      y_tf, state_tf, action_tf, alpha
 
         # self.loss = tf.losses.mean_squared_error(self.y_tf, self.Q_value_at_action)
-        self.td_error = tf.abs(tf.subtract(self.y_tf, self.Q_value_at_action))
-        self.loss = tf.multiply(self.grad_weights, tf.losses.huber_loss(self.y_tf, self.Q_value_at_action))
+        self.loss = tf.losses.huber_loss(self.y_tf, self.Q_value_at_action)
         self.optimizer = tf.train.AdamOptimizer(learning_rate=self.alpha)
         self.train_op = self.optimizer.minimize(self.loss, name='train_minimize')
 
@@ -114,7 +108,7 @@ class DQN_Agent:
         self.sess.graph.finalize()
 
     def experience_replay(self, alpha):
-        state_batch, action_batch, reward_batch, next_state_batch, done_batch, weights, indices = self.replay_memory.get_mini_batch(self.training_metadata)
+        state_batch, action_batch, reward_batch, next_state_batch, done_batch = self.replay_memory.get_mini_batch(self.training_metadata)
         y_batch = [None] * self.replay_memory.batch_size
         fixed_feed_dict = {self.state_tf: next_state_batch}
         fixed_feed_dict.update(zip(self.trainable_variables, self.fixed_target_weights))
@@ -125,9 +119,7 @@ class DQN_Agent:
 
         y_batch = reward_batch + self.discount * np.multiply(np.invert(done_batch), Q_batch)
 
-        feed = {self.state_tf: state_batch, self.action_tf: action_batch, self.y_tf: y_batch, self.grad_weights: weights, self.alpha: alpha}
-        new_priorities = self.sess.run(self.td_error, feed_dict=feed)
-        self.replay_memory.priority_update(indices, new_priorities)
+        feed = {self.state_tf: state_batch, self.action_tf: action_batch, self.y_tf: y_batch, self.alpha: alpha}
         self.sess.run(self.train_op, feed_dict=feed)
 
     def get_action(self, state, epsilon):
@@ -139,7 +131,7 @@ class DQN_Agent:
 
     def calculate_reward(self, reward, in_grass, grass_frames):
         if self.env.detect_grass and in_grass and grass_frames > 10:
-            reward  = -1
+            reward = -1
         return reward
 
     def update_fixed_target_weights(self):
@@ -176,7 +168,7 @@ class DQN_Agent:
                 self.replay_memory.add(self, state, action, reward, next_state, done)
 
                 # Performing experience replay if replay memory populated
-                if self.replay_memory.length() > 10*self.replay_memory.batch_size:
+                if self.replay_memory.length() > 10 * self.replay_memory.batch_size:
                     self.sess.run(self.increment_frames_op)
                     self.training_metadata.increment_frame()
                     self.experience_replay(alpha)
@@ -184,13 +176,13 @@ class DQN_Agent:
                 done = info['true_done']
 
             # Creating q_grid if not yet defined and calculating average q-value
-            if self.replay_memory.length() > 100*self.replay_memory.batch_size:
+            if self.replay_memory.length() > 100 * self.replay_memory.batch_size:
                 self.q_grid = self.replay_memory.get_q_grid(size=200, training_metadata=self.training_metadata)
             avg_q = self.estimate_avg_q()
 
             # Saving tensorboard data and model weights
-            if (episode % 30 == 0) and (episode != 0):
-                score, std, rewards = self.test_Q(num_test_episodes=5, visualize=True)
+            if (episode % 30 == 0) and not (episode != 0):
+                score, std, rewards = self.test(num_test_episodes=5, visualize=True)
                 print('{0} +- {1}'.format(score, std))
                 self.writer.add_summary(self.sess.run(self.test_summary,
                                                       feed_dict={self.test_score: score}), episode / 30)
@@ -198,17 +190,17 @@ class DQN_Agent:
 
             self.writer.add_summary(self.sess.run(self.training_summary, feed_dict={self.avg_q: avg_q}), episode)
 
-    def test_Q(self, num_test_episodes, visualize):
+    def test(self, num_test_episodes, visualize):
         rewards = []
         for episode in range(num_test_episodes):
             done = False
-            state, _ = self.test_env.reset()
+            state, _ = self.env.reset(test=True)
             episode_reward = 0
             while not done:
                 if visualize:
-                    self.test_env.render()
+                    self.env.render()
                 action = self.get_action(state, epsilon=0)
-                next_state, reward, done, info, _ = self.test_env.step(action)
+                next_state, reward, done, info, _ = self.env.step(action, test=True)
                 state = next_state
                 episode_reward += reward
                 done = info['true_done']
@@ -219,7 +211,6 @@ class DQN_Agent:
         if not self.q_grid:
             return 0
         return np.average(np.amax(self.sess.run(self.Q_value, feed_dict={self.state_tf: self.q_grid}), axis=1))
-
 
     def load(self, path):
         self.saver.restore(self.sess, path)

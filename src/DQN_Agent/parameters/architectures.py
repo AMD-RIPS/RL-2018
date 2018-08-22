@@ -4,7 +4,11 @@ sys.dont_write_bytecode = True
 import tensorflow as tf
 import numpy as np
 
+########## A class storing several classes of neural network architectures ##########
+########## Called during training and testing. Uses tensorflow backend     ##########
 
+# A class that defines a fully connected network with two hideen layers, each 
+# with 32 neurons and a non-linear rectifier linear unit (ReLU) activation.
 class Basic_Architecture:
 
     def __init__(self):
@@ -21,6 +25,10 @@ class Basic_Architecture:
         return "2 dense layers of size {0} and {1}".format(self.layer_sizes[0], self.layer_sizes[1])
 
 
+# A class that defines a neural network with the following architecture:
+# - 1 convolutional layer with 16 8x8 kernels with a stride of 4x4 w/ ReLU activation
+# - 1 fully connected layer with 16 neurons and ReLU activation. Dropout is applied with
+#   keep probability of .8
 class Conv_1Layer:
 
     def evaluate(self, input, action_size):
@@ -35,6 +43,11 @@ class Conv_1Layer:
         return "1 convolutional layer: filters = 16, kernel = [8,8], strides = [4,4], relu activation and one dense dropout layer with drop probability 20\% and 16 neurons"
 
 
+# A class that defines a neural network with the following architecture:
+# - 1 convolutional layer with 16 8x8 kernels with a stride of 4x4 w/ ReLU activation
+# - 1 convolutional layer with 32 4x4 kernels with a stride of 2x2 w/ ReLU activation
+# - 1 fully connected layer with 256 neurons and ReLU activation. Dropout is applied with
+#   keep probability of .7
 class Conv_2Layer:
 
     def evaluate(self, input, action_size):
@@ -51,6 +64,11 @@ class Conv_2Layer:
         return "conv2 with dropout 0.7"
 
 
+# A class that defines a neural network with the following architecture:
+# - 1 convolutional layer with 16 8x8 kernels with a stride of 4x4 w/ ReLU activation
+# - 1 convolutional layer with 32 4x4 kernels with a stride of 2x2 w/ ReLU activation
+# - 1 fully connected layer with 256 neurons and ReLU activation. 
+# Based on 2013 paper 'Playing Atari with Deep Reinforcement Learning' by Mnih et al
 class Atari_Paper:
 
     def evaluate(self, input, action_size):
@@ -65,6 +83,12 @@ class Atari_Paper:
     def __str__(self):
         return "Architecture used in the atari paper"
 
+# A class that defines a neural network with the following architecture:
+# - 1 convolutional layer with 32 8x8 kernels with a stride of 4x4 w/ ReLU activation
+# - 1 convolutional layer with 64 4x4 kernels with a stride of 2x2 w/ ReLU activation
+# - 1 convolutional layer with 64 3x3 kernels with a stride of 2x2 w/ ReLU activation
+# - 1 fully connected layer with 512 neurons and ReLU activation. 
+# Based on 2015 paper 'Human-level control through deep reinforcement learning' by Mnih et al
 class Nature_Paper:
 
     def evaluate(self, input, action_size):
@@ -84,6 +108,13 @@ class Nature_Paper:
     def __str__(self):
         return "Architecture used in the nature paper in 2015"
 
+# A class that defines a neural network with the following architecture:
+# - 1 convolutional layer with 32 8x8 kernels with a stride of 4x4 w/ ReLU activation
+# - 1 convolutional layer with 64 4x4 kernels with a stride of 2x2 w/ ReLU activation
+# - 1 convolutional layer with 64 3x3 kernels with a stride of 2x2 w/ ReLU activation
+# - 1 fully connected layer with 512 neurons and ReLU activation. 
+# - Same as 'Nature_Paper' but with batchnorm on output layer
+# Based on 2015 paper 'Human-level control through deep reinforcement learning' by Mnih et al
 class Nature_Paper_Batchnorm:
 
     def evaluate(self, input, action_size):
@@ -103,6 +134,13 @@ class Nature_Paper_Batchnorm:
     def __str__(self):
         return "Architecture used in the nature paper in 2015 with batchnorm on every layer"
 
+# A class that defines a neural network with the following architecture:
+# - 1 convolutional layer with 32 8x8 kernels with a stride of 4x4 w/ ReLU activation
+# - 1 convolutional layer with 64 4x4 kernels with a stride of 2x2 w/ ReLU activation
+# - 1 convolutional layer with 64 3x3 kernels with a stride of 2x2 w/ ReLU activation
+# - 1 fully connected layer with 512 neurons and ReLU activation. 
+# - Same as 'Nature_Paper' but with dropout with keep probability .7 on output layer
+# Based on 2015 paper 'Human-level control through deep reinforcement learning' by Mnih et al
 class Nature_Paper_Dropout:
 
     def evaluate(self, input, action_size):
@@ -122,6 +160,13 @@ class Nature_Paper_Dropout:
     def __str__(self):
         return "Architecture used in the nature paper in 2015 with dropout on dense layers, 0.7 keep prob."
 
+# A class that defines a neural network with the following architecture:
+# - 1 convolutional layer with 32 8x8 kernels with a stride of 4x4 w/ ReLU activation
+# - 1 convolutional layer with 64 4x4 kernels with a stride of 2x2 w/ ReLU activation
+# - 1 convolutional layer with 64 3x3 kernels with a stride of 2x2 w/ ReLU activation
+# - 1 fully connected layer with 512 neurons and ReLU activation. 
+# - Same as 'Nature_Paper' but with dropout with keep probability .5 on 2nd convolutional layer
+# Based on 2015 paper 'Human-level control through deep reinforcement learning' by Mnih et al
 class Nature_Paper_Conv_Dropout:
 
     def evaluate(self, input, action_size):
@@ -130,7 +175,7 @@ class Nature_Paper_Conv_Dropout:
             kernel_initializer=tf.contrib.layers.xavier_initializer(), name='layer1_out')
         layer2_out = tf.nn.dropout(tf.layers.conv2d(layer1_out, filters=64, kernel_size=[4,4],
             strides=[2,2], padding='same', activation=tf.nn.relu, data_format='channels_first', 
-            kernel_initializer=tf.contrib.layers.xavier_initializer(), name='layer2_out'), .7, name='layer2_out')
+            kernel_initializer=tf.contrib.layers.xavier_initializer(), name='layer2_out'), .5, name='layer2_out')
         layer3_out = tf.layers.conv2d(layer2_out, filters=64, kernel_size=[3,3],
             strides=[1,1], padding='same', activation=tf.nn.relu, data_format='channels_first', 
             kernel_initializer=tf.contrib.layers.xavier_initializer(), name='layer3_out')

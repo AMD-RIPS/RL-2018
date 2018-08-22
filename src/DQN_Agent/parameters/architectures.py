@@ -5,7 +5,7 @@ import tensorflow as tf
 import numpy as np
 
 
-class basic_architecture:
+class Basic_Architecture:
 
     def __init__(self):
         self.layer_sizes = [32, 32]
@@ -21,7 +21,7 @@ class basic_architecture:
         return "2 dense layers of size {0} and {1}".format(self.layer_sizes[0], self.layer_sizes[1])
 
 
-class convolutional_architecture_1_layer:
+class Conv_1Layer:
 
     def evaluate(self, input, action_size):
         layer1_out = tf.layers.conv2d(input, filters=16, kernel_size=[8, 8],
@@ -35,7 +35,7 @@ class convolutional_architecture_1_layer:
         return "1 convolutional layer: filters = 16, kernel = [8,8], strides = [4,4], relu activation and one dense dropout layer with drop probability 20\% and 16 neurons"
 
 
-class convolutional_architecture_2_layers:
+class Conv_2Layer:
 
     def evaluate(self, input, action_size):
         layer1_out = tf.layers.conv2d(input, filters=16, kernel_size=[8, 8],
@@ -51,7 +51,7 @@ class convolutional_architecture_2_layers:
         return "conv2 with dropout 0.7"
 
 
-class atari_paper:
+class Atari_Paper:
 
     def evaluate(self, input, action_size):
         layer1_out = tf.layers.conv2d(input, filters=16, kernel_size=[8, 8],
@@ -65,7 +65,7 @@ class atari_paper:
     def __str__(self):
         return "Architecture used in the atari paper"
 
-class nature_paper:
+class Nature_Paper:
 
     def evaluate(self, input, action_size):
         layer1_out = tf.layers.conv2d(input, filters=32, kernel_size=[8,8],
@@ -84,7 +84,7 @@ class nature_paper:
     def __str__(self):
         return "Architecture used in the nature paper in 2015"
 
-class nature_paper_batchnorm:
+class Nature_Paper_Batchnorm:
 
     def evaluate(self, input, action_size):
         layer1_out = tf.contrib.layers.batch_norm(tf.layers.conv2d(input, filters=32, kernel_size=[8,8],
@@ -103,7 +103,7 @@ class nature_paper_batchnorm:
     def __str__(self):
         return "Architecture used in the nature paper in 2015 with batchnorm on every layer"
 
-class nature_paper_dropout:
+class Nature_Paper_Dropout:
 
     def evaluate(self, input, action_size):
         layer1_out = tf.layers.conv2d(input, filters=32, kernel_size=[8,8],
@@ -116,13 +116,13 @@ class nature_paper_dropout:
             strides=[1,1], padding='same', activation=tf.nn.relu, data_format='channels_first', 
             kernel_initializer=tf.contrib.layers.xavier_initializer(), name='layer3_out')
         layer4_out = tf.nn.dropout(tf.layers.dense(tf.layers.flatten(layer3_out), 512, activation=tf.nn.relu), .7, name='layer4_out')
-        output =  tf.nn.dropout(tf.layers.dense(layer4_out, action_size, activation=None), .7, name='output')
+        output =  tf.layers.dense(layer4_out, action_size, activation=None, name='output')
         return output
 
     def __str__(self):
         return "Architecture used in the nature paper in 2015 with dropout on dense layers, 0.7 keep prob."
 
-class dropout_conv_layer:
+class Nature_Paper_Conv_Dropout:
 
     def evaluate(self, input, action_size):
         layer1_out = tf.layers.conv2d(input, filters=32, kernel_size=[8,8],
@@ -140,14 +140,3 @@ class dropout_conv_layer:
 
     def __str__(self):
         return "Architecture used in the nature paper in 2015 with dropout on 2nd conv layer, 0.7 keep prob."
-
-arch_dict = {
-    'basic': basic_architecture,
-    'conv1': convolutional_architecture_1_layer,
-    'conv2': convolutional_architecture_2_layers,
-    'atari': atari_paper,
-    'nature': nature_paper,
-    'nature_batchnorm': nature_paper_batchnorm,
-    'nature_dropout': nature_paper_dropout,
-    'dropout_conv_layer':dropout_conv_layer
-}

@@ -4,8 +4,6 @@ sys.dont_write_bytecode = True
 import numpy as np
 import random
 from utils import pause
-import sumtree
-
 
 class Replay_Memory:
 
@@ -24,8 +22,7 @@ class Replay_Memory:
         reward_batch = [data[2] for data in mini_batch]
         next_state_batch = [data[3] for data in mini_batch]
         done_batch = [data[4] for data in mini_batch]
-        weights = indices = [1 for _ in mini_batch]
-        return state_batch, action_batch, reward_batch, next_state_batch, done_batch, weights, indices
+        return state_batch, action_batch, reward_batch, next_state_batch, done_batch
 
     def add(self, agent, state, action, reward, next_state, done):
         one_hot_action = np.zeros(agent.action_size)
@@ -36,6 +33,3 @@ class Replay_Memory:
 
     def get_q_grid(self, size, *args, **kwargs):
         return [data[0] for data in random.sample(self.memory, size)]
-
-    def priority_update(self, *args, **kwargs):
-        pass

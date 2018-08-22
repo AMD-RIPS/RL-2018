@@ -7,7 +7,7 @@ import random
 from PIL import Image
 import utils
 import time
-
+from gym import wrappers
 
 class Classic_Control:
 
@@ -109,6 +109,7 @@ class CarRacing:
     def __init__(self, type="CarRacing", crop=(None, None, None, None), downscaling_dimension=(84, 84), history_pick=4, seed=None, test=False):
         self.name = type + str(time.time())
         self.env = gym.make(type + '-v0')
+        # self.env = wrappers.Monitor(gym.make(type + '-v0'), '/home/kphamdo/Documents/videos')
         self.downscaling_dimension = downscaling_dimension
         self.history_pick = history_pick
         self.state_space_size = history_pick * np.prod(self.downscaling_dimension)
@@ -119,6 +120,7 @@ class CarRacing:
         self.crop = crop
         self.seed = seed
         self.test = test
+        self.curve_data = {}
 
     def sample_action_space(self):
         return np.random.randint(self.action_space_size)
@@ -129,6 +131,10 @@ class CarRacing:
     def reset(self):
         if self.seed:
             self.env.seed(random.choice(self.seed))
+        return self.process(self.env.reset())
+
+    def reset_with_seed(self, seed_num):
+        self.env.seed(seed_num)
         return self.process(self.env.reset())
 
     def step(self, action):
@@ -159,6 +165,50 @@ class CarRacing:
         if len(self.history) >= self.history_pick:
             self.history.pop(0)
         self.history.append(utils.process_image(state, self.crop, self.downscaling_dimension))
+
+    def test_curves(self):
+        curves = self.env.env.test_curves()
+        for curve in curves:
+            curve_type = curve[2] + str(curve[3])
+            if curve_type in self.curve_data:
+                self.curve_data[curve_type][0] += curve[0]
+                self.curve_data[curve_type][1] += curve[1]
+            else:
+                self.curve_data[curve_type] = curve[:2]
+        return self.curve_data
+
+    def analyze_curves(self, path):
+        f = open(path, 'w')
+        for direction in ['L', 'R', 'S']:
+            for i in range(1, 6):
+                curve = direction + str(i)
+                if curve in self.curve_data:
+                    visited = self.curve_data[curve][0]
+                    total = self.curve_data[curve][1]
+                    pct = visited / float(total)
+                    f.write(','.join([curve, str(visited), str(total), str(pct)]) + '\n')
+                else:
+                    f.write(','.join([curve, 'None', 'None', 'None']) + '\n')
+        f.close()
+        # for direction in ['L', 'R', 'S']:
+        #     visited = 0
+        #     total = 0
+        #     for i in range(1, 6):
+        #         curve = direction + ' ' + str(i)
+        #         if curve in info:
+        #             visited += info[curve][0]
+        #             total += info[curve][1]
+        #     print direction, visited, total, visited / float(total)
+        # print
+        # for i in range(1, 6):
+        #     visited = 0
+        #     total = 0
+        #     for direction in ['L', 'R', 'S']:
+        #         curve = direction + ' ' + str(i)
+        #         if curve in info:
+        #             visited += info[curve][0]
+        #             total += info[curve][1]
+        #     print str(i), visited, total, visited / float(total)
 
     def __str__(self):
     	return self.name + '\nseed: {0}\nactions: {1}\n'.format(self.seed, self.action_dict)

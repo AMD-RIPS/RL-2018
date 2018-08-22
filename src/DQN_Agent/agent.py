@@ -35,10 +35,11 @@ class DQN_Agent:
         self.target_update_frequency = target_update_frequency
         self.discount = discount
         self.replay_memory = rplm.Replay_Memory(memory_capacity, batch_size)
-        # self.training_metadata = utils.Training_Metadata(frame=self.sess.run(self.frames), frame_limit=learning_rate_drop_frame_limit,
-                                                            # episode=self.sess.run(self.episode), num_episodes=num_episodes)
-        self.training_metadata = utils.Training_Metadata(frame=0, frame_limit=learning_rate_drop_frame_limit,
-                                                            episode=0, num_episodes=num_episodes)
+
+        self.training_metadata = utils.Training_Metadata(frame=self.sess.run(self.frames), frame_limit=learning_rate_drop_frame_limit,
+                                                            episode=self.sess.run(self.episode), num_episodes=num_episodes)
+        # self.training_metadata = utils.Training_Metadata(frame=0, frame_limit=learning_rate_drop_frame_limit,
+        #                                                     episode=0, num_episodes=num_episodes)
         self.delta = delta
         utils.document_parameters(self)
 
@@ -143,8 +144,6 @@ class DQN_Agent:
     def train(self):
         while self.sess.run(self.episode) < self.training_metadata.num_episodes:
             episode = self.sess.run(self.episode)
-            self.training_metadata.increment_episode()
-            self.sess.run(self.increment_episode_op)
 
             # Setting up game environment
             state = self.env.reset()
@@ -179,31 +178,48 @@ class DQN_Agent:
                 self.q_grid = self.replay_memory.get_q_grid(size=200, training_metadata=self.training_metadata)
             avg_q = self.estimate_avg_q()
 
+            
+            self.sess.run(self.increment_episode_op)
             # Saving tensorboard data and model weights
             if (episode % 30 == 0) and (episode != 0):
-                score = self.test_Q(num_test_episodes=5, visualize=True)
+                score = self.test_Q(num_test_episodes=5, visualize=False)
                 print(score)
                 self.writer.add_summary(self.sess.run(self.test_summary,
                                                       feed_dict={self.test_score: score}), episode / 30)
                 self.saver.save(self.sess, self.model_path + '/data.chkp', global_step=self.training_metadata.episode)
 
             self.writer.add_summary(self.sess.run(self.training_summary, feed_dict={self.avg_q: avg_q}), episode)
+            self.training_metadata.increment_episode()
+            
 
     def test_Q(self, num_test_episodes, visualize, test_curves=False):
         cum_reward = 0
+        f = open(self.model_path + '/testscores' + str(num_test_episodes) + '.csv', 'w')
         for episode in range(num_test_episodes):
             done = False
-            state = self.test_env.reset()
+            np.random.seed(episode)
+            seed = np.random.randint(10000)
+            state = self.test_env.reset_with_seed(seed)   
+            # state = self.test_env.reset()
             if not visualize:   # need to render for accurate scores
                 self.test_env.render()
+            total_reward = 0
             while not done:
                 if visualize:
                     self.test_env.render()
                 action = self.get_action(state, epsilon=0)
                 next_state, reward, done, info = self.test_env.step(action)
                 state = next_state
-                cum_reward += reward
+                total_reward += reward
                 done = info['true_done']
+            f.write(str(total_reward) + '\n')
+            cum_reward += total_reward
+            if test_curves: # CarRacing only
+                self.test_env.test_curves()
+            print episode, total_reward
+        if test_curves:
+            self.test_env.analyze_curves(self.model_path + '/curve_data.csv')
+        f.write('Average: ' + str(cum_reward / num_test_episodes) + '\n')
         return cum_reward / num_test_episodes
 
     def estimate_avg_q(self):

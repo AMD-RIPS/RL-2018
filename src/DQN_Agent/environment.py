@@ -10,6 +10,10 @@ import time
 
 class CarRacing:
 
+    # Parameters
+    # - type: Name of environment. Default is classic Car Racing game, but can be changed to introduce perturbations in environment
+    # - history_pick: Size of history
+    # - seed: List of seeds to sample from during training. Default is none (random games)
     def __init__(self, type="CarRacing", history_pick=4, seed=None, detect_edges=False, detect_grass=False, flip=False):
         self.name = type + str(time.time())
         self.env = gym.make(type + '-v0')
@@ -26,6 +30,7 @@ class CarRacing:
         self.flip = flip
         self.flip_episode = False
 
+    # returns a random action
     def sample_action_space(self):
         return np.random.randint(self.action_space_size)
 
@@ -34,12 +39,14 @@ class CarRacing:
             action = 1 - action
         return self.action_dict[action]
 
+    # resets the environment and returns the initial state
     def reset(self, test=False):
         if self.seed:
             self.env.seed(random.choice(self.seed))
         self.flip_episode = random.random() > 0.5 and not test and self.flip
         return self.process(self.env.reset())
 
+    # take action 
     def step(self, action, test=False):
         action = self.map_action(action)
         total_reward = 0
@@ -55,6 +62,7 @@ class CarRacing:
     def render(self):
         self.env.render()
 
+    # process state and return the current history
     def process(self, state):
         self.add_history(state)
         in_grass = utils.in_grass(state)
@@ -73,4 +81,4 @@ class CarRacing:
         self.history.append(temp)
 
     def __str__(self):
-    	return self.name + '\nseed: {0}\nactions: {1}\n'.format(self.seed, self.action_dict)
+    	return self.name + '\nseed: {0}\nactions: {1}'.format(self.seed, self.action_dict)

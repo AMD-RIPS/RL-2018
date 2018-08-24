@@ -1,0 +1,14 @@
+\chapter{Discussion}\label{Ch:FutureWork}
+
+Our work has shown that the DQN algorithm does generalize from limited training environments to all tracks in the OpenAi CarRacing environment, but not perfectly. The algorithm fails occasionally during testing, such as cutting corners and swirling out of the road. There is still much work to do to uncover the reasons for these problems. We have compiled a list of ideas that could  improve the performance on this specific task, with some of them also applicable to other reinforcement learning problems:
+\begin{itemize}
+\item Explore hyperparameters more thoroughly, most importantly  replay memory size, batch size and update frequency for target Q-network
+\item Explore multiple regularization methods and their hyperparameters
+\item Try Deeper architectures
+\item Introduce perturbations into the testing environment and analyze the effect
+\end{itemize}
+
+Nonetheless, we have surpassed the current score for the car racing game on the OpenAI leaderboard and come very close to solving the game. Our results involving dropout also shone some light on the positive effect regularization can have on Deep Reinforcement Learning algorithms.
+
+\endinput
+

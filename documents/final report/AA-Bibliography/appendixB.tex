@@ -1,0 +1,78 @@
+\chapter{Parameters}\label{Parameters}
+
+\section{Neural Network Structures}
+\begin{table}[h!]
+\begin{center}
+\begin{tabular}{|P{3cm}|P{6cm}|P{6cm}|}
+\hline
+Layer Number & Two Convolutional Layers & Three Convolutional Layers\\
+\hline
+Layer 1 & Convolutional, 16 8x8 kernels with stride 4, 
+ReLU activiation & Convolutional, 32 8x8 kernels with stride 4, 
+ReLU activiation\\
+\hline
+Layer 2 & Convolutional, 32 4x4 kernels with stride 2, 
+ReLU activiation & Convolutional, 64 4x4 kernels with stride 2, 
+ReLU activiation\\
+\hline
+Layer 3 & Dense, 256 kernels, ReLU activiation & Convolutional, 64 3x3 kernels with stride 1, ReLU activiation\\
+\hline
+Layer 4 & Dense, 5 kernels, linear activation & Dense, 512 kernels, ReLU activation\\
+\hline
+Layer 5 &  & Dense, 5 kernels, linear activation\\
+\hline
+\end{tabular}
+\caption{Neural Network Structures}
+\label{table: neuralstructures}
+\end{center}
+\end{table}
+
+\section{Actions}
+\begin{table}[h!]
+\begin{center}
+\begin{tabular}{|P{6cm}|P{6cm}|}
+\hline
+Four Actions & Five Actions\\
+\hline
+Left Turn [-1, 0, 0] & Left Turn [-1, 0, 0]\\
+\hline
+Right Turn [1, 0, 0] & Right Turn [1, 0, 0]\\
+\hline
+Acceleration [0, 1, 0] & Acceleration [0, 1, 0]\\
+\hline
+Deceleration [0, 0, 0.8] & Deceleration [0, 0, 0.8]\\
+\hline
+ & No Operation [0, 0, 0]\\
+\hline
+\end{tabular}
+\caption{Action Space Comparison}
+\label{table: ActionSpace}
+\end{center}
+\end{table}
+
+\section{Hyperparameters}
+\begin{table}[h!]
+\begin{center}
+\begin{tabular}{ |c|c| } 
+\hline
+Name & Value \\
+\hline
+Architecture & Three convolutional layers\\
+\hline
+Explore Rate & Decrease from 1 to 0.1 linearly for the first 250000 frames, 0.1 thereafter\\
+\hline
+Learning Rate & 0.00025\\
+\hline
+Discount Rate & 0.99 \\
+\hline
+Batch Size & 32 \\
+\hline
+Memory Capacity & 100000 \\
+\hline
+\end{tabular}
+\caption{Hyperparameters}
+\label{table: hyperparameters}
+\end{center}
+\end{table}
+
+\endinput

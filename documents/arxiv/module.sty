@@ -1,0 +1,267 @@
+%%% ====================================================================
+%%%  @LaTeX-style-file{
+%%%     author          = "Alan Jeffrey",
+%%%     version         = "1.1",
+%%%     date            = "02 June 1992",
+%%%     time            = "14:51:35 BST",
+%%%     filename        = "module.sty",
+%%%     address         = "School of Cognitive and Computing Sciences
+%%%                        University of Sussex
+%%%                        Brighton BN1 9QH
+%%%                        UK",
+%%%     telephone       = "+44 273 606755 x 3238",
+%%%     FAX             = "+44 273 678188",
+%%%     checksum        = "59444 265 1437 10221",
+%%%     email           = "alanje@cogs.sussex.ac.uk",
+%%%     codetable       = "ISO/ASCII",
+%%%     keywords        = "LaTeX module fonts",
+%%%     supported       = "yes",
+%%%     abstract        = "This is a document style option for
+%%%                        modularizing definitions",
+%%%     docstring       = "This is a document style option for
+%%%                        modularizing definitions.  It is part of
+%%%                        the St Mary's Road font package, described
+%%%                        in stmaryrd.tex.
+%%%
+%%%                        Copyright 1992 Alan Jeffrey.
+%%%
+%%%                        The checksum field above contains a CRC-16
+%%%                        checksum as the first value, followed by the
+%%%                        equivalent of the standard UNIX wc (word
+%%%                        count) utility output of lines, words, and
+%%%                        characters.  This is produced by Robert
+%%%                        Solovay's checksum utility.",
+%%%     package         = "St Mary's Road",
+%%%     dependencies    = "none",
+%%%  }
+%%%
+%%%  ====================================================================
+%%%
+%%% 23 May 1991, v1.0: Created file.
+%%%
+%%% 24 May 1991, v1.01: Hacked around with it quite a bit, redefined how
+%%%    \iftag...\fi works, allowed \else, \isunsettag and conjunction.
+%%%    Came up with the \modulefredloaded trick, implimented the settags
+%%%    environment, rewrote some of the comments, defined tags so that
+%%%    using one as a command causes an error message, changed the syntax
+%%%    of \ifdef, and generally nicened it up a bit.
+%%%
+%%% 25 May 1991, v1.02: More hackery.  Renamed \iftag to \iftest ... \then, and
+%%%    reimplemented it.  Renamed \issettag to \tagisset, ditto
+%%%    \tagisunset.  Introduced \truetest, \falsetest, \andtest, \ortest,
+%%%    \nottest and \newfontselection.  Went back to the original syntax
+%%%    for \ifdef.
+%%%
+%%% 2 Jun 1992, v1.1: Added the file headers.
+
+% This style allows you to define modules for LaTeX, which the user can
+% then use all or none of, depending on their fancy.  This is mainly
+% useful for loading in new symbol fonts, which may define over 200 new
+% commands, of which the user only wants a handful.  At the moment, the
+% AMS gets round this by defining a command \newsymbol, but here we
+% present a more user-friendly way of getting the same effect.
+%
+% The main concept the user needs is that of a {\em tag\/} which is a
+% request to a module saying `please give me this facility'.  Usually
+% these are just command names that the module will define---for
+% example the module stmaryrd has tags \varoplus, \bindnasrepma, and so
+% on.  But there are other tags which control how the module behaves,
+% for example the tag \substitutefonts means `We don't have the
+% necessary fonts, please use substitutes instead.'
+%
+% To set the tag \foo, you say \settag{\foo}.  To set \foo, \baz and
+% \bar, you can say \begin{settags} \foo\baz\bar \end{settags}.
+%
+% To unset the tag \foo, you say \unsettag{\foo}.  To unset \foo, \baz
+% and \bar, you can say \begin{unsettags} \foo\baz\bar \end{unsettags}.
+%
+% You can then import a module.  This can be done in various ways:
+%
+% a) By saying \import{fred}, which only loads the commands whose tags
+%    you set.
+%
+% b) By saying \import*{fred}, which loads in all the commands.
+%
+% c) As a \documentstyle option, e.g. \documentstyle[module,fred]{article}.
+%    This is equivalent to \import*{fred}.
+%
+% And that's it.
+
+% This all works by keeping a file fred.sty, which is loaded in when fred
+% is imported.  This can have any sort of definition you like (including the
+% character @, which is made into a letter for the occasion).  It should
+% include a command:
+%
+%    \settag\modulefredloaded
+%
+% to tell other modules (including itself) that fred.sty has been loaded.
+% You also get a special command:
+%
+%    \iftest <test> \then <true text>  \fi
+%
+% or
+%
+%    \iftest <test> \then <true text> \else <false text> \fi
+%
+% meaning `if the test is true, do the true text, otherwise do
+% the false text.'  A test is of the form
+%
+%    \truetest
+%    \falsetest
+%    \tagisset<tag>
+%    \ortest{<test>}{<test>}
+%    \andtest{<test>}{<test>}
+%    \nottest{<test>}
+%
+% For example, there is a special tag called \everything, which is set if we
+% are meant to define every command we can.  So if we are defining a
+% command \fred, we would like to test if either \fred or \everything has
+% been set.  We can do this by saying
+%
+%    \iftest \ortest{\tagisset\fred}{\tagisset\everything} \then \def\foo... \fi
+%
+% This is so common as to warrant its own syntactic sugar:
+%
+%    \ifdef \then \def\foo... \fi
+%
+% You can also say \ifdef\then\mathchardef\foo...\fi,
+% \ifdef\then\let\foo...\fi, or any other defining command.  Since
+% these are so common in modules, I've included the extra commands:
+%
+%    \delimiterdef\foo"1234567  \textchardef\foo"123
+%
+% Another common usage is
+%
+%    \iftest \tagisset\foo \then \settag\baz \fi
+%
+% meaning `If we are exporting \foo, we should export \baz as well.'
+% This sort of dependency information is so common as to warrant its own
+% syntactic sugar:
+%
+%    \dependent\foo\baz
+%
+% Note that since modules may well be loaded in more than once, you have
+% to make sure your commands can be obeyed many times.  To get round
+% this, the module `fred' can look at the value of \modulefredloaded to
+% see whether or not it's been loaded before.  For example, if you have
+% some sensitive definitions (such as loading fonts) which shoudn't be
+% done more than once, you can say (before setting \modulefredloaded):
+%
+%    \iftest \tagisunset\modulefredloaded \then ...sensitive material... \fi
+%
+% If your module does some font loading, it can look at the tag
+% \newfontselection to see whether the new font selection scheme has been
+% installed.
+
+% So how is this all done?  Well, the name of the game is to use TeX's
+% primitive \if ... \fi constructs in such a way that they always group
+% nicely.  So a <test> is a command that expands out to either \iftrue
+% or \iffalse.  NB: \iffalse and \iftrue are *not* valid tests, as they'd
+% foul up the \if...\fi matching.
+
+\def\truetest{\iftrue}
+\def\falsetest{\iffalse}
+
+\def\ortest#1{#1\expandafter\K@true\else\expandafter\@identity\fi}
+\def\@identity#1{#1}
+\def\K@true#1{\iftrue}
+
+\def\andtest#1#2{#1\@fi#2}
+\def\@fi{\fi}
+
+\def\nottest#1{#1\expandafter\falsetest\else\expandafter\truetest\fi}
+
+% Then all that \iftest...\then has to do is expand out the test.
+
+\def\iftest#1\then{#1}
+
+% In order to make sure that \if ... \fi matching works properly, we need
+% to define \then to be an \if-like command.
+
+\let\then\iftrue
+
+% To test whether a tag is set or not we just look to see if it
+% is the same as \magic@value.
+
+\def\tagisset#1{\ifx\magic@value#1}
+
+% So to set a tag, we just \let it to \magic@value.
+
+\def\settag#1{\let#1\magic@value}
+\def\unsettag#1{\let#1\unmagic@value}
+
+% If the user says something like \settag\foo \import{fred} but fred
+% doesn't define \foo, we'd like some way of failing gracefully.  We do
+% this by defining \magic@value and \unmagic@value to produce error messages.
+
+\def\magic@value{\set@error}
+\def\set@error{\@latexerr{This command is a set tag}{You just used a tag
+   where LaTeX expected an ordinary command.^^JIf you press return now, I'll
+   ignore the tag.^^JSee `A module system for LaTeX' by Alan Jeffrey for
+   details.}}
+
+\def\unmagic@value{\unset@error}
+\def\unset@error{\@latexerr{This command is an unset tag}{You just used a tag
+   where LaTeX expected an ordinary command.^^JIf you press return now, I'll
+   ignore the tag.^^JSee `A module system for LaTeX' by Alan Jeffrey for
+   details.}}
+
+% Then \ifdef and \dependent are just syntactic sugar, speeded up a bit.
+
+\def\ifdef\then#1#2%
+   {\tagisset\everything\expandafter\iftrue
+      \else\expandafter\tagisset\expandafter#2\fi#1#2}
+\def\dependent#1#2%
+   {\tagisset#1\settag#2\fi}
+
+% The settags and unsettags environments:
+
+\def\settags#1%
+   {\ifx#1\end\expandafter\end\else\settag#1\expandafter\settags\fi}
+\def\unsettags#1%
+   {\ifx#1\end\expandafter\end\else\unsettag#1\expandafter\unsettags\fi}
+
+% The trouble with \import is getting it to save the current values of
+% \everything and the catcode for @ correctly.  Oh, if only I could
+% use TeX grouping for this, but I can't, because the font selection
+% scheme doesn't allow you to load fonts globally.  Oh well.
+
+\def\import
+   {\@ifstar{\@import\settag}{\@import\unsettag}}
+\def\@import#1#2%
+   {\tagisset\everything
+      \def\next{\@@import{#2}\settag\everything}\else
+         \def\next{\@@import{#2}\unsettag\everything}\fi
+      #1\everything\next}
+\def\@@import#1%
+   {\edef\next{\noexpand\@@input #1.sty
+      \catcode`\noexpand\@\the\catcode`\@}\makeatletter\next}
+
+% We need to set \everything initially, so that if a module is read in
+% as a .sty file, it behaves like \import*{fred}.
+
+\settag\everything
+
+% And to be a well-behaved module, we should set \modulemoduleloaded.
+
+\settag\modulemoduleloaded
+
+% Look to see if \selectfont is defined (as a check for whether we're
+% using the new font selection scheme).
+
+\@ifundefined{selectfont}{}{\settag\newfontselection}
+
+% Old-fashioned LaTeX didn't have this:
+
+\def\hexnumber@#1{\ifcase#1 \z@
+ \or \@ne \or \tw@ \or \thr@@
+ \or 4\or 5\or 6\or 7\or 8\or
+ 9\or A\or B\or C\or D\or E\or F\fi}
+
+% A few extra commands for definitions:
+
+\def\textchardef#1"#2#3#4{\edef#1{\noexpand\mathhexbox#2#3#4}}
+\def\delimiterdef#1"#2#3#4#5#6#7#8{\edef#1{\delimiter"#2#3#4#5#6#7#8 }}
+
+% And that's that.
+

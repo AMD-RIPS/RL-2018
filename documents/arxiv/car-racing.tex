@@ -1,187 +1,157 @@
-% The following choice requires a coordinated choice when PRINTING the report:
-%\documentclass[oneside,12pt]{report}  % Use this for one-sided copying (print with printer's normal
-%  single-sided option
-\documentclass[twoside,12pt,openright]{report}  % You can use this for a slim final printed copy (print with 
-%  printer's double-sided option)
+\documentclass{article}
 
-% the dimensions of the page
-\textheight=9.25in \topmargin=-0.5in   %See note in Chapter 8 of Sample Report about "Page scaling" option in Adobe
-\textwidth=6.0in
-\oddsidemargin=0.3in
-\evensidemargin=0.3in  % Needed to balance even and odd pages in twoside print copy
 
-% Useful packages
+\usepackage{arxiv}
+
+\usepackage[utf8]{inputenc} % allow utf-8 input
+\usepackage[T1]{fontenc}    % use 8-bit T1 fonts
+\usepackage{hyperref}       % hyperlinks
+\usepackage{url}            % simple URL typesetting
+\usepackage{booktabs}       % professional-quality tables
+\usepackage{amsfonts}       % blackboard math symbols
+\usepackage{nicefrac}       % compact symbols for 1/2, etc.
+\usepackage{microtype}      % microtypography
+\usepackage{lipsum}
+
+% nick adding packages
 \usepackage{amsmath}
 \usepackage{amsfonts}
 \usepackage{amsbsy}
-
-%% In the following, the assumption is that your graphics are in encapsulated postscript (eps).  If not,
-%% you may need to use some other method for incorporating graphics into your pdf of the final report.
-%  Use the next package for typesetting directly to dvi or postcript (used primarily for the PCTeX typesetter, 
-%  see the following alternatives).
-%\usepackage[dvips]{graphicx} 
-% Use the next two packages together for typesetting directly to pdf (this works for pdfLaTeX and may work 
-% for others---not yet tested for all---please report your experience).
-\usepackage[pdftex]{graphicx}
-%\usepackage{epstopdf}
-%%
-
+\usepackage[dvips]{graphicx}
 \usepackage{doc}
-% Following sets up logic and formatting for conditional twoside copying
+
 \usepackage{ifthen, color, fancyvrb}
 \usepackage{nextpage}\pagestyle{plain}
 \newcommand\myclearpage{\cleartooddpage
   [\thispagestyle{empty}]
   }
 
-%  Set font size for captions
-\usepackage[skip=4pt,font=footnotesize]{caption}
 
-
-\DeclareGraphicsExtensions{ps,eps}
-\usepackage{excludeonly}
-
-% If some words are being hyphenated incorrectly, they can be
-% given in a list to the \hyphenation command as below.
-\hyphenation{ap-pen-dix wer-ther-i-an}
-
-\usepackage{amsthm}                % Theorem/proof enviornments.
-% Theorem-like command definitions:
-\newtheorem{theorem}{Theorem}[chapter]
-\newtheorem{lemma}{Lemma}[chapter]
-\newtheorem*{definition}{Definition}  % Note, this italicizes everything
-
-% Print the chapter and sections in the toc
-\setcounter{tocdepth}{1}
-
-% Specify which files to typeset for this run (note that overall pagination is preserved)
-%\includeonly{chapter1, chapter2}
-
-% Specify which files NOT to typeset for this run (note that overall pagination is preserved)
-%\excludeonly{}
-
-% Groundwork for allowing double-sided copying with blank versos
-\def\prefacesection#1{
-\chapter*{#1}
-\addcontentsline{toc}{chapter}{#1}
-}
-
-
-\usepackage{amssymb}               % Various symbols.
-%\usepackage{geometry}              % Easy interface to set page margins.
-%\usepackage{fancyhdr}              % Custom headers/footers, page styles.
-\usepackage[shortlabels]{enumitem} % Stuff for enumerate, itemize environments.
 \usepackage{tikz}
-\usepackage{stmaryrd}
-\usepackage{bbm}
+%\usepackage{stmaryrd}
+%\usepackage{bbm}
 \usepackage{latexsym}
 \usepackage{graphicx}
 \usepackage{subcaption}
-\usepackage{algorithm2e}
+%\usepackage{algorithm2e}
 \usepackage{mathtools}
 \usepackage{array}
 \usepackage{float}
 \newcolumntype{P}[1]{>{\centering\arraybackslash}p{#1}}
 
-%\geometry{margin=3cm}              % Sets margins on all sides.
-%\pagestyle{fancyplain}             % Sets page style.
-%\headheight 35pt                   % Sets the height of the header.
-%\headsep 10pt                      % Sets space between the header and the body.
 
-\setlength{\parindent}{0em}        % Sets paragraph indentation.
-\setlength{\parskip}{0.5em}        % Sets space between paragraphs.
+\title{Solving OpenAI's CarRacing using DQN and Dropout}
 
-\setlist[itemize]{leftmargin=*}    % Normalize left margin in itemize. 
-\setlist[enumerate]{leftmargin=*}  % Normalize left margin in enumerate.
-
-
-\newenvironment{solution}{\textit{Solution.}}
-\allowdisplaybreaks
-
-
-\newcommand\semester{Summer 2018}  
-\newcommand\banner{AMD}      
-\newcommand\E{\mathbb{E}}
-
-\DeclareMathOperator*{\argmax}{arg\,max}
-
-%\lhead{\banner}
-%\chead{\textbf{\Large Final Report}}
-%\rhead{\semester}
-
+\author{
+  % author 1
+  Patrik Gerber\thanks{Equal Contribution} \\
+  Department of Statistics\\
+  University of Oxford\\
+  Oxford OX1 2JD, UK \\
+  \texttt{patrik.r.gerber@gmail.com} \\
+  % author 2
+  \and
+  Jiajing Guan\footnotemark[1] \\
+  Department of Computer Science\\
+  George Mason University\\
+  Fairfax, VA 22030 \\
+  \texttt{jiajingguan@gmail.com} \\
+  % author 3
+  \and
+  Elvis Nunez\footnotemark[1] \\
+  Department of Computer Science\\
+  Brown University\\
+  Providence, RI 02912 \\
+  \texttt{elvis\_nunez@alumni.brown.edu} \\
+  % author 4
+  \and
+  Kaman Phamdo\footnotemark[1] \\
+  Department of Computer Science\\
+  University of Maryland, College Park \\
+  College Park, MD 20742 \\
+  \texttt{kaman@phamdo.com} \\
+  %% examples of more authors
+   \And
+  Nicholas Penha Malaya \\
+  AMD Research\\
+  Advanced Micro Devices\\
+  Austin, TX \\
+  \texttt{nicholas.malaya@amd.com} \\
+  %% \AND
+  %% Coauthor \\
+  %% Affiliation \\
+  %% Address \\
+  %% \texttt{email} \\
+  %% \And
+  %% Coauthor \\
+  %% Affiliation \\
+  %% Address \\
+  %% \texttt{email} \\
+  %% \And
+  %% Coauthor \\
+  %% Affiliation \\
+  %% Address \\
+  %% \texttt{email} \\
+}
 
 \begin{document}
+\maketitle
 
-% Footnote references are symbolized in the front matter, but see below for restoration of numbered footnotes in the body.
-\def\thefootnote{\fnsymbol{footnote}}
+\begin{abstract}
+\lipsum[1]
+\end{abstract}
 
-% The title page is in its own file, ``titlepage.tex''.
-% It needs to be edited to reflect information specific
-% to your project. 
-\input{titlepage.tex}
 
-% Begin ABSTRACT
-\ifthenelse{\boolean{@twoside}}{\myclearpage}{}
-\prefacesection{Abstract}
-\input{Abstract/Abstract}
+% keywords can be removed
+\keywords{Reinforcement Learning \and Regularization \and Dropout \and
+OpenAI CarRacing Environment}
 
-% Begin ACKNOWLEDGMENTS
-\ifthenelse{\boolean{@twoside}}{\myclearpage}{}
-\prefacesection{Acknowledgments}
-\input{Acknowledgements/Acknowledgements}
 
-% Table of contents, List of Figures, and List of Tables.
-\ifthenelse{\boolean{@twoside}}{\myclearpage}{}
-\tableofcontents
+\section{Introduction}
 
-\ifthenelse{\boolean{@twoside}}{\myclearpage}{}
-\listoffigures
 
-\ifthenelse{\boolean{@twoside}}{\myclearpage}{}
-\listoftables
+\section{Background and Related Work}
+\label{sec:background}
 
-% The report is an extensive document.
-% It is convenient to have each chapter of the report in its own file
-% rather than throw all work together in a single file.
-% Do not run the LaTeX typesetter on each individual chapter; refresh
-% your report by running the typesetter on this master file.
 
-% Cancel the previous symbol requirement for footnotes in the front
-% matter, and use arabic numerals for footnotes in the body
-\renewcommand{\thefootnote}{\arabic{footnote}}
-\setcounter{footnote}{0}
+\section{Methods}
+\label{sec:methods}
 
-% Chapter 1 -- the Introduction
-\ifthenelse{\boolean{@twoside}}{\myclearpage}{}
-\include{chapter1}
+\section{Results}
+\label{sec:results}
 
-% Chapter 2
-\ifthenelse{\boolean{@twoside}}{\myclearpage}{}
-\include{chapter2}
+\section{Discussion}
+\label{sec:discussion}
 
-% Chapter 3
-\ifthenelse{\boolean{@twoside}}{\myclearpage}{}
-\include{chapter3}
 
-% Chapter 4
-\ifthenelse{\boolean{@twoside}}{\myclearpage}{}
-\include{chapter4}
 
-% Chapter 5
+%% % Chapter 2
+%% \ifthenelse{\boolean{@twoside}}{\myclearpage}{}
+%% \include{chapter2}
+
+%% % Chapter 3
+%% \ifthenelse{\boolean{@twoside}}{\myclearpage}{}
+%% \include{chapter3}
+
+%% % Chapter 4
+%% \ifthenelse{\boolean{@twoside}}{\myclearpage}{}
+%% \include{chapter4}
+
+%% % Chapter 5
 \ifthenelse{\boolean{@twoside}}{\myclearpage}{}
 \include{chapter5}
 
-% Chapter 6
-\ifthenelse{\boolean{@twoside}}{\myclearpage}{}
-\include{chapter6}
+%% % Chapter 6
+%% \ifthenelse{\boolean{@twoside}}{\myclearpage}{}
+%% \include{chapter6}
 
-% Chapter 7
-\ifthenelse{\boolean{@twoside}}{\myclearpage}{}
-\include{chapter7}
+%% % Chapter 7
+%% \ifthenelse{\boolean{@twoside}}{\myclearpage}{}
+%% \include{chapter7}
 
-% Chapter 7
-\ifthenelse{\boolean{@twoside}}{\myclearpage}{}
-\include{chapter8}
+%% % Chapter 7
+%% \ifthenelse{\boolean{@twoside}}{\myclearpage}{}
+%% \include{chapter8}
 
 % Chapter 9 -- the Conclusion
 % \ifthenelse{\boolean{@twoside}}{\myclearpage}{}
@@ -190,25 +160,13 @@
 % Insert text in Table of Contents to highlight the appendix(es)
 \addtocontents {toc}{\protect \contentsline {chapter}{APPENDIXES}{}}
 \appendix
-\ifthenelse{\boolean{@twoside}}{\myclearpage}{}
-\input{AA-Bibliography/appendixA}
+%\ifthenelse{\boolean{@twoside}}{\myclearpage}{}
+%\input{AA-Bibliography/appendixA}
 \ifthenelse{\boolean{@twoside}}{\myclearpage}{}
 \input{AA-Bibliography/appendixB}
-\ifthenelse{\boolean{@twoside}}{\myclearpage}{}
-\input{AA-Bibliography/a-glossary}
-\ifthenelse{\boolean{@twoside}}{\myclearpage}{}
-\input{AA-Bibliography/abbreviations}
-
-% Add your bibliography to Contents
-\ifthenelse{\boolean{@twoside}}{\myclearpage}{\newpage}
-\addtocontents {toc}{\protect \contentsline {chapter}{REFERENCES}{}}
-\addcontentsline{toc}{chapter}{Reference}  % Use the 'bibname' name here.  See below.
-
-% Bibliography must come last.
-\bibliographystyle{siam}     % Siam and Ieeetr bibliographic styles treat titles of articles in journals or collections correctly
-\renewcommand\bibname{References}
-\nocite{*}  % List ALL references in your references, not just the ones cited in the text.
-% This scheme automatically alphabetizes the Bibliography.
-\bibliography{AA-Bibliography/RIPS_AMD}
+%% \ifthenelse{\boolean{@twoside}}{\myclearpage}{}
+%% \input{AA-Bibliography/a-glossary}
+%% \ifthenelse{\boolean{@twoside}}{\myclearpage}{}
+%% \input{AA-Bibliography/abbreviations}
 
 \end{document}

@@ -1,0 +1,335 @@
+%%% ====================================================================
+%%%  @LaTeX-style-file{
+%%%     author          = "Alan Jeffrey",
+%%%     version         = "1.1",
+%%%     date            = "02 June 1992",
+%%%     time            = "15:30:37 BST",
+%%%     filename        = "stmaryrd.sty",
+%%%     address         = "School of Cognitive and Computing Sciences
+%%%                        University of Sussex
+%%%                        Brighton BN1 9QH
+%%%                        UK",
+%%%     telephone       = "+44 273 606755 x 3238",
+%%%     FAX             = "+44 273 678188",
+%%%     checksum        = "21107 335 695 12492",
+%%%     email           = "alanje@cogs.sussex.ac.uk",
+%%%     codetable       = "ISO/ASCII",
+%%%     keywords        = "LaTeX math fonts symbols",
+%%%     supported       = "yes",
+%%%     abstract        = "This document style option loads the St
+%%%                        Mary's Road symbol font.",
+%%%     docstring       = "This document style option loads the St
+%%%                        Mary's Road symbol font.  The font
+%%%                        contains a number of mathematical
+%%%                        characters which are not present in the
+%%%                        standard TeX and AMS symbol fonts.
+%%%
+%%%                        It is described in stmaryrd.tex.
+%%%
+%%%                        Copyright 1992 Alan Jeffrey.
+%%%
+%%%                        The checksum field above contains a CRC-16
+%%%                        checksum as the first value, followed by the
+%%%                        equivalent of the standard UNIX wc (word
+%%%                        count) utility output of lines, words, and
+%%%                        characters.  This is produced by Robert
+%%%                        Solovay's checksum utility.",
+%%%     package         = "St Mary's Road",
+%%%     dependencies    = "module.sty stmary*.tfm",
+%%%  }
+%%% ====================================================================
+%%%
+%%% 23 May 1991, v1.0: file created.
+%%%
+%%% 25 May 1991, v1.01: Updated for the new module.sty and stmaryrd.mf.
+%%%
+%%% 5 Jun 1991, v1.02: By mistake, \varotimes wasn't swapped for \otimes.
+%%%
+%%% 25 Jun 1991, v1.03: Added \longarrownot and \Longarrownot.
+%%%
+%%% 27 Jun 1991, v1.04: The default is now for the cmsy circles, not the
+%%% heavier ones.  If you want \oplus, \otimes, etc. to generate the
+%%% heavier symbols, set the tag \heavycircles.
+%%%
+%%% 2 Jun 1992: v1.1: Added the headers.
+
+% This module loads in the St Mary's Road symbol font, and defines loads
+% of new commands to access it.  It understands the tag \heavycircles
+% to mean `please give me the heavy versions of \oplus etc.'  It
+% can cope with new or obsolete font selection, but doesn't understand the
+% \substitutesymbols tag yet.
+
+\@ifundefined{modulemoduleloaded}{\input module.sty}{}
+
+% Dependency information:
+
+\dependent\Mapsto\Mapstochar
+\dependent\mapsfrom\mapsfromchar
+\dependent\Mapsfrom\Mapsfromchar
+\dependent\longarrownot\arrownot
+\dependent\Longarrownot\Arrownot
+\dependent\Longmapsto\Mapstochar
+\dependent\longmapsfrom\mapsfromchar
+\dependent\Longmapsfrom\Mapsfromchar
+
+% If we're replacing the old eggshaped \oplus-like symbols, we need to
+% make sure they're defined.
+
+\iftest\tagisset\heavycircles\then
+   \settag\varotimes
+   \settag\varoast
+   \settag\varobar
+   \settag\varodot
+   \settag\varoslash
+   \settag\varobslash
+   \settag\varocircle
+   \settag\varoplus
+   \settag\varominus
+   \settag\varbigcirc
+\fi
+
+% The first time the module is loaded, we grab the fonts.
+
+\iftest \tagisset\modulestmaryrdloaded \then \else
+
+   \iftest \tagisset\newfontselection \then
+
+      \new@mathgroup\stmaryrdfam
+      \define@mathgroup\mv@normal\stmaryrdfam{stmaryrd}{m}{n}
+      \define@mathgroup\mv@bold\stmaryrdfam{stmaryrd}{m}{n}
+
+      \new@fontshape{stmaryrd}{m}{n}{%
+         <5>stmary5%
+         <6>stmary6%
+         <7>stmary7%
+         <8>stmary8%
+         <9>stmary9%
+         <10>stmary10%
+         <11>stmary10 at10.95pt%
+         <12>stmary10 at12pt%
+         <14>stmary10 at14.4pt%
+         <17>stmary10 at17.28pt%
+         <20>stmary10 at20.736pt%
+         <25>stmary10 at24.8832pt}{}
+
+   \else
+
+      \newfam\stmaryrdfam
+
+      \font\stmaryfiv  stmary5
+      \font\stmarysix  stmary6
+      \font\stmarysev  stmary7
+      \font\stmaryegt  stmary8
+      \font\stmarynin  stmary9
+      \font\stmaryten  stmary10
+      \font\stmaryelv  stmary10 at10.95pt
+      \font\stmarytwl  stmary10 at12pt
+      \font\stmaryfrtn stmary10 at14.4pt
+      \font\stmarysvtn stmary10 at17.28pt
+      \font\stmarytwty stmary10 at20.736pt
+      \font\stmarytwfv stmary10 at24.8832pt
+
+      \@addfontinfo\@vpt{\textfont\stmaryrdfam\stmaryfiv
+         \scriptfont\stmaryrdfam\stmaryfiv
+         \scriptscriptfont\stmaryrdfam\stmaryfiv}
+      \@addfontinfo\@vipt{\textfont\stmaryrdfam\stmarysix
+         \scriptfont\stmaryrdfam\stmarysix
+         \scriptscriptfont\stmaryrdfam\stmarysix}
+      \@addfontinfo\@viipt{\textfont\stmaryrdfam\stmarysev
+         \scriptfont\stmaryrdfam\stmarysix
+         \scriptscriptfont\stmaryrdfam\stmaryfiv}
+      \@addfontinfo\@viiipt{\textfont\stmaryrdfam\stmaryegt
+         \scriptfont\stmaryrdfam\stmarysix
+         \scriptscriptfont\stmaryrdfam\stmaryfiv}
+      \@addfontinfo\@ixpt{\textfont\stmaryrdfam\stmarynin
+         \scriptfont\stmaryrdfam\stmarysix
+         \scriptscriptfont\stmaryrdfam\stmaryfiv}
+      \@addfontinfo\@xpt{\textfont\stmaryrdfam\stmaryten
+         \scriptfont\stmaryrdfam\stmarysev
+         \scriptscriptfont\stmaryrdfam\stmaryfiv}
+      \@addfontinfo\@xipt{\textfont\stmaryrdfam\stmaryelv
+         \scriptfont\stmaryrdfam\stmarysev
+         \scriptscriptfont\stmaryrdfam\stmaryfiv}
+      \@addfontinfo\@xiipt{\textfont\stmaryrdfam\stmarytwl
+         \scriptfont\stmaryrdfam\stmaryegt
+         \scriptscriptfont\stmaryrdfam\stmarysix}
+      \@addfontinfo\@xivpt{\textfont\stmaryrdfam\stmaryfrtn
+         \scriptfont\stmaryrdfam\stmaryten
+         \scriptscriptfont\stmaryrdfam\stmarysev}
+      \@addfontinfo\@xviipt{\textfont\stmaryrdfam\stmarysvtn
+         \scriptfont\stmaryrdfam\stmarytwl
+         \scriptscriptfont\stmaryrdfam\stmaryten}
+      \@addfontinfo\@xxpt{\textfont\stmaryrdfam\stmarytwty
+         \scriptfont\stmaryrdfam\stmaryfrtn
+         \scriptscriptfont\stmaryrdfam\stmarytwl}
+      \@addfontinfo\@xxvpt{\textfont\stmaryrdfam\stmarytwfv
+         \scriptfont\stmaryrdfam\stmarytwty
+         \scriptscriptfont\stmaryrdfam\stmarysvtn}
+   \fi
+
+\fi
+
+% For the rest of the style, ! is the hex number of the family.
+
+\catcode`\!\active
+\edef!{\hexnumber@\stmaryrdfam}
+
+% Then we load those symbols!
+
+\ifdef\then\mathchardef\shortleftarrow"3!00\fi
+\ifdef\then\mathchardef\shortrightarrow"3!01\fi
+\ifdef\then\mathchardef\shortuparrow"3!02\fi
+\ifdef\then\mathchardef\shortdownarrow"3!03\fi
+\ifdef\then\mathchardef\Yup"2!04\fi
+\ifdef\then\mathchardef\Ydown"2!05\fi
+\ifdef\then\mathchardef\Yleft"2!06\fi
+\ifdef\then\mathchardef\Yright"2!07\fi
+\ifdef\then\mathchardef\varcurlyvee"2!08\fi
+\ifdef\then\mathchardef\varcurlywedge"2!09\fi
+\ifdef\then\mathchardef\minuso"2!0A\fi
+\ifdef\then\mathchardef\baro"2!0B\fi
+\ifdef\then\mathchardef\sslash"2!0C\fi
+\ifdef\then\mathchardef\bbslash"2!0D\fi
+\ifdef\then\mathchardef\moo"2!0E\fi
+\ifdef\then\mathchardef\varotimes"2!0F\fi
+\ifdef\then\mathchardef\varoast"2!10\fi
+\ifdef\then\mathchardef\varobar"2!11\fi
+\ifdef\then\mathchardef\varodot"2!12\fi
+\ifdef\then\mathchardef\varoslash"2!13\fi
+\ifdef\then\mathchardef\varobslash"2!14\fi
+\ifdef\then\mathchardef\varocircle"2!15\fi
+\ifdef\then\mathchardef\varoplus"2!16\fi
+\ifdef\then\mathchardef\varominus"2!17\fi
+\ifdef\then\mathchardef\boxast"2!18\fi
+\ifdef\then\mathchardef\boxbar"2!19\fi
+\ifdef\then\mathchardef\boxdot"2!1A\fi
+\ifdef\then\mathchardef\boxslash"2!1B\fi
+\ifdef\then\mathchardef\boxbslash"2!1C\fi
+\ifdef\then\mathchardef\boxcircle"2!1D\fi
+\ifdef\then\mathchardef\boxbox"2!1E\fi
+\ifdef\then\mathchardef\boxempty"2!1F\fi
+\ifdef\then\mathchardef\lightning"0!20\fi
+\ifdef\then\mathchardef\merge"2!21\fi
+\ifdef\then\mathchardef\vartimes"2!22\fi
+\ifdef\then\mathchardef\fatsemi"2!23\fi
+\ifdef\then\mathchardef\sswarrow"3!24\fi
+\ifdef\then\mathchardef\ssearrow"3!25\fi
+\ifdef\then\mathchardef\curlywedgeuparrow"3!26\fi
+\ifdef\then\mathchardef\curlywedgedownarrow"3!27\fi
+\ifdef\then\mathchardef\fatslash"2!28\fi
+\ifdef\then\mathchardef\fatbslash"2!29\fi
+\ifdef\then\mathchardef\lbag"2!2A\fi
+\ifdef\then\mathchardef\rbag"2!2B\fi
+\ifdef\then\mathchardef\varbigcirc"2!2C\fi
+\ifdef\then\mathchardef\leftrightarroweq"3!2D\fi
+\ifdef\then\mathchardef\curlyveedownarrow"3!2E\fi
+\ifdef\then\mathchardef\curlyveeuparrow"3!2F\fi
+\ifdef\then\mathchardef\nnwarrow"3!30\fi
+\ifdef\then\mathchardef\nnearrow"3!31\fi
+\ifdef\then\mathchardef\leftslice"2!32\fi
+\ifdef\then\mathchardef\rightslice"2!33\fi
+\ifdef\then\mathchardef\varolessthan"2!34\fi
+\ifdef\then\mathchardef\varogreaterthan"2!35\fi
+\ifdef\then\mathchardef\varovee"2!36\fi
+\ifdef\then\mathchardef\varowedge"2!37\fi
+\ifdef\then\mathchardef\talloblong"2!38\fi
+\ifdef\then\mathchardef\interleave"2!39\fi
+\ifdef\then\mathchardef\obar"2!3A\fi
+\ifdef\then\mathchardef\obslash"2!3B\fi
+\ifdef\then\mathchardef\olessthan"2!3C\fi
+\ifdef\then\mathchardef\ogreaterthan"2!3D\fi
+\ifdef\then\mathchardef\ovee"2!3E\fi
+\ifdef\then\mathchardef\owedge"2!3F\fi
+\ifdef\then\mathchardef\oblong"2!40\fi
+\ifdef\then\mathchardef\inplus"3!41\fi
+\ifdef\then\mathchardef\niplus"3!42\fi
+\ifdef\then\mathchardef\nplus"2!43\fi
+\ifdef\then\mathchardef\subsetplus"3!44\fi
+\ifdef\then\mathchardef\supsetplus"3!45\fi
+\ifdef\then\mathchardef\subsetpluseq"3!46\fi
+\ifdef\then\mathchardef\supsetpluseq"3!47\fi
+\ifdef\then\mathchardef\Lbag"4!48\fi
+\ifdef\then\mathchardef\Rbag"5!49\fi
+
+\ifdef\then\mathchardef\llparenthesis"4!4C\fi
+\ifdef\then\mathchardef\rrparenthesis"5!4D\fi
+\ifdef\then\mathchardef\binampersand"4!4E\fi
+\ifdef\then\mathchardef\bindnasrepma"5!4F\fi
+\ifdef\then\mathchardef\trianglelefteqslant"3!50\fi
+\ifdef\then\mathchardef\trianglerighteqslant"3!51\fi
+\ifdef\then\mathchardef\ntrianglelefteqslant"3!52\fi
+\ifdef\then\mathchardef\ntrianglerighteqslant"3!53\fi
+\ifdef\then\mathchardef\llfloor"4!54\fi
+\ifdef\then\mathchardef\rrfloor"5!55\fi
+\ifdef\then\mathchardef\llceil"4!56\fi
+\ifdef\then\mathchardef\rrceil"5!57\fi
+\ifdef\then\mathchardef\arrownot"3!58\fi
+\ifdef\then\mathchardef\Arrownot"3!59\fi
+\ifdef\then\mathchardef\Mapstochar"3!5A\fi
+\ifdef\then\mathchardef\mapsfromchar"3!5B\fi
+\ifdef\then\mathchardef\Mapsfromchar"3!5C\fi
+\ifdef\then\mathchardef\leftrightarrowtriangle"2!5D\fi
+\ifdef\then\mathchardef\leftarrowtriangle"3!5E\fi
+\ifdef\then\mathchardef\rightarrowtriangle"3!5F\fi
+\ifdef\then\mathchardef\bigtriangledown"1!60\fi
+\ifdef\then\mathchardef\bigtriangleup"1!61\fi
+\ifdef\then\mathchardef\bigcurlyvee"1!62\fi
+\ifdef\then\mathchardef\bigcurlywedge"1!63\fi
+\ifdef\then\mathchardef\bigsqcap"1!64\fi
+\ifdef\then\mathchardef\bigbox"1!65\fi
+\ifdef\then\mathchardef\bigparallel"1!66\fi
+\ifdef\then\mathchardef\biginterleave"1!67\fi
+\ifdef\then\mathchardef\bignplus"1!70\fi
+
+\ifdef\then\delimiterdef\llbracket"4!4A!71\fi
+\ifdef\then\delimiterdef\rrbracket"5!4B!79\fi
+
+\def\@tempa#1{\ifdef\then\def\varcopyright
+   {{\ooalign{\hfil\raise.07ex\hbox{c}\hfil\crcr\mathhexbox#12C}}}\fi}
+\expandafter\@tempa!
+
+% The long arrow negations.
+
+\ifdef\then\def\longarrownot{\mathrel{\mkern5.5mu\arrownot\mkern-5.5mu}}\fi
+\ifdef\then\def\Longarrownot{\mathrel{\mkern5.5mu\Arrownot\mkern-5.5mu}}\fi
+
+% The variants on \mapsto:
+
+\ifdef\then\def\Mapsto{\Mapstochar\Rightarrow}\fi
+\ifdef\then\def\mapsfrom{\leftarrow\mapsfromchar}\fi
+\ifdef\then\def\Mapsfrom{\Leftarrow\Mapsfromchar}\fi
+\ifdef\then\def\Longmapsto{\Mapstochar\Longrightarrow}\fi
+\ifdef\then\def\longmapsfrom{\longleftarrow\mapsfromchar}\fi
+\ifdef\then\def\Longmapsfrom{\Longleftarrow\Mapsfromchar}\fi
+
+\catcode`\!=12
+
+% The circular circles:
+
+\iftest
+   \andtest{\tagisset\heavycircles}{\nottest{\tagisset\swappedcircles}}
+\then
+   \def\@swap#1#2{\let\@tempa#1\let#1#2\let#2\@tempa}
+   \@swap\varotimes\otimes
+   \@swap\varolessthan\olessthan
+   \@swap\varogreaterthan\ogreaterthan
+   \@swap\varovee\ovee
+   \@swap\varowedge\owedge
+   \@swap\varoast\oast
+   \@swap\varobar\obar
+   \@swap\varodot\odot
+   \@swap\varoslash\oslash
+   \@swap\varobslash\obslash
+   \@swap\varocircle\ocircle
+   \@swap\varoplus\oplus
+   \@swap\varominus\ominus
+   \@swap\varbigcirc\bigcirc
+   \@swap\varcopyright\copyright
+   \settag\swappedcircles
+\fi
+
+% Set our own name:
+
+\settag\modulestmaryrdloaded
+
+% And that's it.

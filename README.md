@@ -1,5 +1,8 @@
 [![Join the chat at https://gitter.im/AMD-RIPS/Lobby](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/AMD-RIPS/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
+This project details a solution OpenAI's CarRacing-v0 game. This model uses a three layer DQN regularized with dropout and using a curriculum learning approach. 
+
+
 
 # RL-2018
 Reinforcement Learning at UCLA IPAM RIPS 2018

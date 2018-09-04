@@ -69,7 +69,7 @@
   Kaman Phamdo \\
   University of Maryland \\
   Somewhere in Maryland \\
-  \texttt{kaman@google.org} \\
+  \texttt{kaman@phamdo.com} \\
   \And
   Nicholas Malaya \\
   AMD Research \\ 
@@ -118,14 +118,42 @@ with Dropout to solve OpenAI's CarRacing environment, using only a small subset 
 % resulting \textit{state} of the environment and a scalar \textit{reward} signal. 
 % \par
 
-OpenAI Gym is a set of Reinforcement Learning testbeds including many classical video games and control problems. OpenAI Gym's 
-CarRacing environment - from here on referred to as the 'car racing game' - is a simple, top-down view racing game, shown in 
-Figure \ref{fig:carracing}. The player has control of a race-car, and its goal is to visit the tiles making up the randomly 
-generated track, as fast as possible. At each frame, the score changes by -0.1 if no tile was visited and by 
-$\frac{1000}{N}$ otherwise, where N=Number of tiles on the track. The emulator returns 96 by 96 RGB screenshots 
-of the screen at each frame. The game ends if the race-car visits all tiles on the track, or if the number of passed frames exceeds 1000. The environment is considered solved as per OpenAI's guidelines, if an average score of over 900 is achieved over 100 consecutive 
-games. The car racing game was recently solved by \cite{World_Models}, however to the best of our knowledge it is unsolved 
-using RL methods. 
+Deep reinforcement learning allows an agent to learn through experience while
+dynamically interacting with an environment. Computer games are often used as
+a sandbox for investigating deep reinforcement learning algorithms because they
+provide an easy way to generate large amounts of data for experience. RL
+methods have achieved some success in learning how to play computer games using
+only images and score as input. In particular, DeepMind’s DQN algorithm reached
+superhuman performance in several Atari games \cite{DQNPaper}.
+
+However, RL methods are limited by their sensitivity to perturbations in the
+environment. They can fail catastrophically when applied to environments that
+differ from where they were trained. Additionally, they typically require
+millions of frames of experience and days of training. It is crucial for these
+methods to become more robust if they are to be deployed in the real world.
+
+We investigate OpenAI Gym’s CarRacing-v0 environment [ref?], which is a simple,
+top-down view racing game as shown in Figure \ref{fig:carracing}. The
+environment includes a racecar, a race track composed of tiles, and grass. The
+agent has control of the racecar, and its goal is to visit the tiles of the
+randomly generated race track as quickly as possible. The agent receives
+a \textit{reward} of -0.1 at each time step and $+\frac{1000}{Number\ of\
+tiles}$ for each track tile visited. The \textit{state} is represented by 96x96
+RGB screenshots of the game. The game ends when the agent visits all tiles on
+the track or when 1000 frames have passed. This environment is considered
+solved by OpenAI's guidelines when the agent achieves an average score of 900
+or above over 100 consecutive games. This car racing game was recently solved
+by \cite{World_Models} using generative methods. To the best of our knowledge,
+it is previously unsolved using RL methods.
+
+% OpenAI Gym is a set of Reinforcement Learning testbeds including many classical video games and control problems. OpenAI Gym's 
+% CarRacing environment - from here on referred to as the 'car racing game' - is a simple, top-down view racing game, shown in 
+% Figure \ref{fig:carracing}. The player has control of a race-car, and its goal is to visit the tiles making up the randomly 
+% generated track, as fast as possible. At each frame, the score changes by -0.1 if no tile was visited and by 
+% $\frac{1000}{N}$ otherwise, where N=Number of tiles on the track. The emulator returns 96 by 96 RGB screenshots 
+% of the screen at each frame. The game ends if the race-car visits all tiles on the track, or if the number of passed frames exceeds 1000. The environment is considered solved as per OpenAI's guidelines, if an average score of over 900 is achieved over 100 consecutive 
+% games. The car racing game was recently solved by \cite{World_Models}, however to the best of our knowledge it is unsolved 
+% using RL methods. 
 \par
 
 \begin{figure}[!h]
@@ -133,20 +161,20 @@ using RL methods.
 \centering
 \begin{minipage}{.4\textwidth}
   \centering
-  \includegraphics[width=\linewidth]{carracing.jpg}
+  \includegraphics[width=\linewidth]{Graphics/carracing.jpg}
   \caption{Screenshot of the car racing game. }
   \label{fig:carracing}
 \end{minipage}
 \hspace{1cm}
 \begin{minipage}{.4\textwidth}
   \centering
-  \includegraphics[width=\linewidth]{curve_characterization.png}
+  \includegraphics[width=\linewidth]{Graphics/curve_characterization.png}
   \caption{Characterization of different types of curves. }
   \label{fig:curves}
 \end{minipage}
 \end{figure}
 
-In this paper we describe a Deep Reinforcement Learning algorithm that uses a convolutional architecture with dropout that 
+In this paper, we describe a Deep Reinforcement Learning algorithm that uses a convolutional architecture with dropout that 
 successfully solves the game. Remarkably the model is trained on a limited environment made up of 3 tracks. This result 
 shows that regularisation methods such as dropout can mitigate the overfit usually exhibited by these Deep Reinforcement Learning methods. Our code can be found at \textit{https://github.com/AMD-RIPS/RL-2018}, and video of the best performing model can be found under \textit{TODO}
 
@@ -165,7 +193,7 @@ We use two methods to analyze the performance of our models. The first one is to
 \captionsetup{justification=centering}
 \centering
 \centering
-\includegraphics[width=\linewidth]{scores_notitle.png}
+\includegraphics[width=\linewidth]{Graphics/scores_notitle.png}
 \caption{Comparison of the 6 models with 'Baseline' referring to models without dropout. The red line indicates the average score required to solve the environment. }
 \label{fig:scores}
 \end{figure}
@@ -179,7 +207,7 @@ We used the curve characterization method to quantitatively measure whether appl
 
 \begin{figure}[!h]
 \centering
-\includegraphics[width=\linewidth]{curves_comparison_notitle.png}
+\includegraphics[width=\linewidth]{Graphics/curves_comparison_notitle.png}
 \caption{Comparison of performance of model trained on a single track, with 'Baseline' referring to no dropout. }
 \label{fig:curves_comparison}
 \end{figure}

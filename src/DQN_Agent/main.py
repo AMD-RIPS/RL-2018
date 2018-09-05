@@ -18,9 +18,12 @@ environment = env.CarRacing(**setup.setup_dict['car racing'])
 control = agent.DQN_Agent(environment=environment, model_name=sys.argv[1], **setup.setup_dict['agent'])
 
 #####################################  Traning a model  ################################################
-control.train()
+#control.train()
 
 #####################################  Testing a model  ################################################
 ##### 
 # control.load("/home/pgerber/Documents/RL-2018/src/DQN_Agent/models/tmp/data.chkp-1")
 # control.test_Q(5, True)
+
+control.load("../../models/data.chkp-900")
+control.test(5, True)

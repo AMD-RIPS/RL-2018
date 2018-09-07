@@ -11,8 +11,6 @@ import time
 class CarRacing:
 
     # Parameters
-    # - type: Name of environment. Default is classic Car Racing game, but can be changed to introduce perturbations in environment
-    # - history_pick: Size of history
     # - seed: List of seeds to sample from during training. Default is none (random games)
     def __init__(self, seed=None):
         self.name = "CarRacing" + str(time.time())

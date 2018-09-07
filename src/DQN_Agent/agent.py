@@ -175,9 +175,7 @@ class DQN_Agent:
     # Description: Trains the model
     # Parameters: 	None
     # Output: 		None
-    def train(self):
-        test_fequency = 10
-        test_episodes = 3
+    def train(self, test_frequency, test_eipsodes):
         while self.sess.run(self.episode) < self.training_metadata.num_episodes:
             episode = self.sess.run(self.episode)
             self.training_metadata.increment_episode()
@@ -217,7 +215,7 @@ class DQN_Agent:
 
             # Saving tensorboard data and model weights
 
-            if (episode % test_fequency == 0) and (episode != -1):
+            if (episode % test_fequency == 0) and (episode != 0):
                 score, std, rewards = self.test(num_test_episodes=test_episodes, visualize=False)
                 print('{0} +- {1}'.format(score, std))
                 self.writer.add_summary(self.sess.run(self.test_summary,
@@ -245,7 +243,7 @@ class DQN_Agent:
                 episode_reward += reward
             print('Episode: {0} \tscore: {1}'.format(episode, episode_reward))
             rewards.append(episode_reward)
-        log = open("rewards.txt", "w")
+        log = open(self.model_path + "/rewards.txt", "w")
         log.write(','.join(map(str, rewards)))
         log.close()
         return np.mean(rewards), np.std(rewards), rewards

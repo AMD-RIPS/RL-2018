@@ -12,9 +12,9 @@ fixed_1track_seed = [108]
 fixed_3track_seed = [104, 106, 108]
 
 # import necessary classes
-from explore_rates import *
-from learning_rates import * 
-from architectures import *
+from .explore_rates import *
+from .learning_rates import * 
+from .architectures import *
 
 ####################################################################
 # Hyperparameters:												   #
@@ -66,11 +66,7 @@ setup_dict = {
 	},
 
 	'car racing': {
-		'seed': fixed_3track_seed, 
-		'detect_edges': False, 
-		'detect_grass': False, 
-		'flip': True,
-		'type': 'ShortTrack'
+		'seed': fixed_3track_seed
 	}
 }
 

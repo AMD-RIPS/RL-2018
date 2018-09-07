@@ -166,17 +166,6 @@ class DQN_Agent:
         else:
             return self.sess.run(self.Q_argmax, feed_dict={self.state_tf: [state]})[0]
 
-    # Description: Calculates the reward at a given timestep
-    # Parameters:
-    # - reward: 		Number, the reward returned by the emulator
-    # - in_grass: 		Boolean, gives wether car is in grass or not
-    # - episode_frame: 	Integer, counting the number of frames elapsed in the given episode
-    # Output: 			Number, the reward calculated
-    def calculate_reward(self, reward, in_grass, episode_frame):
-        if self.env.detect_grass and in_grass and episode_frame > 10:
-            reward = -1
-        return reward
-
     # Description: Updates the weights of the target network
     # Parameters: 	None
     # Output: 		None
@@ -187,13 +176,15 @@ class DQN_Agent:
     # Parameters: 	None
     # Output: 		None
     def train(self):
+        test_fequency = 10
+        test_episodes = 3
         while self.sess.run(self.episode) < self.training_metadata.num_episodes:
             episode = self.sess.run(self.episode)
             self.training_metadata.increment_episode()
             self.sess.run(self.increment_episode_op)
 
             # Setting up game environment
-            state, _ = self.env.reset()
+            state = self.env.reset()
             self.env.render()
 
             # Setting up parameters for the episode
@@ -201,7 +192,6 @@ class DQN_Agent:
             epsilon = self.explore_rate.get(self.training_metadata)
             alpha = self.learning_rate.get(self.training_metadata)
             print("Episode {0}/{1} \t Epsilon: {2} \t Alpha: {3}".format(episode, self.training_metadata.num_episodes, epsilon, alpha))
-            episode_frame = 0
             while not done:
                 # Updating fixed target weights every #target_update_frequency frames
                 if self.training_metadata.frame % self.target_update_frequency == 0 and (self.training_metadata.frame != 0):
@@ -209,10 +199,7 @@ class DQN_Agent:
 
                 # Choosing and performing action and updating the replay memory
                 action = self.get_action(state, epsilon)
-                next_state, reward, done, info, in_grass = self.env.step(action)
-
-                reward = self.calculate_reward(reward, in_grass, episode_frame)
-                episode_frame += 1
+                next_state, reward, done, _ = self.env.step(action)
 
                 self.replay_memory.add(self, state, action, reward, next_state, done)
 
@@ -222,19 +209,19 @@ class DQN_Agent:
                     self.training_metadata.increment_frame()
                     self.experience_replay(alpha)
                 state = next_state
-                done = info['true_done']
 
             # Creating q_grid if not yet defined and calculating average q-value
             if self.replay_memory.length() > 100 * self.replay_memory.batch_size:
-                self.q_grid = self.replay_memory.get_q_grid(size=200, training_metadata=self.training_metadata)
+                self.q_grid = self.replay_memory.get_q_grid(size=100, training_metadata=self.training_metadata)
             avg_q = self.estimate_avg_q()
 
             # Saving tensorboard data and model weights
-            if (episode % 30 == 0) and (episode != 0):
-                score, std, rewards = self.test(num_test_episodes=5, visualize=True)
+
+            if (episode % test_fequency == 0) and (episode != -1):
+                score, std, rewards = self.test(num_test_episodes=test_episodes, visualize=False)
                 print('{0} +- {1}'.format(score, std))
                 self.writer.add_summary(self.sess.run(self.test_summary,
-                                                      feed_dict={self.test_score: score}), episode / 30)
+                                                      feed_dict={self.test_score: score}), episode / test_fequency)
                 self.saver.save(self.sess, self.model_path + '/data.chkp', global_step=self.training_metadata.episode)
 
             self.writer.add_summary(self.sess.run(self.training_summary, feed_dict={self.avg_q: avg_q}), episode)
@@ -243,23 +230,24 @@ class DQN_Agent:
     # Parameters:
     # - num_test_episodes: 	Integer, giving the number of episodes to be tested over
     # - visualize: 			Boolean, gives whether should render the testing gameplay
-    def test(self, num_test_episodes, visualize):
+    def test(self, num_test_episodes, visualize):        
         rewards = []
         for episode in range(num_test_episodes):
             done = False
-            state, _ = self.env.reset(test=True)
+            state = self.env.reset(test=True)
             episode_reward = 0
-            if not visualize:
-                self.test_env.render()
+            self.env.render()
             while not done:
-                if visualize:
-                    self.env.render()
+                if visualize: self.env.render()
                 action = self.get_action(state, epsilon=0)
-                next_state, reward, done, info, _ = self.env.step(action, test=True)
+                next_state, reward, done, _ = self.env.step(action, test=True)
                 state = next_state
                 episode_reward += reward
-                done = info['true_done']
+            print('Episode: {0} \tscore: {1}'.format(episode, episode_reward))
             rewards.append(episode_reward)
+        log = open("rewards.txt", "w")
+        log.write(','.join(map(str, rewards)))
+        log.close()
         return np.mean(rewards), np.std(rewards), rewards
 
     # Description: Returns average Q-value over some number of fixed tracks

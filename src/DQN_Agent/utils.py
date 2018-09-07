@@ -15,7 +15,6 @@ import matplotlib.pyplot as plt
 def pause():
     programPause = raw_input("Press the <ENTER> key to continue...")
 
-
 # Sets all pixel values to be between (0,1)
 # Parameters:
 # - image: A grayscale (nxmx1) or RGB (nxmx3) array of floats
@@ -24,7 +23,6 @@ def pause():
 def unit_image(image):
     image = np.array(image)
     return np.true_divide(image, 255)
-
 
 # Converts an RGB image to grayscale
 # Parameters:
@@ -35,41 +33,6 @@ def unit_image(image):
 def grayscale_img(image):
     return np.dot(image[..., :3], [0.299, 0.587, 0.114])
 
-# Mirrors the provided image vertically while preserving some parameters
-# Parameters:
-# - image: A (nxmx1) array of floats representing a grayscale image. Assumes
-#          the provided image is a snapshot from the CarRacing game.
-# Outputs:
-# - A (nxmx1) array of floars representing a mirrored version of 'image'.
-#   Reflects the gameplay screen (road + car + grass) vertically. 
-#   Reflects gyro and steering bars vertically
-#   Preserves score, true speed, and ABS
-def flip_image(image):
-    steer_left = (image[88, 47] == [0, 255, 0]).all()
-    gyro_left = (image[88, 71] == [255, 0, 0]).all()
-    if steer_left:
-        steer_length = sum(map(all, (image[88, :48] == [0, 255, 0])))
-    else:
-        steer_length = sum(map(all, (image[88, 48:] == [0, 255, 0])))
-    if gyro_left:
-        gyro_length = sum(map(all, (image[88, :72] == [255, 0, 0])))
-    else:
-        gyro_length = sum(map(all, (image[88, 72:] == [255, 0, 0])))
-
-    image[84:, 28:] = 0
-
-    if steer_left:
-        image[86:91, 48:(48 + steer_length)] = [0, 255, 0]
-    else:
-        image[86:91, (48 - steer_length):48] = [0, 255, 0]
-    if gyro_left:
-        image[86:91, 72:(72 + gyro_length)] = [255, 0, 0]
-    else:
-        image[86:91, (72 - gyro_length):72] = [255, 0, 0]
-
-    image[:84, :] = cv.flip(image[:84, :], 1)
-    return image
-
 # Processes image output by environment
 # Parameters:
 # - rgb_image: The RGB image output by the environment. A (nxmx3) array of floats
@@ -78,30 +41,11 @@ def flip_image(image):
 #                 the images
 # Outputs:
 # An (nxmx1) array of floats representing the processed image
-def process_image(rgb_image, flip, detect_edges=False):
-    if flip:
-        rgb_image = flip_image(rgb_image)
-    if detect_edges:
-        edgy = cv.Canny(rgb_image, 150, 250, apertureSize=3)
-        result = edgy
-    else:
-        gray = grayscale_img(rgb_image)
-        gray = unit_image(gray)
-        result = gray
+def process_image(rgb_image):
+    gray = grayscale_img(rgb_image)
+    gray = resize(gray, (84, 84))
+    result = unit_image(gray)
     return result
-
-# Determines if the car is in the grass (specific to CarRacing)
-# Parameters:
-# - state: A (nxmx1) image representing the current frame of the game
-# Outputs:
-# A boolean stating whether the car is in grass or not.
-# Said to be in grass if  12x10 region around car has more than 44
-# green pixels
-def in_grass(state):
-    cropped = state[66:78, 43:53]
-    green = np.sum(cropped[..., 1] >= 204)
-    return green >= 45
-
 
 # Plots the given image using pyplot
 # Parameters:
@@ -110,7 +54,6 @@ def show(image):
     # Or with plt:
     plt.imshow(image, cmap='gray')
     plt.show()
-
 
 # Creates a txt file storing model parameters
 # Parameters:
@@ -127,7 +70,6 @@ def document_parameters(agent):
         file.write('Memory Capacity: ' + str(agent.replay_memory.memory_capacity) + '\n')
         file.write('Num Episodes: ' + str(agent.training_metadata.num_episodes) + '\n')
         file.write('Learning Rate Drop Frame Limit: ' + str(agent.training_metadata.frame_limit) + '\n')
-
 
 # A class used 
 class Training_Metadata:

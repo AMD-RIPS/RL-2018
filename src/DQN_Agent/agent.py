@@ -175,7 +175,7 @@ class DQN_Agent:
     # Description: Trains the model
     # Parameters: 	None
     # Output: 		None
-    def train(self, test_frequency, test_eipsodes):
+    def train(self, test_frequency, test_episodes):
         while self.sess.run(self.episode) < self.training_metadata.num_episodes:
             episode = self.sess.run(self.episode)
             self.training_metadata.increment_episode()
@@ -215,11 +215,11 @@ class DQN_Agent:
 
             # Saving tensorboard data and model weights
 
-            if (episode % test_fequency == 0) and (episode != 0):
-                score, std, rewards = self.test(num_test_episodes=test_episodes, visualize=False)
+            if (episode % test_frequency == 0) and (episode != 0):
+                score, std = self.test(num_test_episodes=test_episodes, visualize=False)
                 print('{0} +- {1}'.format(score, std))
                 self.writer.add_summary(self.sess.run(self.test_summary,
-                                                      feed_dict={self.test_score: score}), episode / test_fequency)
+                                                      feed_dict={self.test_score: score}), episode / test_frequency)
                 self.saver.save(self.sess, self.model_path + '/data.chkp', global_step=self.training_metadata.episode)
 
             self.writer.add_summary(self.sess.run(self.training_summary, feed_dict={self.avg_q: avg_q}), episode)
@@ -228,7 +228,7 @@ class DQN_Agent:
     # Parameters:
     # - num_test_episodes: 	Integer, giving the number of episodes to be tested over
     # - visualize: 			Boolean, gives whether should render the testing gameplay
-    def test(self, num_test_episodes, visualize):        
+    def test(self, num_test_episodes, visualize, log=False):        
         rewards = []
         for episode in range(num_test_episodes):
             done = False
@@ -243,10 +243,11 @@ class DQN_Agent:
                 episode_reward += reward
             print('Episode: {0} \tscore: {1}'.format(episode, episode_reward))
             rewards.append(episode_reward)
-        log = open(self.model_path + "/rewards.txt", "w")
-        log.write(','.join(map(str, rewards)))
-        log.close()
-        return np.mean(rewards), np.std(rewards), rewards
+        if log:
+	        file = open(self.log_path + "/rewards.txt", "w")
+	        file.write(','.join(map(str, rewards)))
+	        file.close()
+        return np.mean(rewards), np.std(rewards)
 
     # Description: Returns average Q-value over some number of fixed tracks
     # Parameters: 	None

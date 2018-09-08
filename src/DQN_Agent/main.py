@@ -23,4 +23,4 @@ control = agent.DQN_Agent(environment=environment, model_name=sys.argv[1], **set
 #####################################  Testing a model  ################################################
 ##### 
 control.load("./models/best_model/data.chkp-900")
-print('Average score: {0} +- {1}'.format(*control.test(100, True)[:2]))
+print('Average score: {0} +- {1}'.format(*control.test(num_test_episodes=100, visualize=True, log=True)))

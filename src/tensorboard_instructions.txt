@@ -1,5 +1,6 @@
-When you run run_deep_q.py, tensorboard starts up automatically. In the terminal it tells you what address to go to in your browser of choice to get to tensorboard. 
-In case of error 'TensorBoard attempted to bind to port xxxx, but it was already in use', do
-'pkill tensorboard'
-
+To use tensorboard just open a terminal in a folder that is a parent folder of the log file you want to open. Then run
+>>> tensorboard --logdir .
+If it tells you the port is being  used then run
+>>> pkill tensorboard
+>>> tensorboard --logdir .
 

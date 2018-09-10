@@ -1,0 +1,11 @@
+Environment: CarRacing1536605446.53368
+seed: [104, 106, 108]
+actions: {0: [-1, 0, 0], 1: [1, 0, 0], 2: [0, 1, 0], 3: [0, 0, 0.8], 4: [0, 0, 0]}
+Architecture: Architecture used in the nature paper in 2015 with dropout on 2nd conv layer, 0.5 keep prob.
+Explore Rate: max(0.1, (1 - float(training_metadata.frame) / training_metadata.frame_limit))
+Learning Rate: 0.00025
+Discount: 0.99
+Batch Size: 32
+Memory Capacity: 100000
+Num Episodes: 3000
+Learning Rate Drop Frame Limit: 250000

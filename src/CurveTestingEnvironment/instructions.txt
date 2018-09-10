@@ -1,0 +1,1 @@
+Copy car_racing.py to gym/envs/box2d, replacing the old file. Having done this the curve analysis functionality becomes available. 

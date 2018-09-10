@@ -1,0 +1,27 @@
+\begin{thebibliography}{1}
+
+\bibitem{World_Models}
+David Ha and J{\"{u}}rgen Schmidhuber.
+\newblock World models.
+\newblock {\em CoRR}, abs/1803.10122, 2018.
+
+\bibitem{DQN}
+Volodymyr Mnih, Koray Kavukcuoglu, David Silver, Andrei~A Rusu, Joel Veness,
+  Marc~G Bellemare, Alex Graves, Martin Riedmiller, Andreas~K Fidjeland, Georg
+  Ostrovski, et~al.
+\newblock Human-level control through deep reinforcement learning.
+\newblock {\em Nature}, 518(7540):529, 2015.
+
+\bibitem{Dropout}
+Nitish Srivastava, Geoffrey Hinton, Alex Krizhevsky, Ilya Sutskever, and Ruslan
+  Salakhutdinov.
+\newblock Dropout: a simple way to prevent neural networks from overfitting.
+\newblock {\em The Journal of Machine Learning Research}, 15(1):1929--1958,
+  2014.
+
+\bibitem{DDQN}
+Hado Van~Hasselt, Arthur Guez, and David Silver.
+\newblock Deep reinforcement learning with double q-learning.
+\newblock In {\em AAAI}, volume~2, page~5. Phoenix, AZ, 2016.
+
+\end{thebibliography}

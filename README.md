@@ -3,7 +3,7 @@
 This project details a solution OpenAI's CarRacing-v0 game. This model uses a three layer DQN regularized with dropout and using a curriculum learning approach. The trained model exceeds 900 in average score, sufficient to meet the criterion for solution. More information at: https://github.com/openai/gym/wiki/Leaderboard#carracing-v0
 
 # RL-2018
-Reinforcement Learning at UCLA IPAM RIPS 2018. 
+Reinforcement Learning at UCLA IPAM RIPS 2018. Industry Sponsor: Advanced Micro Devices.
 
 Initial goals:
 * Add papers and background

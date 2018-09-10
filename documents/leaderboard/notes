@@ -1,0 +1,30 @@
+We encourage you to contribute and modify this page and
+add your scores and links to your write-ups and code to
+reproduce your results.
+
+Links to videos are optional, but encouraged.
+Videos can be youtube, instagram, a tweet, or other public links.
+
+Write-ups should explain how to reproduce the result,
+and can be in the form of a simple gist link, blog post, or github repo.
+
+python -m IPython notebook
+
+https://github.com/openai/gym/wiki/Leaderboard
+
+# publication venues:
+ * arxiv
+ * https://sites.google.com/view/deep-rl-workshop-nips-2018/home
+ * https://sites.google.com/site/rlponips2018/call-for-papers
+
+## Discussion
+
+Brief discussion of curriculum training?
+
+<img src="../final report/Graphics/dropout_curve.png">
+
+The plot above shows performance of the network on various curves trained with and without dropout. The x-axes show different curves characterized by severity and turning direction. The curves are ranked by steepness on a scale between 1-5, where 1 represents a very shallow curve and 5 a very steep curve. Each turn is further characterized as either left (L), right (R), or S (either a left turn followed by a right turn or vice-versa). The y-axes shows a metric of performance (tiles visited) where higher indicates better performance (1.00 is perfect performance, 0.00 would be the worse possible performance). This plot indicates that the dropout has improved generalization of training. In some cases dropout has not improved, but also not degraded, model performance.
+
+This also has the effect of reducing the training time.
+
+**Below you will find various training curves for this environment.**

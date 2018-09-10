@@ -18,9 +18,9 @@ environment = env.CarRacing(**setup.setup_dict['car racing'])
 control = agent.DQN_Agent(environment=environment, model_name=sys.argv[1], **setup.setup_dict['agent'])
 
 #####################################  Traning a model  ################################################
-control.train(test_frequency = 30, test_episodes = 5)
+# control.train(test_frequency = 30, test_episodes = 5)
 
 #####################################  Testing a model  ################################################
 ##### 
-# control.load("./models/best_model/data.chkp-900")
-# print('Average score: {0} +- {1}'.format(*control.test(num_test_episodes=100, visualize=True, log=True)))
+control.load("./models/best_model/data.chkp-900")
+print('Average score: {0} +- {1}'.format(*control.test(num_test_episodes=4, visualize=True, test_curves=True, log=True, seed=True)))

@@ -33,9 +33,11 @@ class CarRacing:
         return self.action_dict[action]
 
     # resets the environment and returns the initial state
-    def reset(self, test=False):
+    def reset(self, test=False, seed=None):
         if self.seed and not test:
             self.env.seed(random.choice(self.seed))
+        elif seed:
+            self.env.seed(seed)
         return self.process(self.env.reset())
 
     # take action 
@@ -58,7 +60,6 @@ class CarRacing:
                 self.curve_data[curve_type][1] += curve[1]
             else:
                 self.curve_data[curve_type] = curve[:2]
-        return self.curve_data
 
     def analyze_curves(self, path):
         f = open(path, 'w')

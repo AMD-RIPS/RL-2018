@@ -229,11 +229,11 @@ class DQN_Agent:
     # Parameters:
     # - num_test_episodes: 	Integer, giving the number of episodes to be tested over
     # - visualize: 			Boolean, gives whether should render the testing gameplay
-    def test(self, num_test_episodes, visualize, log=False, test_curves=False):        
+    def test(self, num_test_episodes, visualize, log=False, test_curves=False, seed=False):        
         rewards = []
         for episode in range(num_test_episodes):
             done = False
-            state = self.env.reset(test=True)
+            state = self.env.reset(test=True, seed=episode if seed else None)
             episode_reward = 0
             self.env.render()
             while not done:

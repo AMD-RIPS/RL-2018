@@ -13,6 +13,7 @@ Contributers:
 * Tonmoy Monsoor, UCLA
 * [Nicholas Malaya](https://nicholasmalaya.github.io), AMD Research
 
+\* Denotes Equal Contribution.
 
 Initial goals:
 * Add papers and background

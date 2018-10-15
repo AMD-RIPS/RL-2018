@@ -29,7 +29,7 @@
 \usepackage{graphicx}
 \graphicspath{ {./graphics/} }
 
-\title{Solving OpenAI's CarRacing environment using Deep Reinforcement Learning and Dropout}
+\title{Solving OpenAI's Car Racing Environment with Deep Reinforcement Learning and Dropout}
 
 % The \author macro works with any number of authors. There are two
 % commands used to separate the names and addresses of multiple
@@ -51,50 +51,30 @@
   % \texttt{hippo@cs.cranberry-lemon.edu} \\
   %% examples of more authors
   % \And
-  Patrik Gerber \\
+  Patrik Gerber* \\
   University of Oxford \\
-  Corpus Christi College, Oxford, UK \\
+  % Corpus Christi College, Oxford, UK \\
   \texttt{patrik.gerber@ccc.ox.ac.uk} \\
   \And
-  Jiajing Guan \\
+  Jiajing Guan* \\
   George Mason University \\ 
-  Somewhere in Virginia? \\
   \texttt{jiajingguan@gmail.com} \\
   \And
-  Elvis Nunez \\
+  Elvis Nunez* \\
   Brown University \\
-  Somewhere in Los Angeles \\
   \texttt{elvis@brown.io} \\
   \And
-  Kaman Phamdo \\
+  Kaman Phamdo* \\
   University of Maryland \\
-  Somewhere in Maryland \\
   \texttt{kaman@phamdo.com} \\
   \And
   Nicholas Malaya \\
   AMD Research \\ 
-  Somewhere in Austin \\
   \texttt{nicholas.malaya@amd.com} \\
   \And
   Tonmoy Monsoor \\
-  University of California Los Angeles \\
-  Somewhere in Los Angeles \\
+  UCLA \\
   \texttt{mtonmoy@g.ucla.edu} \\
-  %% \AND
-  %% Coauthor \\
-  %% Affiliation \\
-  %% Address \\
-  %% \texttt{email} \\
-  %% \And
-  %% Coauthor \\
-  %% Affiliation \\
-  %% Address \\
-  %% \texttt{email} \\
-  %% \And
-  %% Coauthor \\
-  %% Affiliation \\
-  %% Address \\
-  %% \texttt{email} \\
 }
 
 \begin{document}
@@ -103,58 +83,15 @@
 \maketitle
 
 \begin{abstract}
-Deep Reinforcement Learning methods have seen many successes in recent years, ranging from solving classical video games to beating 
-world class Go players. However, little progress has been made on the front of generalizability: successful models are trained for 
-narrow, well-defined tasks, often using a vast amount of compute time. These models perform well in their specific task, but slight 
-perturbations in the environment often cause disproportionate decrease in performance. Regularization methods have not yet been shown 
-successful in tackling this issue of overfit. In this paper we attempt to give such a positive example, by applying the DDQN-algorithm 
-with Dropout to solve OpenAI's CarRacing environment, using only a small subset of the state space for training. 
+Deep Reinforcement Learning methods have seen many successes in recent years, ranging from solving classical video games to beating world class Go players. However, successful models are typically trained for narrow, well-defined tasks using a vast amount of computation. They perform well in their defined task, but slight perturbations in the environment often cause disproportionate reductions in performance. In this paper, we provide an example which suggests that regularization methods could improve the generalizability of deep RL algorithms. We present a solution to OpenAI’s Car Racing environment where the agent observes only a small subset of the state space during training by applying the DDQN-algorithm with dropout.
 \end{abstract}
 
 \section{Introduction}
-% The field of Reinforcement Learning (RL) concerns itself with the task of learning from interaction to maximize a reward signal. 
-% In the setting of this interaction, the decision maker is called the \textit{agent} and the world it interacts with is called the 
-% \textit{environment}. At each time step the \textit{agent} chooses and \textit{action} to take, and the environment responds with 
-% resulting \textit{state} of the environment and a scalar \textit{reward} signal. 
-% \par
+Deep reinforcement learning methods have proven successful in solving well-defined computer games. In particular, the DDQN algorithm has achieved superhuman performance in several Atari games \cite{DQN}. However, deep RL agents are limited by their sensitivity to perturbations in the environment. They can fail catastrophically when applied to environments that differ even slightly from where they were trained.
 
-Deep reinforcement learning allows an agent to learn through experience while
-dynamically interacting with an environment. Computer games are often used as
-a sandbox for investigating deep reinforcement learning algorithms because they
-provide an easy way to generate large amounts of data for experience. RL
-methods have achieved some success in learning how to play computer games using
-only images and score as input. In particular, DeepMind’s DQN algorithm reached
-superhuman performance in several Atari games \cite{DQNPaper}.
+The OpenAI Gym’s CarRacing-v0 environment \cite{CarRacing} is a top-down view car racing game as shown in Figure \ref{fig:carracing}. The goal is to visit the tiles of the racetrack as quickly as possible. The agent receives a reward of $-0.1$ at each time step and $\frac{1000}{N}$ for each track tile visited, where $N$ is the number of tiles in the racetrack. The state is represented by $96\times96$ RGB screenshots of the game. The game ends when the agent visits all tiles on the track or when 1000 frames have passed. This environment is considered solved by OpenAI’s guidelines when the agent achieves an average score of 900 or above over 100 consecutive games. This game is particularly challenging because the racetrack is randomly generated, which introduces stochasticity and complexity into the environment.  The challenge has been solved using a generative neural network model \cite{World_Models}, but previous attempts using deep RL methods have not been successful \cite{CarRacing1}. % cite something here.
 
-However, RL methods are limited by their sensitivity to perturbations in the
-environment. They can fail catastrophically when applied to environments that
-differ from where they were trained. Additionally, they typically require
-millions of frames of experience and days of training. It is crucial for these
-methods to become more robust if they are to be deployed in the real world.
-
-We investigate OpenAI Gym’s CarRacing-v0 environment [ref?], which is a simple,
-top-down view racing game as shown in Figure \ref{fig:carracing}. The
-environment includes a racecar, a race track composed of tiles, and grass. The
-agent has control of the racecar, and its goal is to visit the tiles of the
-randomly generated race track as quickly as possible. The agent receives
-a \textit{reward} of -0.1 at each time step and $+\frac{1000}{Number\ of\
-tiles}$ for each track tile visited. The \textit{state} is represented by 96x96
-RGB screenshots of the game. The game ends when the agent visits all tiles on
-the track or when 1000 frames have passed. This environment is considered
-solved by OpenAI's guidelines when the agent achieves an average score of 900
-or above over 100 consecutive games. This car racing game was recently solved
-by \cite{World_Models} using generative methods. To the best of our knowledge,
-it is previously unsolved using RL methods.
-
-% OpenAI Gym is a set of Reinforcement Learning testbeds including many classical video games and control problems. OpenAI Gym's 
-% CarRacing environment - from here on referred to as the 'car racing game' - is a simple, top-down view racing game, shown in 
-% Figure \ref{fig:carracing}. The player has control of a race-car, and its goal is to visit the tiles making up the randomly 
-% generated track, as fast as possible. At each frame, the score changes by -0.1 if no tile was visited and by 
-% $\frac{1000}{N}$ otherwise, where N=Number of tiles on the track. The emulator returns 96 by 96 RGB screenshots 
-% of the screen at each frame. The game ends if the race-car visits all tiles on the track, or if the number of passed frames exceeds 1000. The environment is considered solved as per OpenAI's guidelines, if an average score of over 900 is achieved over 100 consecutive 
-% games. The car racing game was recently solved by \cite{World_Models}, however to the best of our knowledge it is unsolved 
-% using RL methods. 
-\par
+In this paper, we describe a deep RL algorithm that uses a convolutional architecture with dropout that successfully solves the game. Remarkably, the model is trained on a limited environment made up of 3 tracks. This result shows that regularization methods such as dropout can mitigate the overfit usually exhibited by deep RL. To the best of our knowledge, this solution is the first to solve the challenge using deep RL.
 
 \begin{figure}[!h]
 \captionsetup{justification=centering}
@@ -162,57 +99,58 @@ it is previously unsolved using RL methods.
 \begin{minipage}{.4\textwidth}
   \centering
   \includegraphics[width=\linewidth]{Graphics/carracing.jpg}
-  \caption{Screenshot of the car racing game. }
+  \caption{Screenshot of CarRacing-v0}
   \label{fig:carracing}
 \end{minipage}
 \hspace{1cm}
-\begin{minipage}{.4\textwidth}
+\begin{minipage}{.35\textwidth}
   \centering
-  \includegraphics[width=\linewidth]{Graphics/curve_characterization.png}
-  \caption{Characterization of different types of curves. }
+  \includegraphics[width=\linewidth]{Graphics/curves.png}
+  \caption{Characterization of different types of curves in the racetrack}
   \label{fig:curves}
 \end{minipage}
 \end{figure}
 
-In this paper, we describe a Deep Reinforcement Learning algorithm that uses a convolutional architecture with dropout that 
-successfully solves the game. Remarkably the model is trained on a limited environment made up of 3 tracks. This result 
-shows that regularisation methods such as dropout can mitigate the overfit usually exhibited by these Deep Reinforcement Learning methods. Our code can be found at \textit{https://github.com/AMD-RIPS/RL-2018}, and video of the best performing model can be found under \textit{TODO}
-
 \section{Method}
+The car racing environment has a continuous action space with 3 values $(x, y, z)$ where $x \in [-1, 1]$ represents steering, $y \in [0, 1]$ represents acceleration, and $z \in [0, 1]$ corresponds to the brake. In our experiments, we discretized the state space into 5 actions: turn left $(-1, 0, 0)$, turn right $(1, 0, 0)$, accelerate $(0, 1, 0)$, brake $(0, 0, 0.8)$, and no operation $(0, 0, 0)$. These 5 actions were chosen based on the actions that a reasonable human player would use.
 
-\subsection{Model}
-We use the DDQN-algorithm for our experiments, as first described in \cite{DDQN}. It is a simple extension of the celebrated DQN-algorithm, 
-proposed in \cite{DQN}. The architecture of the Q-network is that described in the original paper \cite{DQN}, consisting of
-3 convolutional layers followed by 2 dense layers and the output layer. The input to the network is a 96 $\times$ 96 $\times$ 4 image 
-produced by stacking 4 consectuive frames of the game. Dropout (for a definition see \cite{Dropout}) is added to the second convolutional layer only, with a drop probability of 0.5. 
+We adapted the DDQN algorithm \cite{DDQN} for our approach. The input to the Q-network is a $96\times96\times4$ image produced by stacking 4 consecutive frames of the game. As proposed in the original DQN algorithm \cite{DQN}, the architecture for the Q-network consists of 3 convolutional layers followed by 2 dense layers and an output for each of the 5 actions. Each hidden layer is followed by a rectified nonlinearity. Dropout is applied to the second convolutional layer. We train over a maximum of 3000 episodes and use early stopping to ensure that the best performing model is selected for analysis.
 
-\subsection{Analyzing performance}
-We use two methods to analyze the performance of our models. The first one is to perform 100 consecutive test runs on randomly generated tracks, recording the average score. The second is to measure how the models perform on different types of curves in a racetrack. To do so, we developed a simple curve classification algorithm, which is demonstrated in Figure \ref{fig:curves}. Each curve is characterized as either a Left, Right, or S-shaped curve. An S-shaped curve is either a left turn followed by a right turn or a right turn followed by a left turn. Then, the steepness of the curve is ranked on a scale from 1 to 5, where 1 represents a very shallow curve and 5 represents a very steep curve. For each of these different types of curves we record the average percentage of tiles cleared.  
+We trained several models with varying observability of the state space. First, we train the model on a single racetrack. Second, we randomly alternate between 3 fixed racetracks. Third, the agent is shown random racetracks from the state space. All models are tested on random racetracks. We performed a baseline experiment with no dropout and experimented with the dropout probability. The results from the best performing models are displayed in Table \ref{tab:scores}.
+
+\section{Performance Analysis}
+\begin{table}[h!]
+  \begin{center}
+    \begin{tabular}{l|l|l}
+      \textbf{Environment} & \textbf{Dropout} & \textbf{Average Score}\\
+      \hline
+      1 Fixed Track & None & $849.99\pm78.72$ \\
+      3 Fixed Tracks & None & $853.88\pm127.71$ \\
+      Random Tracks & None & $854.83\pm107.14$ \\
+      1 Fixed Track & $0.7$ & $894.38\pm24.5$ \\
+      3 Fixed Tracks & $0.5$ & $906.67\pm23.6$ \\
+      Random Tracks & $0.5$ & $892.62\pm41.48$ \\
+    \end{tabular}
+    \vspace{0.1cm}
+    \caption{Average scores over 100 consecutive games on random racetracks}
+    \label{tab:scores}
+  \end{center}
+\end{table}
+
+As shown in Table \ref{tab:scores}, the average scores over 100 random games improved in all three environments when dropout was applied to the Q-network. This suggests that dropout acts as an effective regularizer by improving the agent's performance in situations it has not observed during training. In order to investigate the generalizability of these models, we developed a curve classification algorithm. Each curve in the racetrack is charactertized as either a Left, Right, or S-shaped curve. Then, the steepness of the curve is ranked from 1 to 3, where 1 represents a shallow curve and 3 represents a steep curve. For each of these different types of curves, we record the percentage of tiles cleared.  
+
+Figure \ref{fig:curves_comparison} compares the performance of the models trained on a single racetrack. Even though both models were trained on the same racetrack, the model with dropout performed better than the model without dropout, especially on curves that agent did not see examples of during training. 
+This indicates that using dropout is an effective regularizer and improves the generalizability of these models.
 
 \begin{figure}[!h]
-\captionsetup{justification=centering}
 \centering
-\centering
-\includegraphics[width=\linewidth]{Graphics/scores_notitle.png}
-\caption{Comparison of the 6 models with 'Baseline' referring to models without dropout. The red line indicates the average score required to solve the environment. }
-\label{fig:scores}
-\end{figure}
-
-\section{Experiments}
-
-We train on three different environments: a single track, 3 different tracks and randomly generated tracks. We train on each of these environments both with and without dropout, giving a total of 6 training sessions. It is worth noting that the same fixed tracks were used for the first two environments when training with and without dropout. Training is over 3000 episodes and early stopping is used: only the best performing model is selected to be analyzed. Boxplots of the scores over 100 consecutive games for the 6 models are shown in Figure \ref{fig:scores}. The model trained on 3 tracks using dropout achieves an average score of over 906 with standard deviation $\sim$23, thereby solving the environment. 
-\par
-
-We used the curve characterization method to quantitatively measure whether applying dropout improved the ability to generalize to curves  not seen during training. In particular, we analyzed the models that were trained on a single track, because these models only encountered a limited number of different types of curves during training. Even though both models were trained on the same track, the model with dropout performed better on each curve type. These results are demonstrated in Figure \ref{fig:curves_comparison}. This indicates that using dropout indeed allows for better generalization to curves not seen during training. Thus, dropout has the potential to be an effective regularizer in deep reinforcement learning problems.
-
-\begin{figure}[!h]
-\centering
-\includegraphics[width=\linewidth]{Graphics/curves_comparison_notitle.png}
-\caption{Comparison of performance of model trained on a single track, with 'Baseline' referring to no dropout. }
+\includegraphics[scale=0.7]{Graphics/curve_plot.png}
+\caption{Curve performance for models trained on one racetrack with and without dropout}
 \label{fig:curves_comparison}
 \end{figure}
 
 \section{Conclusion}
+We demonstrate a deep RL solution to CarRacing-v0 where the agent has limited access to the state space. Even with partial knowledge about the environment, the agent is capable of making informed decisions. By applying dropout as a regularization technique, we improve the algorithm's ability to generalize to situations it has not observed during training. These results suggest that regularization techniques could be used to make deep RL algorithms more robust under limited observations of the environment.
 
 % -------------------------------------------------------------------------------------------------------------------
 % -------------------------------------------------------------------------------------------------------------------

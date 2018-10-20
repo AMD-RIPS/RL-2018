@@ -89,9 +89,12 @@
 \section{Introduction}
 Deep reinforcement learning methods have proven successful in solving well-defined computer games. In particular, the DDQN algorithm has achieved superhuman performance in several Atari games \cite{DQN}. However, deep RL agents are limited by their sensitivity to perturbations in the environment. They can fail catastrophically when applied to environments that differ even slightly from where they were trained.
 
-The OpenAI Gym’s CarRacing-v0 environment \cite{CarRacing} is a top-down view car racing game where the goal is to visit all tiles of the racetrack as quickly as possible. The agent receives a reward of $-0.1$ at each time step and $\frac{1000}{N}$ for each track tile visited, where $N$ is the total number of tiles in the racetrack. The state is represented by $96\times96$ RGB screenshots of the game. The game ends when the agent visits all tiles on the track or when 1000 frames have passed. This environment is considered solved by OpenAI’s guidelines when the agent achieves an average score of 900 or above over 100 consecutive games. This game is particularly challenging because the racetrack is randomly generated, which introduces stochasticity and complexity into the environment.  The challenge has been solved using a generative neural network model \cite{World_Models}, but previous attempts using deep RL methods have not been successful \cite{CarRacing1}. % cite something here.
+OpenAI Gym’s CarRacing-v0 reinforcement learning testbed \cite{CarRacing} is a is a top-down view car racing game where the goal is to visit all tiles of the racetrack as quickly as possible. The agent receives a reward of $-0.1$ at each time step and $\frac{1000}{N}$ for each track tile visited, where $N$ is the total number of tiles in the racetrack. The state is represented by $96\times96$ RGB screenshots of the game. The game ends when the agent visits all tiles on the track or when 1000 frames have passed. 
 
-In this paper, we describe a deep RL algorithm that uses a convolutional architecture with dropout that successfully solves the game. Remarkably, the model is trained on a limited environment made up of 3 tracks. This result shows that regularization methods such as dropout can mitigate the overfit usually exhibited by deep RL. To the best of our knowledge, this solution is the first to solve the challenge using deep RL.
+In this paper, we describe a deep RL algorithm that uses a convolutional architecture with dropout that successfully solves the game. Remarkably, the model is trained on a limited state space made up of 3 tracks. This result shows that regularization methods such as dropout can mitigate the overfit usually exhibited by deep RL. To the best of our knowledge, this solution is the first to solve the challenge using deep RL. The environment is considered solved by OpenAI’s guidelines when the agent achieves an average score of 900 or above over 100 consecutive games. This task is particularly challenging because the racetrack is randomly generated for each game. The environment has recently been solved using a generative neural network model \cite{World_Models}, but previous attempts using deep RL methods have not been successful \cite{CarRacing1}. 
+
+\section{Method}
+We adapted the DDQN algorithm \cite{DDQN} for our approach. The input to the Q-network is a $96\times96\times4$ tensor produced by stacking 4 consecutive frames of the game, and the output is five dimensional, corresponding to the elements of the discretized action space. As proposed in the original DQN algorithm \cite{DQN}, the architecture for the Q-network consists of 3 convolutional layers followed by 2 dense layers and an output for each of the five actions. Each hidden layer is followed by a rectified nonlinearity with dropout applied to the second convolutional layer only. We trained over a maximum of 3000 episodes corresponding to a training time of approximately 36 hours, and early stopping was used to ensure that the best performing model was selected for analysis.
 
 \begin{figure}[!h]
 \captionsetup{justification=centering}
@@ -111,13 +114,10 @@ In this paper, we describe a deep RL algorithm that uses a convolutional archite
 \end{minipage}
 \end{figure}
 
-\section{Method}
-We adapted the DDQN algorithm \cite{DDQN} for our approach. The input to the Q-network is a $96\times96\times4$ image produced by stacking 4 consecutive frames of the game while the output is five dimensional, corresponding to the elements of the discretized action space. As proposed in the original DQN algorithm \cite{DQN}, the architecture for the Q-network consists of 3 convolutional layers followed by 2 dense layers and an output for each of the 5 actions. Each hidden layer is followed by a rectified nonlinearity. Dropout is applied to the second convolutional layer. We train over a maximum of 3000 episodes and use early stopping to ensure that the best performing model is selected for analysis.
-
-We trained several models with varying observability of the state space. First, we train the model on a single racetrack. Second, we randomly alternate between 3 fixed racetracks. Third, the agent is shown random racetracks from the state space. All models are tested on random racetracks. We performed a baseline experiment with no dropout and experimented with the dropout probability. The results from the best performing models are displayed in Table \ref{tab:scores}.
+The models were trained with varying observability of the environment. We performed experiments on three different subsets of the state space: a single (fixed) racetrack; three (fixed) racetracks; randomly generated racetracks (i.e. no restriction). The models were tested on the same 100 racetracks, generated from random seeds $1$ through $100$. The results of the best performing agents from multiple training sessions corresponding to different combinations of dropout probability and state space can be seen in Table \ref{tab:scores}. 
 
 \section{Performance Analysis}
-As shown in Table \ref{tab:scores}, the average scores over 100 random games improved in all three environments when dropout was applied to the Q-network. This suggests that dropout acts as an effective regularizer by improving the agent's performance in situations it has not observed during training. In order to investigate the generalizability of these models, we developed a curve classification algorithm. Each curve in the racetrack is charactertized as either a Left, Right, or S-shaped curve. Then, the steepness of the curve is ranked from 1 to 3, where 1 represents a shallow curve and 3 represents a steep curve. For each of these different types of curves, we record the percentage of tiles cleared.  
+As shown in Table \ref{tab:scores}, the average scores over 100 random games improved in all three environments when dropout was applied to the Q-network. In order to investigate the generalizability of these models, we developed a curve classification algorithm. Each curve in the racetrack is charactertized as either a Left, Right, or S-shaped curve. Then, the steepness of the curve is ranked from 1 to 3, where 1 represents a shallow curve and 3 represents a steep curve. For each of these different types of curves, we record the percentage of tiles cleared.  
 
 \begin{table}[h!]
   \begin{center}
@@ -141,7 +141,7 @@ As shown in Table \ref{tab:scores}, the average scores over 100 random games imp
 Figure \ref{fig:curves_comparison} compares the performance of the models trained on a single racetrack. Even though both models were trained on the same racetrack, the model with dropout performed better than the model without dropout, especially on curves that the agent did not see examples of during training. This indicates that using dropout is an effective regularizer and improves the generalizability of these models.
 
 \section{Conclusion}
-We demonstrated a deep RL solution to CarRacing-v0 where the agent was trained on a limited subset of the state space. Even with partial knowledge about the environment, the agent is capable of making informed decisions. By applying dropout as a regularization technique, we improved the algorithm's ability to generalize to situations it has not observed during training. These results suggest that widespread regularization techniques such as dropout could be successfully applied to deep RL algorithms to make them more robust under partial observability of the environment. 
+We demonstrated a deep RL solution to CarRacing-v0 where the agent was trained on just three fixed racetracks. Even with about the environment, the agent is capable of making informed decisions. By applying dropout we improved the algorithm's ability to generalize to situations it has not observed during training. These results suggest that widespread regularization techniques such as dropout can be applied successfully to improve robustness of deep RL algorithms. This is especially fruitful in applications particularly prone to overfitting, such as environments where the agent has access to only a subset of the state space during training. 
 
 % -------------------------------------------------------------------------------------------------------------------
 % -------------------------------------------------------------------------------------------------------------------
@@ -489,7 +489,7 @@ See the table below for the exact architecture used in our models.
   \end{center}
 \end{table}
 
-\subsection{Action space}
+\subsection{Acetion space}
 The action space of OpenAI's CarRacing environment is the set $[-1,1] \times [0,1]^2 \subset \mathbb{R}^3$. We discretize this space into five possible actions. See the table below for more detail. 
 \begin{table}[h!]
   \begin{center}
@@ -515,7 +515,7 @@ See the table below for the training parameters that were used during training f
     \begin{tabular}{c|c}
       \textbf{Parameter} & \textbf{Value} \\
       \hline
-      Exploration rate & \begin{tabular}{@{}c@{}}Decrease from $1$ to $0.1$ linearly \\ over the first $250000$ frames, $0.1$ thereafter\end{tabular} \\
+      Exploration rate & \begin{tabular}{@{}c@{}}Decrease from $1$ to $0.1$ linearly over \\ the first $250000$ frames, $0.1$ thereafter\end{tabular} \\
       Optimizer & Default Tensorflow AdamOptimizer \\
       Learning rate & $0.00025$ \\
       Discount value & $0.99$ \\

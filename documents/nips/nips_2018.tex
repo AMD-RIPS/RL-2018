@@ -26,23 +26,24 @@
 \usepackage{nicefrac}       % compact symbols for 1/2, etc.
 \usepackage{microtype}      % microtypography
 \usepackage{caption}
+\usepackage{todo}
 \usepackage{graphicx}
 \graphicspath{ {./graphics/} }
 
 \title{Solving OpenAI's Car Racing Environment with Deep Reinforcement Learning and Dropout}
 
-% The \author macro works with any number of authors. There are two
-% commands used to separate the names and addresses of multiple
-% authors: \And and \AND.
-%
-% Using \And between authors leaves it to LaTeX to determine where to
-% break the lines. Using \AND forces a line break at that point. So,
-% if LaTeX puts 3 of 4 authors names on the first line, and the last
-% on the second line, try using \AND instead of \And before the third
-% author name.
+%% The \author macro works with any number of authors. There are two
+%% commands used to separate the names and addresses of multiple
+%% authors: \And and \AND.
+
+%% Using \And between authors leaves it to LaTeX to determine where to
+%% break the lines. Using \AND forces a line break at that point. So,
+%% if LaTeX puts 3 of 4 authors names on the first line, and the last
+%% on the second line, try using \AND instead of \And before the third
+%% author name.
 \newcommand*\samethanks[1][\value{footnote}]{\footnotemark[#1]}
 \author{
-  Patrik Gerber\thanks{Authors contributed equally to this work.}\\
+  Patrik Gerber\thanks{Denotes equal contribution to this work.}\\
   University of Oxford \\
   % \texttt{patrik.gerber@ccc.ox.ac.uk} \\
   \And
@@ -58,13 +59,13 @@
   University of Maryland \\
   % \texttt{kaman@phamdo.com} \\
   \And
-  Nicholas Malaya \\
-  AMD Research \\ 
-  % \texttt{nicholas.malaya@amd.com} \\
-  \And
   Tonmoy Monsoor \\
   University of California, Los Angeles \\
   % \texttt{mtonmoy@g.ucla.edu} \\
+  \And
+  Nicholas Malaya \\ % typically, supervisor is last author
+  AMD Research \\ 
+  % \texttt{nicholas.malaya@amd.com} \\
 }
 
 \begin{document}
@@ -72,19 +73,69 @@
 
 \maketitle
 
-% \begin{abstract}
-% Deep Reinforcement Learning methods have seen many successes in recent years, ranging from solving classical video games to beating world class Go players. However, successful models are typically trained for narrow, well-defined tasks using a vast amount of computation. They perform well in their defined task, but slight perturbations in the environment often cause disproportionate reductions in performance. In this paper, we provide an example which suggests that regularization methods could improve the generalizability of deep RL algorithms. We present a solution to OpenAI’s Car Racing environment where the agent observes only a small subset of the state space during training by applying the DDQN-algorithm with dropout.
-% \end{abstract}
+\begin{abstract}
+Deep Reinforcement Learning methods have seen many successes in recent
+years, ranging from solving classical video games to beating world
+class Go players. However, successful models are typically trained for
+narrow, well-defined tasks using a vast amount of computation. They
+perform well in their defined task, but slight perturbations in the
+environment often cause disproportionate reductions in performance. In
+this paper, an example which suggests that regularization
+methods could improve the generalizability of deep RL algorithms is
+provided.
+Furthermore, this example is a solution to OpenAI’s Car
+Racing environment where the agent observes only a small subset of the
+state space during training by applying the DDQN-algorithm with dropout. 
+\end{abstract}
+
 \vspace{-6mm}
 \section{Introduction}
-Deep reinforcement learning methods have proven successful in solving well-defined computer games. In particular, the DDQN algorithm has achieved superhuman performance in several Atari games \cite{DQN}. However, deep RL agents are limited by their sensitivity to perturbations in the environment. They can fail catastrophically when applied to environments that differ even slightly from where they were trained.
+Deep reinforcement learning methods have proven successful in solving
+well-defined computer games. In particular, the DDQN algorithm has
+achieved superhuman performance in several Atari games
+\cite{DQN}. However, deep RL agents are limited by their sensitivity
+to perturbations in the environment. They can fail catastrophically
+when applied to environments that differ even slightly from where they
+were trained.\todo{add more motivation here} 
 
-OpenAI Gym’s CarRacing-v0 reinforcement learning testbed \cite{CarRacing} is a is a top-down view car racing game where the goal is to visit all tiles of the racetrack as quickly as possible. The agent receives a reward of $-0.1$ at each time step and $\frac{1000}{N}$ for each track tile visited, where $N$ is the total number of tiles in the track. The state is represented by $96\times96$ RGB screenshots of the game. The game ends when the agent visits all tiles on the track or when 1000 frames have passed. The environment is considered solved by when the agent achieves an average score of 900 or above over 100 consecutive games.
+OpenAI Gym’s CarRacing-v0 reinforcement learning testbed
+\cite{CarRacing} is a is a top-down view car racing game where the
+goal is to visit all tiles of the racetrack as quickly as
+possible. The agent receives a reward of $-0.1$ at each time step and
+$\frac{1000}{N}$ for each track tile visited, where $N$ is the total
+number of tiles in the track. The state is represented by $96\times96$
+RGB screenshots of the game. The game ends when the agent visits all
+tiles on the track or when 1000 frames have passed. The environment is
+considered solved by when the agent achieves an average score of 900
+or above over 100 consecutive games. 
 
-In this paper, we describe a deep RL algorithm that uses dropout \cite{Dropout} to successfully solve the game. Remarkably, the model is trained on a limited state space made up of 3 tracks. This result shows that regularization methods such as dropout can mitigate the overfit usually exhibited by deep RL. This task is particularly challenging because the track is randomly generated for each game. The environment has recently been solved using a generative neural network model, but previous attempts using deep RL methods have not been successful \cite{World_Models} \cite{CarRacing1}. To the best of our knowledge, this solution is the first to solve the challenge using deep RL.
+In this paper, a deep RL algorithm that uses dropout
+\cite{Dropout} is used to successfully solve the game of
+CarRacing-v0.
+The model is trained on a limited state space made up of 3
+tracks\todo{add curriculum learning discussion}. This result
+shows that regularization methods such as dropout can mitigate the
+overfit usually exhibited by deep RL. This task is particularly
+challenging because the track is randomly generated for each game. The
+environment has recently been solved using a generative neural network
+model, but previous attempts using deep RL methods have not been
+successful \cite{World_Models} \cite{CarRacing1}. To the best of our
+knowledge, this solution is the first to solve the challenge using
+deep RL. 
 
-\section{Method}
-We adapted the DDQN algorithm \cite{DDQN} for our approach. The input to the Q-network is a $96\times96\times4$ tensor produced by stacking 4 consecutive frames of the game, and the output is five dimensional, corresponding to the elements of the discretized action space. As proposed in the original DQN algorithm \cite{DQN}, the architecture for the Q-network consists of 3 convolutional layers followed by 2 dense layers and an output for each of the five actions. Each hidden layer is followed by a rectified nonlinearity with dropout applied to the second convolutional layer only. We trained over a maximum of 3000 episodes corresponding to a training time of approximately 36 hours, and early stopping was used to ensure that the best performing model was selected for analysis.
+\section{Methods}
+We adapted the DDQN algorithm \cite{DDQN} for our approach. The input
+to the Q-network is a $96\times96\times4$ tensor produced by stacking
+4 consecutive frames of the game, and the output is five dimensional,
+corresponding to the elements of the discretized action space. As
+proposed in the original DQN algorithm \cite{DQN}, the architecture
+for the Q-network consists of 3 convolutional layers followed by 2
+dense layers and an output for each of the five actions. Each hidden
+layer is followed by a rectified nonlinearity with dropout applied to
+the second convolutional layer only. We trained over a maximum of 3000
+episodes corresponding to a training time of approximately 36 hours,
+and early stopping was used to ensure that the best performing model
+was selected for analysis.\todo{need stopping criterion?} 
 
 \begin{figure}[!h]
 \captionsetup{justification=centering}
@@ -105,10 +156,23 @@ We adapted the DDQN algorithm \cite{DDQN} for our approach. The input to the Q-n
 \vspace{-2.5mm}
 \end{figure}
 
-The models were trained with varying observability of the environment. We performed experiments on three different subsets of the state space: a single (fixed) racetrack; three (fixed) racetracks; randomly generated racetracks (i.e. no restriction). The models were tested on the same 100 racetracks, generated from random seeds $1$ through $100$.
+The models were trained with varying observability of the
+environment. We performed experiments on three different subsets of
+the state space: a single (fixed) racetrack; three (fixed) racetracks;
+randomly generated racetracks (i.e. no restriction). The models were
+tested on the same 100 racetracks, generated from random seeds $1$
+through $100$. 
 
 \section{Performance Analysis}
-As shown in Tables \ref{tab:base_scores} and \ref{tab:drop_scores}, the average scores over 100 random games improved in all three environments when dropout was applied to the Q-network. In order to investigate the generalizability of these models, we developed a curve classification algorithm. Each curve in the racetrack is charactertized as either a Left, Right, or S-shaped curve. Then, the steepness of the curve is ranked from 1 to 3, where 1 represents a shallow curve and 3 represents a steep curve. For each of these different types of curves, we record the percentage of tiles cleared.  
+As shown in Tables \ref{tab:base_scores} and \ref{tab:drop_scores},
+the average scores over 100 random games improved in all three
+environments when dropout was applied to the Q-network. In order to
+investigate the generalizability of these models, we developed a curve
+classification algorithm. Each curve in the racetrack is
+charactertized as either a Left, Right, or S-shaped curve. Then, the
+steepness of the curve is ranked from 1 to 3, where 1 represents a
+shallow curve and 3 represents a steep curve. For each of these
+different types of curves, we record the percentage of tiles cleared.   
 
 \begin{table}[h!]
 \begin{center}
@@ -138,7 +202,13 @@ As shown in Tables \ref{tab:base_scores} and \ref{tab:drop_scores}, the average 
 \vspace{-5mm}
 \end{table}
 
-Figure \ref{fig:curves_comparison} compares the performance of the models trained on a single racetrack. Even though both models were trained on the same racetrack, the model with dropout performed better than the model without dropout, especially on curves that the agent did not see examples of during training. This indicates that using dropout is an effective regularizer and improves the generalizability of these models.
+Figure \ref{fig:curves_comparison} compares the performance of the
+models trained on a single racetrack. Even though both models were
+trained on the same racetrack, the model with dropout performed better
+than the model without dropout, especially on curves that the agent
+did not see examples of during training. This indicates that using
+dropout is an effective regularizer and improves the generalizability
+of these models. 
 
 \begin{figure}[!h]
 \captionsetup{justification=centering}
@@ -149,8 +219,21 @@ Figure \ref{fig:curves_comparison} compares the performance of the models traine
 \vspace{-4mm}
 \end{figure}
 
-\section{Conclusion}
-We demonstrated a deep RL solution to CarRacing-v0 where the agent was trained on just three fixed racetracks. Even with about the environment, the agent is capable of making informed decisions. By applying dropout we improved the algorithm's ability to generalize to situations it has not observed during training. These results suggest that widespread regularization techniques such as dropout can be applied successfully to improve robustness of deep RL algorithms. This is especially fruitful in applications particularly prone to overfitting, such as environments where the agent has access to only a subset of the state space during training. 
+\section{Conclusions and Future Work}
+We demonstrated a deep RL solution to CarRacing-v0 where the agent was
+trained on just three fixed racetracks.
+
+% nick: this sentence doesnt really make sense, I also don't like 'informed'
+%Even with about the
+%environment, the agent is capable of making informed decisions.
+
+By applying dropout we improved the algorithm's ability to generalize to
+situations it has not observed during training. These results suggest
+that widespread regularization techniques such as dropout can be
+applied successfully to improve robustness of deep RL algorithms. This
+is especially fruitful in applications particularly prone to
+overfitting, such as environments where the agent has access to only a
+subset of the state space during training.  
 
 % -------------------------------------------------------------------------------------------------------------------
 % -------------------------------------------------------------------------------------------------------------------
@@ -502,7 +585,9 @@ See the table below for the exact architecture used in our models.
 \end{table}
 
 \subsection{Action space}
-The action space of OpenAI's CarRacing environment is the set $[-1,1] \times [0,1]^2 \subset \mathbb{R}^3$. We discretize this space into five possible actions. See the table below for more detail. 
+The action space of OpenAI's CarRacing environment is the set $[-1,1]
+\times [0,1]^2 \subset \mathbb{R}^3$. We discretize this space into
+five possible actions. See the table below for more detail.  
 \begin{table}[h!]
   \begin{center}
     \begin{tabular}{c|c}

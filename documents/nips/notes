@@ -1,0 +1,47 @@
+Reinforcement learning (RL) has succeeded in many challenging tasks
+such as Atari, Go, and Chess and even in high dimensional continuous
+domains such as robotics. Most impressive successes are in tasks where
+the agent observes the task features fully. However, in real world
+problems, the agent usually can only rely on partial observations. In
+real time games the agent makes only local observations; in robotics
+the agent has to cope with noisy sensors, occlusions, and unknown
+dynamics. Even more fundamentally, any agent without a full a priori
+world model or without full access to the system state, has to make
+decisions based on partial knowledge about the environment and its
+dynamics. 
+
+In this workshop, we ask among others the following questions. 
+
+For decision-making under partial observability is reinforcement the
+most suitable/effective approach to learning?
+
+How can we extend deep RL methods to robustly solve partially
+observable problems?
+
+Can we learn concise abstractions of history that are sufficient for
+high-quality decision-making?
+
+There have been several successes in decision making under partial
+observability despite the inherent challenges. Can we characterize
+problems where computing good policies is feasible?
+
+Since decision making is hard under partial observability do we want
+to use more complex models and solve them approximately or use
+(inaccurate) simple models and solve them exactly? Or not use models
+at all? 
+
+How can we use control theory together with reinforcement learning to
+advance decision making under partial observability?
+
+Can we combine the strengths of model-based and model-free methods
+under partial observability?
+
+Can recent method improvements in general RL already tackle some
+partially observable applications which were not previously possible?
+
+How do we scale up reinforcement learning in multi-agent systems with
+partial observability?
+
+Do hierarchical models / temporal abstraction improve RL efficiency
+under partial observability? 
+

@@ -96,7 +96,7 @@ environment often cause disproportionate reductions in performance. In
 this paper, an example which suggests that regularization
 methods could improve the generalizability of deep RL algorithms is
 provided.
-We explore this in OpenAI’s Car Racing environment where the agent
+This is explored in OpenAI’s Car Racing environment where the agent
 observes only a small subset of the state space during training by
 applying the DDQN-algorithm with dropout.  The trained regularized
 model solves this challenge, the first of deep RL methods to do so.
@@ -134,7 +134,7 @@ dense layers and an output for each of the five actions.
 This is compared with a modified version, where a dropout layer is
 added to the second convolutional layer, to regularize the model.  
 The models were trained with varying observability of the
-environment. We performed experiments on three different subsets of
+environment. The experiments were performed on three different subsets of
 the state space: a single (fixed) racetrack; three (fixed) racetracks;
 randomly generated racetracks (i.e. no restriction). The models were
 tested on the same 100 racetracks, generated from random seeds $1$
@@ -169,8 +169,8 @@ classification algorithm was developed. Each curve in the racetrack is
 charactertized as either a Left, Right, or S-shaped curve. Then, the
 steepness of the curve is ranked from 1 to 3, where 1 represents a
 shallow curve and 3 represents a steep curve. 
-For each of these different types of curves, we record the percentage
-of tiles cleared as a metric of the car's performance. 
+For each of these different types of curves, the percentage
+of tiles cleared is used as a metric of the car's performance. 
 The proportion of tiles visited for each curve over 100 tracks is
 shown in Figure~\ref{fig:curves_comparison}. Dropout serves to
 improve the car's performance through each curve, with particularly
@@ -461,7 +461,7 @@ data on, to observe the generalization capacity in these cases.
 % numbered consecutively.
 
 % Note that publication-quality tables \emph{do not contain vertical
-%   rules.} We strongly suggest the use of the \verb+booktabs+ package,
+%   rules.} Strongly suggest the use of the \verb+booktabs+ package,
 % which allows for typesetting high-quality, professional tables:
 % \begin{center}
 %   \url{https://www.ctan.org/pkg/booktabs}
@@ -537,13 +537,13 @@ data on, to observe the generalization capacity in these cases.
 
 % \end{itemize}
 
-% If your file contains type 3 fonts or non embedded TrueType fonts, we
+% If your file contains type 3 fonts or non embedded TrueType fonts, 
 % will ask you to fix it.
 
 % \subsection{Margins in \LaTeX{}}
 
 % Most of the margin problems come from figures positioned by hand using
-% \verb+\special+ or other commands. We suggest using the command
+% \verb+\special+ or other commands. Suggest using the command
 % \verb+\includegraphics+ from the \verb+graphicx+ package. Always
 % specify the figure width as a multiple of the line width as in the
 % example below:
@@ -585,10 +585,11 @@ proposed in the original DQN algorithm \cite{DQN}, the architecture
 for the Q-network consists of 3 convolutional layers followed by 2
 dense layers and an output for each of the five actions. Each hidden
 layer is followed by a rectified nonlinearity with dropout applied to
-the second convolutional layer only. We trained over a maximum of 3000
-episodes corresponding to a training time of approximately 36 hours,
-and early stopping was used to ensure that the best performing model
-was selected for analysis.\todo{need stopping criterion?} 
+the second convolutional layer only. The model was trained over a
+maximum of 3000 episodes corresponding to a training time of
+approximately 36 hours, and early stopping was used to ensure that the
+best performing model was selected for analysis.\todo{need stopping
+  criterion?}  
 
 
 The code, implementated algorithm, and further model information can
@@ -629,7 +630,7 @@ See the table below for the exact architecture used in our models.
 
 \subsection{Action space}
 The action space of OpenAI's CarRacing environment is the set $[-1,1]
-\times [0,1]^2 \subset \mathbb{R}^3$. We discretize this space into
+\times [0,1]^2 \subset \mathbb{R}^3$. The space was discretized into
 five possible actions. See the table below for more detail.  
 \begin{table}[h!]
   \begin{center}

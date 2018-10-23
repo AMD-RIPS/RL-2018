@@ -30,7 +30,9 @@
 \usepackage{graphicx}
 \graphicspath{ {./graphics/} }
 
-\title{Solving OpenAI's Car Racing Environment with Deep Reinforcement Learning and Dropout}
+\title{ %Towards Higher Capacity, Regularized Models: 
+  Solving OpenAI's
+  Car Racing Environment with Deep Reinforcement Learning and Dropout} 
 
 %% The \author macro works with any number of authors. There are two
 %% commands used to separate the names and addresses of multiple
@@ -105,9 +107,9 @@ observes only a small subset of the state space during training.
 \vspace{-4mm}
 \section{Introduction}
 Deep reinforcement learning methods have proven successful in solving
-well-defined computer games. In particular, the DDQN algorithm has
-achieved superhuman performance in several Atari games
-\cite{DQN}. However, deep RL agents are limited by their sensitivity
+well-defined computer
+games\cite{mnih2013playing,silver2017mastering,zambaldi2018relational,bansal2017emergent}. 
+However, deep RL agents are limited by their sensitivity
 to perturbations in the environment. They can fail catastrophically
 when applied to environments that differ even slightly from where they
 were trained\cite{kansky2017schema,taylor2009transfer}. This indicates
@@ -129,7 +131,7 @@ attempts using deep RL methods have not been successful
 the first to solve the challenge using deep RL.  
 
 %\section{Methods}
-The DDQN algorithm \cite{DDQN} was used.
+The DDQN algorithm \cite{DQN,DDQN} was used.
 Following the original DQN algorithm \cite{DQN}, the architecture
 for the Q-network consists of 3 convolutional layers followed by 2
 dense layers and an output for each of the five actions.
@@ -145,21 +147,39 @@ random tracks.
 \begin{figure}[!h]
 \captionsetup{justification=centering}
 \centering
-\begin{minipage}[t]{.4\textwidth}
+\begin{minipage}[t]{.3\textwidth}
   \centering
   \includegraphics[width=\linewidth]{Graphics/carracing.jpg}
   \caption{CarRacing-v0 environment}
   \label{fig:curves_comparison}
 \end{minipage}
-\hspace{1cm}
-\begin{minipage}[t]{.35\textwidth}
+\hspace{.25cm}
+\begin{minipage}[t]{.3\textwidth}
   \centering
   \includegraphics[width=\linewidth]{Graphics/curves.png}
   \caption{Different types of curves. }
   \label{fig:curves}
 \end{minipage}
+\hspace{.25cm}
+\begin{minipage}[t]{.32\textwidth}
+  \centering
+  \includegraphics[width=\linewidth]{Graphics/curve_plot_v2.png}
+  \caption{Proportion of tiles visited on different curves. }
+%  \caption{Different types of curves. }
+  \label{fig:curves_comparison}
+\end{minipage}
 \vspace{-2.5mm}
 \end{figure}
+
+
+%% \begin{figure}[!h]
+%% \captionsetup{justification=centering}
+%% \centering
+%% \includegraphics[width=.55\linewidth]{Graphics/curve_plot_v2.png}
+%% \caption{Proportion of tiles visited on different curves. }
+%% \label{fig:curves_comparison}
+%% \vspace{-4mm}
+%% \end{figure}
 
 
 \section{Performance Analysis}
@@ -223,15 +243,6 @@ than the model without dropout, especially on curves that the agent
 did not see examples of during training. This indicates that 
 dropout is an effective regularizer and is improving the
 generalization of the model. 
-
-\begin{figure}[!h]
-\captionsetup{justification=centering}
-\centering
-\includegraphics[width=.55\linewidth]{Graphics/curve_plot_v2.png}
-\caption{Proportion of tiles visited on different curves. }
-\label{fig:curves_comparison}
-\vspace{-4mm}
-\end{figure}
 
 \section{Conclusions and Future Work}
 A deep RL solution was shown to solve CarRacing-v0 where the agent was

@@ -87,15 +87,16 @@
 %% Can we learn concise abstractions of history that are sufficient for
 %% high-quality decision-making? 
   
-Deep Reinforcement Learning methods have seen many successes in recent
-years, ranging from solving classical video games to beating world
-class Go players. However, successful models are typically trained for
+%Deep Reinforcement Learning methods have seen many successes in recent
+%years, ranging from solving classical video games to beating world
+  %class Go players.
+Successful RL models are typically trained for
 narrow, well-defined tasks using a vast amount of computation. They
-perform well in their defined task, but slight perturbations in the
+perform well in their defined task, but changes in the
 environment often cause disproportionate reductions in performance. In
 this paper, an example which suggests that regularization
-methods could improve the generalizability of deep RL algorithms is
-provided.
+methods could improve the generalization capacity of deep RL
+algorithms is provided.
 This is explored in OpenAI’s Car Racing environment where the agent
 observes only a small subset of the state space during training by
 applying the DDQN-algorithm with dropout.  The trained regularized
@@ -110,21 +111,22 @@ achieved superhuman performance in several Atari games
 \cite{DQN}. However, deep RL agents are limited by their sensitivity
 to perturbations in the environment. They can fail catastrophically
 when applied to environments that differ even slightly from where they
-were trained.\todo{add more motivation here} This indicates the models
-are not generalizing well and have overfit to prior experiences. 
+were trained\cite{kansky2017schema,taylor2009transfer}. This indicates
+the models are not generalizing well, have overfit to prior
+experiences, and are not likely to transfer to other tasks effectively.
 
 In this paper, a deep RL algorithm that uses dropout
 \cite{Dropout} is used to successfully solve the game of
 CarRacing-v0\cite{CarRacing}. The model is trained on a
-limited state space made up of 3 tracks\todo{add curriculum
-  learning}. This result shows that regularization methods such as 
-dropout can mitigate the overfit usually exhibited by deep RL. This
-task is particularly challenging because the track is randomly
-generated for each game. The environment has recently been solved
-using a generative network, but previous attempts using deep RL
-methods have not been successful \cite{World_Models}
-\cite{CarRacing1}. To the best of our knowledge, this solution is the
-first to solve the challenge using deep RL.  
+limited state space made up of 3 tracks used as a form of curriculum
+learning\cite{bengio2009curriculum}. This result shows that
+regularization methods such as dropout can mitigate the overfit
+usually exhibited by deep RL. This task is particularly challenging
+because the track is randomly generated for each game. The environment
+has recently been solved using a generative network, but previous
+attempts using deep RL methods have not been successful
+\cite{World_Models} \cite{CarRacing1}. It is believed this solution is
+the first to solve the challenge using deep RL.  
 
 \section{Methods}
 The DDQN algorithm \cite{DDQN} was used.
@@ -164,7 +166,7 @@ through $100$.
 As shown in Tables \ref{tab:base_scores} and \ref{tab:drop_scores},
 the average scores over 100 random games improved in all three
 environments when dropout was applied to the Q-network. To
-investigate the generalizability of these models, a curve 
+investigate the generalization capacity of these models, a curve 
 classification algorithm was developed. Each curve in the racetrack is
 charactertized as either a Left, Right, or S-shaped curve. Then, the
 steepness of the curve is ranked from 1 to 3, where 1 represents a
@@ -220,7 +222,7 @@ trained on the same racetrack, the model with dropout performed better
 than the model without dropout, especially on curves that the agent
 did not see examples of during training. This indicates that 
 dropout is an effective regularizer and is improving the
-generalizability the model. 
+generalization of the model. 
 
 \begin{figure}[!h]
 \captionsetup{justification=centering}
@@ -236,17 +238,19 @@ A deep RL solution was shown to solve CarRacing-v0 where the agent was
 trained on just three fixed racetracks. 
 Regularization improved the algorithm's ability to generalize to
 situations not observed during training. These results suggest
-that widespread regularization techniques such as dropout can be
+that common regularization techniques such as dropout can be
 applied successfully to improve robustness and generalization capacity
 of deep RL algorithms. This is especially fruitful in applications
 particularly prone to overfitting, such as environments where the
 agent has access to only a subset of the state space during training.
+Higher capacity networks may change the balance between optimal
+parallelization of RL tasks between CPUs and GPUs\cite{stooke2018accelerated}. 
 
 These results are preliminary, and are only shown for the CarRacing-v0
 environment. Future work will focus on extending these methods to
 additional environments. Particular focus will be on changing
 parameters of the enviroment that the model had little or no training
-data on, to observe the generalization capacity in these cases.
+data on, to observe the generalization capacity in these cases. 
 
 % -------------------------------------------------------------------------------------------------------------------
 % -------------------------------------------------------------------------------------------------------------------
@@ -611,7 +615,7 @@ considered solved by when the agent achieves an average score of 900
 or above over 100 consecutive games. 
 
 \subsection{Network architecture}
-See the table below for the exact architecture used in our models. 
+See the table below for the exact architecture used in the models. 
 \begin{table}[h!]
   \begin{center}
     \begin{tabular}{c|c|c}

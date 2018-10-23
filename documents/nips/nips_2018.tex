@@ -580,6 +580,20 @@ data on, to observe the generalization capacity in these cases.
 \bibliography{bibliography}
 
 \section{Appendices}
+\subsection{Car-Racing-v0}
+
+OpenAI Gym’s CarRacing-v0 reinforcement learning testbed
+\cite{CarRacing} is a is a top-down view car racing game where the
+goal is to visit all tiles of the racetrack as quickly as
+possible. The agent receives a reward of $-0.1$ at each time step and
+$\frac{1000}{N}$ for each track tile visited, where $N$ is the total
+number of tiles in the track. The state is represented by $96\times96$
+RGB screenshots of the game. The game ends when the agent visits all
+tiles on the track or when 1000 frames have passed. The environment is
+considered solved by when the agent achieves an average score of 900
+or above over 100 consecutive games. 
+
+
 \subsection{Implementation}
 The DDQN algorithm \cite{DDQN} was used. The input
 to the Q-network is a $96\times96\times4$ tensor produced by stacking
@@ -595,24 +609,39 @@ approximately 36 hours, and early stopping was used to ensure that the
 best performing model was selected for analysis.\todo{need stopping
   criterion?}  
 
+The best model was attained using three tracks as a form of curriculum
+learning. These three tracks are shown below. 
+
+\begin{figure}[!h]
+\captionsetup{justification=centering}
+\centering
+\begin{minipage}[t]{.3\textwidth}
+  \centering
+  \includegraphics[width=\linewidth]{Graphics/track104.png}
+  \caption{The first training track.}
+  \label{fig:curves_comparison}
+\end{minipage}
+%\hspace{1cm}
+\begin{minipage}[t]{.3\textwidth}
+  \centering
+  \includegraphics[width=\linewidth]{Graphics/track106.png}
+  \caption{The second training track.}
+  \label{fig:curves}
+\end{minipage}
+%\hspace{1cm}
+\begin{minipage}[t]{.3\textwidth}
+  \centering
+  \includegraphics[width=\linewidth]{Graphics/track108.png}
+  \caption{The third training track.}
+  \label{fig:curves_comparison}
+\end{minipage}
+\vspace{-2.5mm}
+\end{figure}
 
 The code, implementated algorithm, and further model information can
 be found at \url{https://github.com/AMD-RIPS/RL-2018}. A video of the
 fully trained car running a track can be found at
 \url{https://drive.google.com/file/d/1DQU4yCsq6nbVJB6WKoXlED9YFGDselIu/view}. 
-
-\subsection{Car-Racing-v0}
-
-OpenAI Gym’s CarRacing-v0 reinforcement learning testbed
-\cite{CarRacing} is a is a top-down view car racing game where the
-goal is to visit all tiles of the racetrack as quickly as
-possible. The agent receives a reward of $-0.1$ at each time step and
-$\frac{1000}{N}$ for each track tile visited, where $N$ is the total
-number of tiles in the track. The state is represented by $96\times96$
-RGB screenshots of the game. The game ends when the agent visits all
-tiles on the track or when 1000 frames have passed. The environment is
-considered solved by when the agent achieves an average score of 900
-or above over 100 consecutive games. 
 
 \subsection{Network architecture}
 See the table below for the exact architecture used in the models. 

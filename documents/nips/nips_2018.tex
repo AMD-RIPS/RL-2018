@@ -136,7 +136,7 @@ Following the original DQN algorithm \cite{DQN}, the architecture
 for the Q-network consists of 3 convolutional layers followed by 2
 dense layers and an output for each of the five actions.
 This is compared with a modified version, where a dropout layer is
-added to the second convolutional layer, to regularize the model.  
+added to the second convolutional layer to regularize the model.  
 The models were trained with varying observability of the
 environment. The experiments were performed on three different subsets of
 the state space: a single fixed racetrack, three fixed racetracks, and 
@@ -226,10 +226,11 @@ regularized with dropout.
     \textbf{Environment} & \textbf{Average Score}\\
     \hline
     1 Fixed Track & $894.38\pm24.5$ \\
-    3 Fixed Tracks &  $906.67\pm23.6$ \\
+    \bf{3 Fixed Tracks} & \bf{$906.67\pm23.6$} \\
     Random Tracks & $892.62\pm41.48$ \\
   \end{tabular}
-  \caption{Performance with dropout}
+  \caption{Performance with dropout. The game winning result is shown
+    in bold. }
   \label{tab:drop_scores}
 \end{minipage}
 \end{center}

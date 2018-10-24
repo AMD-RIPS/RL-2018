@@ -167,7 +167,10 @@ random tracks.
 \begin{minipage}[t]{.32\textwidth}
   \centering
   \includegraphics[width=\linewidth]{Graphics/curve_plot_v2.png}
-  \caption{Proportion of tiles visited on different curves.}
+  \caption{Proportion of tiles visited on different curves. The grey
+    bars are the general DDQN network, and the black bars are the
+    network with the inclusion of a dropout layer. In each case the
+    accuracy improves with dropout.} 
 %  \caption{Different types of curves. }
   \label{fig:curves_comparison}
 \end{minipage}
@@ -621,8 +624,8 @@ layer is followed by a rectified nonlinearity with dropout applied to
 the second convolutional layer only. The model was trained over a
 maximum of 3000 episodes corresponding to a training time of
 approximately 36 hours, and early stopping was used to ensure that the
-best performing model was selected for analysis.\todo{need stopping
-  criterion?}  
+best performing model was selected for analysis.
+%\todo{need stopping  criterion?}  
 
 The best model was attained using three tracks as a form of curriculum
 learning. These three tracks are shown below. 

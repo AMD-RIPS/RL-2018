@@ -92,7 +92,7 @@
 %Deep Reinforcement Learning methods have seen many successes in recent
 %years, ranging from solving classical video games to beating world
   %class Go players.
-Reinforcement Learning models are typically trained for
+Reinforcement Learning (RL) models are typically trained for
 narrow, well-defined tasks. They perform well in their defined task,
 but changes in the environment often cause disproportionate reductions
 in performance. This paper provides an example which suggests that
@@ -165,7 +165,7 @@ random tracks.
 \begin{minipage}[t]{.32\textwidth}
   \centering
   \includegraphics[width=\linewidth]{Graphics/curve_plot_v2.png}
-  \caption{Proportion of tiles visited on different curves. The grey
+  \caption{Percentage of tiles visited on different curves. The grey
     bars are the general DDQN network, and the black bars are the
     network with the inclusion of a dropout layer.} 
   \label{fig:curves_comparison}
@@ -184,9 +184,9 @@ characterized as either a Left, Right, or S-shaped curve. Then, the
 steepness of the curve is ranked from 1 to 3, where 1 represents a
 shallow curve and 3 represents a steep curve. 
 For each of these different types of curves, the percentage
-of tiles cleared is used as a metric of the car's performance. 
+of tiles visited is used as a metric of the car's performance. 
 
-Figure \ref{fig:curves_comparison} shows the proportion of tiles visited 
+Figure \ref{fig:curves_comparison} shows the percentage of tiles visited 
 for each curve type over 100 tracks. In this comparison, both models were 
 trained using a single racetrack, and both used the same racetrack as input data. 
 Dropout serves to improve the car's performance through each curve, 
@@ -252,7 +252,7 @@ These results are preliminary and are only shown for the CarRacing-v0
 environment. Future work will focus on extending these methods to
 additional environments. Particular focus will be on changing
 parameters of the enviroment that the model had little or no training
-data on, to observe the generalization capacity in these cases. \\ 
+data on, to observe the generalization capacity in these cases.
 
 % -------------------------------------------------------------------------------------------------------------------
 % -------------------------------------------------------------------------------------------------------------------
@@ -585,7 +585,7 @@ data on, to observe the generalization capacity in these cases. \\
 \subsection{Car-Racing-v0}
 
 OpenAI Gym’s CarRacing-v0 reinforcement learning testbed
-\cite{CarRacing} is a is a top-down view car racing game where the
+\cite{CarRacing} is a top-down view car racing game where the
 goal is to visit all tiles of the racetrack as quickly as
 possible. The agent receives a reward of $-0.1$ at each time step and
 $\frac{1000}{N}$ for each track tile visited, where $N$ is the total
@@ -637,7 +637,7 @@ learning. These three tracks are shown below.
 \vspace{-2.5mm}
 \end{figure}
 
-The code, implementated algorithm, and further model information can
+The code, implemented algorithm, and further model information can
 be found at \url{https://github.com/AMD-RIPS/RL-2018}. A video of the
 fully trained car running a track can be found at
 \url{https://drive.google.com/file/d/1DQU4yCsq6nbVJB6WKoXlED9YFGDselIu/view}. 

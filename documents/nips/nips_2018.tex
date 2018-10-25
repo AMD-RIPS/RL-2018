@@ -116,7 +116,7 @@ experiences, and are not likely to transfer to other tasks
 effectively \cite{dibangoye2018learning}. 
 
 In this paper, a deep RL algorithm that uses dropout
-\cite{Dropout} is used to successfully solve the game of
+\cite{Dropout} successfully solves the game of
 CarRacing-v0 \cite{CarRacing}. The model is trained on a
 limited state space made up of 3 tracks used as a form of curriculum
 learning \cite{bengio2009curriculum}. This result shows that
@@ -133,7 +133,8 @@ The DDQN algorithm \cite{DQN,DDQN} was used.
 Following the original DQN algorithm \cite{DQN}, the architecture
 for the Q-network consists of 3 convolutional layers followed by 2
 dense layers and an output for each of the five actions.
-This is compared with a modified version, where a dropout layer is
+This is compared with a modified version, where a dropout layer with a 
+dropout probability of 50\% is
 added to the second convolutional layer to regularize the model.  
 The models were trained with varying observability of the
 environment. The experiments were performed on three different subsets of
@@ -207,7 +208,7 @@ turn requires less velocity or the car will leave the track.
     3 Fixed Tracks & $853.88\pm127.71$ \\
     Random Tracks & $854.83\pm107.14$ \\
   \end{tabular}
-  \vspace{1mm}
+  \vspace{.5mm}
   \caption{Performance without dropout}
   \label{tab:base_scores}
 \end{minipage}
@@ -220,7 +221,7 @@ turn requires less velocity or the car will leave the track.
     \textbf{3 Fixed Tracks} & $\mathbf{906.67\pm23.6}$ \\
     Random Tracks & $892.62\pm41.48$ \\
   \end{tabular}
-  \vspace{1mm}
+  \vspace{.5mm}
   \caption{Performance with dropout. The game winning result is shown
     in bold.}
   \label{tab:drop_scores}
@@ -592,7 +593,7 @@ $\frac{1000}{N}$ for each track tile visited, where $N$ is the total
 number of tiles in the track. The state is represented by $96\times96$
 RGB screenshots of the game. The game ends when the agent visits all
 tiles on the track or when 1000 frames have passed. The environment is
-considered solved by when the agent achieves an average score of 900
+considered solved when the agent achieves an average score of 900
 or above over 100 consecutive games. 
 
 
@@ -605,7 +606,8 @@ proposed in the original DQN algorithm \cite{DQN}, the architecture
 for the Q-network consists of 3 convolutional layers followed by 2
 dense layers and an output for each of the five actions. Each hidden
 layer is followed by a rectified nonlinearity with dropout applied to
-the second convolutional layer only. The model was trained over a
+the second convolutional layer only. The dropout probability was calibrated 
+to 50\% for maximum performance. The model was trained over a
 maximum of 3000 episodes corresponding to a training time of
 approximately 36 hours, and early stopping was used to ensure that the
 best performing model was selected for analysis.

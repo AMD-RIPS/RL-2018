@@ -95,39 +95,37 @@
 Reinforcement Learning models are typically trained for
 narrow, well-defined tasks. They perform well in their defined task,
 but changes in the environment often cause disproportionate reductions
-in performance. In this paper, an example which suggests that
+in performance. This paper provides an example which suggests that
 regularization methods could improve the generalization capacity of
-deep RL algorithms is provided. 
-This is explored in OpenAI’s Car Racing environment where the agent
+deep RL algorithms.
+This is explored in OpenAI’s CarRacing-v0 environment where the agent
 observes only a small subset of the state space during training.
-%by
-%applying the DDQN-algorithm with dropout. 
 \end{abstract}
 
-\vspace{-4mm}
+\vspace{-2mm}
 \section{Introduction}
 Deep reinforcement learning methods have proven successful in solving
-well-defined computer
-games\cite{mnih2013playing,silver2017mastering,zambaldi2018relational,bansal2017emergent}. 
+well-defined computer games 
+\cite{mnih2013playing,silver2017mastering,zambaldi2018relational,bansal2017emergent}. 
 However, deep RL agents are limited by their sensitivity
 to perturbations in the environment. They can fail catastrophically
 when applied to environments that differ even slightly from where they
-were trained\cite{kansky2017schema,taylor2009transfer}. This indicates
+were trained \cite{kansky2017schema,taylor2009transfer}. This indicates
 the models are not generalizing well, have overfit to prior
 experiences, and are not likely to transfer to other tasks
-effectively\cite{dibangoye2018learning}. 
+effectively \cite{dibangoye2018learning}. 
 
 In this paper, a deep RL algorithm that uses dropout
 \cite{Dropout} is used to successfully solve the game of
-CarRacing-v0\cite{CarRacing}. The model is trained on a
+CarRacing-v0 \cite{CarRacing}. The model is trained on a
 limited state space made up of 3 tracks used as a form of curriculum
-learning\cite{bengio2009curriculum}. This result shows that
+learning \cite{bengio2009curriculum}. This result shows that
 regularization methods such as dropout can mitigate the overfit
 usually exhibited by deep RL. This task is particularly challenging
 because the track is randomly generated for each game. The environment
 has recently been solved using a generative network, but previous
 attempts using deep RL methods have not been successful
-\cite{World_Models} \cite{CarRacing1}. It is believed this solution is
+\cite{World_Models,CarRacing1}. It is believed this solution is
 the first to solve the challenge using deep RL.  
 
 %\section{Methods}
@@ -151,15 +149,15 @@ random tracks.
   \centering
   \includegraphics[width=\linewidth]{Graphics/carracing.jpg}
   \caption{CarRacing-v0 environment. The red car's score increases as
-    it traverses cells colored grey, and is decreased when leaving the
+    it traverses the track (grey cells), and decreases when leaving the
   track (green cells).}
-  \label{fig:curves_comparison}
+  \label{fig:carracing}
 \end{minipage}
 \hspace{.25cm}
 \begin{minipage}[t]{.3\textwidth}
   \centering
   \includegraphics[width=\linewidth]{Graphics/curves.png}
-  \caption{A full track, with each corner labelled by the
+  \caption{An example of a full track, with each corner labelled by the
     corresponding curve type.} 
   \label{fig:curves}
 \end{minipage}
@@ -169,51 +167,37 @@ random tracks.
   \includegraphics[width=\linewidth]{Graphics/curve_plot_v2.png}
   \caption{Proportion of tiles visited on different curves. The grey
     bars are the general DDQN network, and the black bars are the
-    network with the inclusion of a dropout layer. In each case the
-    accuracy improves with dropout.} 
-%  \caption{Different types of curves. }
+    network with the inclusion of a dropout layer.} 
   \label{fig:curves_comparison}
 \end{minipage}
 \vspace{-2.5mm}
 \end{figure}
 
-
-%% \begin{figure}[!h]
-%% \captionsetup{justification=centering}
-%% \centering
-%% \includegraphics[width=.55\linewidth]{Graphics/curve_plot_v2.png}
-%% \caption{Proportion of tiles visited on different curves. }
-%% \label{fig:curves_comparison}
-%% \vspace{-4mm}
-%% \end{figure}
-
-
 \section{Performance Analysis}
 As shown in Tables \ref{tab:base_scores} and \ref{tab:drop_scores},
 the average scores over 100 random games improved in all three
-environments when dropout was applied to the Q-network. To
-investigate the generalization capacity of these models, a curve 
-classification algorithm was developed. Each curve in the racetrack is
-charactertized as either a Left, Right, or S-shaped curve. Then, the
+environments when dropout was applied to the Q-network. A curve 
+classification algorithm, demonstrated in Figure \ref{fig:curves},
+was developed to investigate the generalization capacity of these models. 
+Each curve in the racetrack is
+characterized as either a Left, Right, or S-shaped curve. Then, the
 steepness of the curve is ranked from 1 to 3, where 1 represents a
 shallow curve and 3 represents a steep curve. 
 For each of these different types of curves, the percentage
 of tiles cleared is used as a metric of the car's performance. 
-The proportion of tiles visited for each curve over 100 tracks is
-shown in Figure~\ref{fig:curves_comparison}. Dropout serves to
-improve the car's performance through each curve, with particularly
-large improvements in L3, R3, and S3, the steepest curves
-encountered. These steep curves are the least common curve encountered
-in the training data. It is possible that unregularized models are not
+
+Figure \ref{fig:curves_comparison} shows the proportion of tiles visited 
+for each curve type over 100 tracks. In this comparison, both models were 
+trained using a single racetrack, and both used the same racetrack as input data. 
+Dropout serves to improve the car's performance through each curve, 
+with particularly large improvements in L3, R3, and S3, the steepest curves. 
+These steep curves are the least common curves encountered in the training data.
+It is possible that the unregularized models are not
 accurately adapting to these curves, and are overfitting to the more
 common (and shallower) curves. This can be catastrophic, as a sharp
-turn requires less velocity or the car will leave the track. In
-addition to a higher average score, notice also that the standard
-deviation of scores substantially  decreased in the cases using
-dropout. Observations indicate that this reduction in variation was
-because of fewer catastrophic crashes of the car in the cases
-regularized with dropout.  
+turn requires less velocity or the car will leave the track. 
 
+\vspace{1mm}
 \begin{table}[h!]
 \begin{center}
 \begin{minipage}[t]{.4\textwidth}
@@ -223,6 +207,7 @@ regularized with dropout.
     3 Fixed Tracks & $853.88\pm127.71$ \\
     Random Tracks & $854.83\pm107.14$ \\
   \end{tabular}
+  \vspace{1mm}
   \caption{Performance without dropout}
   \label{tab:base_scores}
 \end{minipage}
@@ -232,24 +217,23 @@ regularized with dropout.
     \textbf{Environment} & \textbf{Average Score}\\
     \hline
     1 Fixed Track & $894.38\pm24.5$ \\
-    \bf{3 Fixed Tracks} & \bf{$906.67\pm23.6$} \\
+    \textbf{3 Fixed Tracks} & $\mathbf{906.67\pm23.6}$ \\
     Random Tracks & $892.62\pm41.48$ \\
   \end{tabular}
+  \vspace{1mm}
   \caption{Performance with dropout. The game winning result is shown
-    in bold. }
+    in bold.}
   \label{tab:drop_scores}
 \end{minipage}
 \end{center}
 \vspace{-5mm}
 \end{table}
 
-Figure \ref{fig:curves_comparison} compares the performance of the
-models trained on a single racetrack. Even though both models were
-trained on the same racetrack, the model with dropout performed better
-than the model without dropout, especially on curves that the agent
-did not see examples of during training. This indicates that 
-dropout is an effective regularizer and is improving the
-generalization of the model. 
+In addition to a higher average score, the standard
+deviation of scores substantially decreased in the cases using
+dropout. Observations indicate that this reduction in variation was
+because of fewer catastrophic crashes of the car in the models
+regularized with dropout.  
 
 \section{Conclusions and Future Work}
 A deep RL solution was shown to solve CarRacing-v0 where the agent was
@@ -262,13 +246,13 @@ of deep RL algorithms. This is especially fruitful in applications
 particularly prone to overfitting, such as environments where the
 agent has access to only a subset of the state space during training.
 Higher capacity networks may change the balance between optimal
-parallelization of RL tasks between CPUs and GPUs\cite{stooke2018accelerated}. 
+parallelization of RL tasks between CPUs and GPUs \cite{stooke2018accelerated}. 
 
-These results are preliminary, and are only shown for the CarRacing-v0
+These results are preliminary and are only shown for the CarRacing-v0
 environment. Future work will focus on extending these methods to
 additional environments. Particular focus will be on changing
 parameters of the enviroment that the model had little or no training
-data on, to observe the generalization capacity in these cases. 
+data on, to observe the generalization capacity in these cases. \\ 
 
 % -------------------------------------------------------------------------------------------------------------------
 % -------------------------------------------------------------------------------------------------------------------
@@ -637,21 +621,18 @@ learning. These three tracks are shown below.
   \centering
   \includegraphics[width=\linewidth]{Graphics/track104.png}
   \caption{The first training track.}
-  \label{fig:curves_comparison}
 \end{minipage}
 %\hspace{1cm}
 \begin{minipage}[t]{.3\textwidth}
   \centering
   \includegraphics[width=\linewidth]{Graphics/track106.png}
   \caption{The second training track.}
-  \label{fig:curves}
 \end{minipage}
 %\hspace{1cm}
 \begin{minipage}[t]{.3\textwidth}
   \centering
   \includegraphics[width=\linewidth]{Graphics/track108.png}
   \caption{The third training track.}
-  \label{fig:curves_comparison}
 \end{minipage}
 \vspace{-2.5mm}
 \end{figure}

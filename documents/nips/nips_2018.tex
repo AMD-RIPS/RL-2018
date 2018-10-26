@@ -92,14 +92,19 @@
 %Deep Reinforcement Learning methods have seen many successes in recent
 %years, ranging from solving classical video games to beating world
   %class Go players.
-Reinforcement Learning (RL) models are typically trained for
-narrow, well-defined tasks. They perform well in their defined task,
+Recent successes in Reinforcement Learning (RL) models have occurred
+when they are trained for narrow, well-defined tasks. These models
+perform well in their defined task, 
 but changes in the environment often cause disproportionate reductions
 in performance. This paper provides an example which suggests that
-regularization methods could improve the generalization capacity of
-deep RL algorithms.
+regularization methods improve the generalization capacity of
+deep RL algorithms in a case where the agent is unable
+to observe the task features fully. 
 This is explored in OpenAI’s CarRacing-v0 environment where the agent
-observes only a small subset of the state space during training.
+observes only a small subset of the state space during training. This
+preliminary result indicates that more complex models solved
+imprecisely through regularization may have higher generalization
+than simple models solved exactly. 
 \end{abstract}
 
 \vspace{-2mm}
@@ -122,14 +127,14 @@ limited state space made up of 3 tracks used as a form of curriculum
 learning \cite{bengio2009curriculum}. This result shows that
 regularization methods such as dropout can mitigate the overfit
 usually exhibited by deep RL. This task is particularly challenging
-because the track is randomly generated for each game. The environment
-has recently been solved using a generative network, but previous
+because the track is randomly generated for each game. A recent
+solution to this environment using a generative networks, but previous
 attempts using deep RL methods have not been successful
 \cite{World_Models,CarRacing1}. It is believed this solution is
 the first to solve the challenge using deep RL.  
 
 %\section{Methods}
-The DDQN algorithm \cite{DQN,DDQN} was used.
+In this work, the DDQN algorithm \cite{DQN,DDQN} was used.
 Following the original DQN algorithm \cite{DQN}, the architecture
 for the Q-network consists of 3 convolutional layers followed by 2
 dense layers and an output for each of the five actions.
@@ -137,7 +142,8 @@ This is compared with a modified version, where a dropout layer with a
 dropout probability of 50\% is
 added to the second convolutional layer to regularize the model.  
 The models were trained with varying observability of the
-environment. The experiments were performed on three different subsets of
+environment. To vary the observability of the algorithm, experiments
+were performed on three different subsets of 
 the state space: a single fixed racetrack, three fixed racetracks, and 
 randomly generated racetracks. The models were then tested on 100
 random tracks.
@@ -189,10 +195,12 @@ of tiles visited is used as a metric of the car's performance.
 
 Figure \ref{fig:curves_comparison} shows the percentage of tiles visited 
 for each curve type over 100 tracks. In this comparison, both models were 
-trained using a single racetrack, and both used the same racetrack as input data. 
+trained using a single racetrack, and both used the same racetrack as
+input data.  
 Dropout serves to improve the car's performance through each curve, 
 with particularly large improvements in L3, R3, and S3, the steepest curves. 
-These steep curves are the least common curves encountered in the training data.
+These steep curves are the least common curves encountered in the
+training data. 
 It is possible that the unregularized models are not
 accurately adapting to these curves, and are overfitting to the more
 common (and shallower) curves. This can be catastrophic, as a sharp
@@ -248,12 +256,13 @@ particularly prone to overfitting, such as environments where the
 agent has access to only a subset of the state space during training.
 Higher capacity networks may change the balance between optimal
 parallelization of RL tasks between CPUs and GPUs \cite{stooke2018accelerated}. 
-
 These results are preliminary and are only shown for the CarRacing-v0
 environment. Future work will focus on extending these methods to
-additional environments. Particular focus will be on changing
-parameters of the enviroment that the model had little or no training
-data on, to observe the generalization capacity in these cases.
+additional environments.
+
+%Particular focus will be on changing
+%parameters of the enviroment that the model had sparse training
+%data.
 
 % -------------------------------------------------------------------------------------------------------------------
 % -------------------------------------------------------------------------------------------------------------------
